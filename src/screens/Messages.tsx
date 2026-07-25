@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 import { dok } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 import { cn, timeAgo } from "@/lib/utils";
+import ShareCard, { detectShare } from "@/components/ShareCard";
 
 const cidOf = (c) => c?.conversationId || c?.id || c?._id;
 const midOf = (m) => m?._id || m?.id;
@@ -347,6 +348,19 @@ export default function Messages() {
                 <p className="mt-6 text-center text-sm text-ink-400">No messages yet — say hello 👋</p>
               ) : msgs.map((m) => {
                 const mine = isMine(m);
+                // Shared content → rich preview card instead of the raw-id text.
+                const share = m.isDeleted ? null : detectShare(m);
+                if (share) {
+                  return (
+                    <div key={midOf(m)} className={cn("flex flex-col gap-1", mine ? "items-end" : "items-start")}>
+                      <ShareCard shareType={share.shareType} entityId={share.entityId} mine={mine} />
+                      <p className="flex items-center gap-1 px-1 text-[10px] text-ink-400">
+                        {timeAgo(m.createdAt)}
+                        {mine && (m.status === "seen" ? <CheckCheck size={13} className="text-sky-500" /> : m.status === "delivered" ? <CheckCheck size={13} /> : <Check size={13} />)}
+                      </p>
+                    </div>
+                  );
+                }
                 return (
                   <div key={midOf(m)} className={cn("flex", mine ? "justify-end" : "justify-start")}>
                     <div className={cn("max-w-[75%] px-4 py-2.5 text-sm shadow-soft", mine ? cn(bubble.mine, "bubble-mine text-white") : cn(bubble.theirs, "bg-surface text-ink-900"))}>
