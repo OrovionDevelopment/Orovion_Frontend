@@ -374,9 +374,24 @@ export const dok = {
   },
   chat: {
     conversations: () => unwrap(api.get("/chat/conversations")),
-    messages: (cid) => unwrap(api.get(`/chat/${cid}/messages`)),
+    messages: (cid, q = "") => unwrap(api.get(`/chat/${cid}/messages${q}`)), // ?cursor=&limit=
     start: (b) => unwrap(api.post("/chat/start", b)),
-    send: (cid, b) => unwrap(api.post(`/chat/${cid}/messages`, b)),
+    send: (cid, b) => unwrap(api.post(`/chat/${cid}/messages`, b)), // { content, type, meta? }
+    unreadCount: () => unwrap(api.get("/chat/unread-count")),
+    seen: (cid) => unwrap(api.post(`/chat/${cid}/seen`, {})),
+    // Multipart media/document upload (field "file") → { message }.
+    upload: (cid, file) => { const f = new FormData(); f.append("file", file); return postForm(`/chat/${cid}/upload`, f); },
+    // React (toggle) with an emoji → updated reactions. Empty emoji removes.
+    react: (messageId, emoji) => unwrap(api.post(`/chat/messages/${messageId}/react`, { emoji })),
+    // Delete a message. deleteFor: 'me' | 'for_everyone' (≤60 min, sender only).
+    deleteMessage: (messageId, deleteFor = "me") => unwrap(api.delete(`/chat/messages/${messageId}?deleteFor=${deleteFor}&forEveryone=${deleteFor === "for_everyone"}`)),
+    // Clear a conversation's messages for me (keeps the conversation).
+    clear: (cid, deleteMedia = true) => unwrap(api.delete(`/chat/${cid}/messages?deleteMedia=${deleteMedia}`)),
+    pin: (cid, pinned) => unwrap(api.post(`/chat/${cid}/pin`, {}, { params: { pinned } })),
+    mute: (cid, muted) => unwrap(api.post(`/chat/${cid}/mute`, {}, { params: { muted } })),
+    // Calling permission: { myAllowsCalls, peerAllowsCalls }.
+    getCalling: (cid) => unwrap(api.get(`/chat/${cid}/calling`)),
+    setCalling: (cid, enabled) => unwrap(api.post(`/chat/${cid}/calling`, {}, { params: { enabled } })),
   },
   notifications: {
     list: (q = "") => unwrap(api.get(`/notifications${q}`)),
