@@ -393,6 +393,13 @@ export const dok = {
     getCalling: (cid) => unwrap(api.get(`/chat/${cid}/calling`)),
     setCalling: (cid, enabled) => unwrap(api.post(`/chat/${cid}/calling`, {}, { params: { enabled } })),
   },
+  // Insights — Phase 1 (Overview only; see the Insights implementation report
+  // for the phased plan). Mirrors the Flutter app's features/insights/.
+  insights: {
+    overview: (period = "last_30_days", from?: string, to?: string) =>
+      unwrap(api.get("/insights/overview", { params: { period, ...(period === "custom" ? { from, to } : {}) } })),
+    refresh: () => unwrap(api.post("/insights/refresh", {})),
+  },
   notifications: {
     list: (q = "") => unwrap(api.get(`/notifications${q}`)),
     unread: () => unwrap(api.get("/notifications/unread-count")),

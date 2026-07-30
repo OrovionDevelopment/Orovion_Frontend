@@ -13,6 +13,7 @@ import { dok } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 import { cn, timeAgo } from "@/lib/utils";
 import ChatMessage from "@/components/ChatMessage";
+import { readDeletedConversationIds, writeDeletedConversationIds, filterOutDeleted } from "@/lib/chatDeletedConversations";
 
 const cidOf = (c) => c?.conversationId || c?.id || c?._id;
 const midOf = (m) => m?._id || m?.id;
@@ -54,6 +55,12 @@ export default function Messages() {
   const nextCursorRef = useRef<any>(null);
   const threadRef = useRef<any>(null);
   const recorderRef = useRef<any>(null);
+  // Persisted "user deleted this conversation" guard — see chatDeletedConversations.ts.
+  // Lazily read once; localStorage isn't available during SSR, only in this
+  // client component after mount, so a plain useRef initializer is safe here.
+  const deletedConvIdsRef = useRef<Set<string>>(
+    typeof window !== "undefined" ? readDeletedConversationIds(window.localStorage) : new Set(),
+  );
 
   // Socket handlers are registered once; refs give them the current values.
   const activeRef = useRef(null);
@@ -92,7 +99,7 @@ export default function Messages() {
   // load conversation list
   useEffect(() => {
     dok.chat.conversations()
-      .then((d) => setConvos(d.conversations || d || []))
+      .then((d) => setConvos(filterOutDeleted(d.conversations || d || [], deletedConvIdsRef.current, cidOf)))
       .catch(() => setConvos([]));
   }, []);
 
@@ -161,8 +168,17 @@ export default function Messages() {
         const cid = String(m.conversationId);
         const idx = prev.findIndex((c) => String(cidOf(c)) === cid);
         if (idx === -1) {
-          // brand-new conversation — refetch the list to pick it up
-          dok.chat.conversations().then((d) => setConvos(d.conversations || d || [])).catch(() => {});
+          // Brand-new conversation (to this tab's state) — refetch to pick it
+          // up. This is also how a conversation the user previously deleted
+          // legitimately comes back: a genuine new message revives it, same
+          // as WhatsApp. Only THIS conversation's id is revived — every other
+          // still-deleted conversation stays filtered out of the refetch.
+          if (deletedConvIdsRef.current.delete(cid)) {
+            writeDeletedConversationIds(window.localStorage, deletedConvIdsRef.current);
+          }
+          dok.chat.conversations()
+            .then((d) => setConvos(filterOutDeleted(d.conversations || d || [], deletedConvIdsRef.current, cidOf)))
+            .catch(() => {});
           return prev;
         }
         const c = {
@@ -456,10 +472,16 @@ export default function Messages() {
     if (!active) return;
     setConvMenu(false);
     if (!window.confirm("Delete this conversation?")) return;
-    const cid = cidOf(active);
+    const cid = String(cidOf(active));
     try { await dok.chat.mute(cid, false); } catch { /* reset mute on delete */ }
     try { await dok.chat.clear(cid, true); } catch { /* clear server copy */ }
-    setConvos((prev) => (prev || []).filter((c) => cidOf(c) !== cid));
+    // No backend delete endpoint exists — the server still returns this
+    // conversation, so remember it locally or it reappears on the next
+    // conversations refetch (a page reload, or another chat's new-message
+    // event triggering the full-list refetch above).
+    deletedConvIdsRef.current.add(cid);
+    writeDeletedConversationIds(window.localStorage, deletedConvIdsRef.current);
+    setConvos((prev) => (prev || []).filter((c) => String(cidOf(c)) !== cid));
     setActive(null);
     setMobileThread(false);
   };
@@ -592,8 +614,19 @@ export default function Messages() {
                 </div>
               )}
               <div className="flex items-center gap-2 p-3">
-                {/* Any file — images, video, PDF, DICOM (.dcm), zip, etc. */}
-                <input ref={fileRef} type="file" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) sendMedia(f); e.target.value = ""; }} />
+                {/* Any file(s) — images, video, PDF, DICOM (.dcm), zip, etc. Each
+                    picked file becomes its own outgoing message, in order. */}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files || []);
+                    e.target.value = "";
+                    for (const f of files) await sendMedia(f);
+                  }}
+                />
                 <button onClick={() => fileRef.current?.click()} disabled={uploading || recording} title="Attach a file" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-500 hover:bg-ink-900/5 disabled:opacity-50"><Paperclip size={18} /></button>
                 <input value={text} onChange={onInputChange} onKeyDown={(e) => e.key === "Enter" && send()} placeholder={recording ? "Recording… tap ⏹ to send" : uploading ? "Uploading…" : "Type a message…"} disabled={recording} className="flex-1 rounded-full bg-ink-900/[.04] px-4 py-3 text-sm outline-none disabled:opacity-60" />
                 {text.trim() ? (
