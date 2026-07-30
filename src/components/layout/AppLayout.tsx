@@ -2,7 +2,7 @@
 import { NavLink, useNavigate, Link, useLocation, Navigate } from "@/lib/router";
 import {
   Home, Clapperboard, Users, MessageSquare,
-  Bell, Bookmark, Search, Plus, LogOut, Settings, Video,
+  Bell, Bookmark, Search, Plus, LogOut, Settings, Video, BarChart3,
 } from "lucide-react";
 import { Avatar, Logo, Verified, Spinner } from "@/components/ui/Primitives";
 import NavArrows from "@/components/ui/NavArrows";
@@ -66,6 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </div>
                 </Link>
                 <div className="my-1 h-px bg-ink-900/[.06]" />
+                <MenuItem icon={BarChart3} label="Insights" onClick={() => nav("/app/insights")} />
                 <MenuItem icon={Settings} label="Settings" onClick={() => nav("/app/settings")} />
                 <MenuItem icon={LogOut} label="Log out" onClick={() => { logout(); nav("/"); }} />
               </div>
