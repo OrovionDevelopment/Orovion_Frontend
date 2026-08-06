@@ -6,7 +6,9 @@ export const metadata: Metadata = {
   title: "Orovion — A trusted network of clinicians",
   description:
     "Orovion — the professional network for clinicians, students, and patients. Research, reels and real-time consults.",
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: "/favicon.svg", apple: "/favicon.svg" },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Orovion", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

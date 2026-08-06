@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCall } from "@/context/CallContext";
 import { useToast } from "@/components/ui/Toast";
 import { dok } from "@/lib/api";
+import { readCache, writeCache } from "@/lib/offline-cache";
 import { getSocket } from "@/lib/socket";
 import { cn, timeAgo } from "@/lib/utils";
 import ChatMessage from "@/components/ChatMessage";
@@ -96,11 +97,31 @@ export default function Messages() {
     setConvos((prev) => (prev ? prev.map((x) => (cidOf(x) === cid ? { ...x, unreadCount: 0 } : x)) : prev));
   };
 
-  // load conversation list
+  // load conversation list — offline-first: paint the per-user cached list
+  // instantly (even offline), let the live list win, fall back to cache on error.
   useEffect(() => {
+    let settled = false;
+    const key = "chat:conversations";
+    readCache<any[]>(myId, key).then((c) => {
+      if (!settled && convos === null && c?.data) {
+        setConvos(filterOutDeleted(c.data, deletedConvIdsRef.current, cidOf));
+      }
+    });
     dok.chat.conversations()
-      .then((d) => setConvos(filterOutDeleted(d.conversations || d || [], deletedConvIdsRef.current, cidOf)))
-      .catch(() => setConvos([]));
+      .then((d) => {
+        settled = true;
+        const list = d.conversations || d || [];
+        setConvos(filterOutDeleted(list, deletedConvIdsRef.current, cidOf));
+        writeCache(myId, key, list);
+      })
+      .catch(async () => {
+        settled = true;
+        const c = await readCache<any[]>(myId, key);
+        setConvos((prev) =>
+          prev ?? (c?.data ? filterOutDeleted(c.data, deletedConvIdsRef.current, cidOf) : [])
+        );
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // pick the deep-linked (?c=) conversation, else the first one
