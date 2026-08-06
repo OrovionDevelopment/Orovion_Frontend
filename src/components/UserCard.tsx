@@ -5,6 +5,7 @@ import { Avatar, Verified } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
 import { compact, roleLabel } from "@/lib/utils";
 import { dok } from "@/lib/api";
+import { sendOrQueue } from "@/lib/offline-queue";
 import { reconcileFollowState } from "@/lib/relationships";
 import { broadcastFollow, onFollowChange } from "@/lib/followBus";
 
@@ -52,7 +53,8 @@ export default function UserCard({ user, action = "follow", demo, onAction }) {
       setState("requested");
       if (demo) return;
       setBusy(true);
-      try { await dok.network.request(id); }
+      // Offline-first: queued when offline, replayed on reconnect.
+      try { await sendOrQueue({ kind: "connect", method: "post", url: `/network/request/${id}`, dedupeKey: `connect:${id}` }); }
       catch (e) { setState(prev); toast?.error(e?.response?.data?.message || "Couldn't send the request"); }
       finally { setBusy(false); }
       return;
