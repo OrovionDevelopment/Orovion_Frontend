@@ -9,6 +9,7 @@ import MediaViewer from "@/components/profile/MediaViewer";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
+import { sendOrQueue } from "@/lib/offline-queue";
 import { compact, roleLabel } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { reconcileFollowState } from "@/lib/relationships";
@@ -336,7 +337,10 @@ function ProfileActions({ user, demo }) {
     setC("requested"); // optimistic — pending outgoing request
     if (demo) return;
     try {
-      const d = await dok.network.request(id);
+      // Offline-first: queued when offline (replayed on reconnect); when it runs
+      // now, `r.data` is the unwrapped payload so we can still capture the id.
+      const r = await sendOrQueue({ kind: "connect", method: "post", url: `/network/request/${id}`, dedupeKey: `connect:${id}` });
+      const d = r.data as any;
       reqIdRef.current = d?.request?.id || d?.request?._id || d?.requestId || d?.connectionRequest?.id || reqIdRef.current;
     } catch (e) { setC("connect"); toast?.error(e?.response?.data?.message || "Couldn't send the connection request"); }
   };

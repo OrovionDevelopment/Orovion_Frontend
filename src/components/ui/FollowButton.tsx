@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@/lib/router";
 import { UserPlus, UserCheck, Clock, MessageSquare, Loader2, Link2 } from "lucide-react";
 import { dok } from "@/lib/api";
+import { sendOrQueue } from "@/lib/offline-queue";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import { deriveState, reconcileFollowState } from "@/lib/relationships";
@@ -100,7 +101,9 @@ export default function FollowButton({ user, demo, variant = "solid", className,
   const connect = async () => {
     commit("connecting"); // optimistic handshake
     if (demo) return;
-    try { await dok.network.request(id); }
+    // Offline-first: queued when offline, replayed on reconnect; the optimistic
+    // "connecting" stands. Only a permanent (4xx) error reverts.
+    try { await sendOrQueue({ kind: "connect", method: "post", url: `/network/request/${id}`, dedupeKey: `connect:${id}` }); }
     catch (e) {
       commit("connect");
       toast?.error(e?.response?.data?.message || "Couldn't send the connection request");
