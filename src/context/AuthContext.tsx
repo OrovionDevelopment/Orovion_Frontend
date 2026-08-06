@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { dok, TOKENS } from "@/lib/api";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { clearOfflineCache } from "@/lib/offline-cache";
 
 const AuthCtx = createContext<any>(null);
 export const useAuth = () => useContext(AuthCtx);
@@ -38,6 +39,7 @@ export function AuthProvider({ children }) {
       TOKENS.clear();
       disconnectSocket();
       setUser(null);
+      clearOfflineCache(); // drop this session's cached data on forced logout
     };
     window.addEventListener("dl:auth-expired", onExpired);
     return () => window.removeEventListener("dl:auth-expired", onExpired);
@@ -66,6 +68,7 @@ export function AuthProvider({ children }) {
     TOKENS.clear();
     disconnectSocket();
     setUser(null);
+    clearOfflineCache(); // privacy: clear cached data so the next user starts clean
   };
 
   return (

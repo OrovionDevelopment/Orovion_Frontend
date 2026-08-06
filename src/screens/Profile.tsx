@@ -11,6 +11,7 @@ import PeopleSheet from "@/components/profile/PeopleSheet";
 import MediaViewer from "@/components/profile/MediaViewer";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
+import { readCache, writeCache } from "@/lib/offline-cache";
 import { cn, compact, reelPoster } from "@/lib/utils";
 
 const TABS = ["Posts", "About"];
@@ -49,21 +50,42 @@ export default function Profile() {
   const [full, setFull] = useState(null); // hydrate payload: memberSince, accountAge, role metrics
   const [loading, setLoading] = useState(true);
 
+  const uidKey = authUser?._id || authUser?.id;
   useEffect(() => {
     let alive = true;
+    let settled = false;
     setLoading(true);
+    const key = "profile:me";
+    // Offline-first: paint the cached profile instantly (even offline), then let
+    // the live payload win. `full` is a secondary hydrate — cache it too so the
+    // richer sections survive offline.
+    readCache(uidKey, key).then((c) => {
+      if (alive && !settled && data === null && c?.data) {
+        setData(c.data);
+        setLoading(false);
+      }
+    });
+    readCache(uidKey, "profile:full").then((c) => {
+      if (alive && full === null && c?.data) setFull(c.data);
+    });
     // Primary profile drives the loading state. The richer hydrate (full) fills in
     // when it lands — never block the whole screen on it (it can be slow/hang).
     dok.profile.me()
-      .then((v) => { if (alive) setData(v); })
-      .catch(() => {})
+      .then((v) => { settled = true; if (alive) { setData(v); writeCache(uidKey, key, v); } })
+      .catch(async () => {
+        settled = true;
+        if (!alive) return;
+        const c = await readCache(uidKey, key);
+        setData((p) => p ?? c?.data ?? null);
+      })
       .finally(() => { if (alive) setLoading(false); });
     dok.profile.full()
-      .then((v) => { if (alive) setFull(v); })
+      .then((v) => { if (alive) { setFull(v); writeCache(uidKey, "profile:full", v); } })
       .catch(() => {});
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Merge instead of pick: /me/full's user omits follower/following/connection/post

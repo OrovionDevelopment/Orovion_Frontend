@@ -65,9 +65,9 @@ export default function Settings() {
   );
 }
 
-function Card({ title, children }) {
+function Card({ title, children, className }: { title?: string; children?: React.ReactNode; className?: string }) {
   return (
-    <section className="card p-5">
+    <section className={cn("card p-5", className)}>
       {title && <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-ink-400">{title}</h2>}
       <div className="space-y-4">{children}</div>
     </section>
@@ -258,7 +258,7 @@ function Privacy() {
 
   const CALLS = [{ v: "everyone", l: "Everyone" }, { v: "connections", l: "Connections" }, { v: "nobody", l: "Nobody" }];
   return (
-    <Card title="Visibility & calls">
+    <Card title="Visibility & calls" className="bg-narvik dark:bg-ink-100">
       <Toggle icon={Eye} label="Private account" desc="Only approved followers see your full profile" on={p.profileVisibility === "private"} onChange={(v) => update({ profileVisibility: v ? "private" : "public" })} />
       <div>
         <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink-700"><Globe size={15} className="text-ink-400" /> Who can call you</p>

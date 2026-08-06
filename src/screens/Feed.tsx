@@ -8,6 +8,8 @@ import { Avatar } from "@/components/ui/Primitives";
 import { PostFeedSkeleton } from "@/components/ui/Skeletons";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
+import { readCache, writeCache } from "@/lib/offline-cache";
+import { sendOrQueue } from "@/lib/offline-queue";
 import { cn, roleLabel } from "@/lib/utils";
 import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
@@ -54,25 +56,45 @@ export default function Feed() {
     return `?${parts.join("&")}`;
   }, []);
 
-  /* feed loads — instant background request on every chip change */
+  /* feed loads — instant background request on every chip change.
+     Offline-first: paint the per-user cached first page INSTANTLY (even with no
+     network), let the live request win the moment it resolves, and fall back to
+     the cache when the request fails (offline). The first page is cached on every
+     successful load so a returning visitor never sees an empty feed. */
+  const uid = user?._id || user?.id;
   useEffect(() => {
     const seq = ++reqSeq.current;
+    const key = `feed:home:${filter.kind}:${filter.key}`;
+    let settled = false; // the network (success OR failure) has produced a result
+
     if (posts === null) {
-      // first paint → skeleton
+      // Instant paint from cache — only applied while the network is still in
+      // flight, so a fast live response is never overwritten by stale cache.
+      readCache(uid, key).then((c) => {
+        if (!settled && seq === reqSeq.current && c?.data) setPosts(c.data as any);
+      });
     } else {
       setRefreshing(true); // chip switch → keep the layout, dim the list
     }
+
     dok.feed
       .home(buildQuery(filter, null))
       .then((d) => {
+        settled = true;
         if (seq !== reqSeq.current) return; // a newer chip tap superseded this payload
-        setPosts(d.feed || d.posts || []);
+        const list = d.feed || d.posts || [];
+        setPosts(list);
         setHasMore(Boolean(d.hasMore));
         setCursor(d.nextCursor || null);
+        writeCache(uid, key, list); // refresh the offline cache (first page only)
       })
-      .catch(() => {
+      .catch(async () => {
+        settled = true;
         if (seq !== reqSeq.current) return;
-        setPosts((p) => p ?? []);
+        // Offline / error: keep what's on screen, else fall back to the cache
+        // (covers the case where the network failed before the cache read landed).
+        const c = await readCache<any[]>(uid, key);
+        setPosts((p) => p ?? c?.data ?? []);
         setHasMore(false);
       })
       .finally(() => {
@@ -249,9 +271,21 @@ function PeopleYouMayKnow() {
 function SuggestionCard({ user, demo }) {
   const [done, setDone] = useState(false);
   const connect = async () => {
-    setDone(true);
+    setDone(true); // optimistic
     if (!demo) {
-      try { await dok.network.request(user._id || user.id); } catch {}
+      // Offline-first: if the request can't go out now (no network), it's durably
+      // queued and replayed on reconnect — the optimistic "Requested" stands.
+      try {
+        await sendOrQueue({
+          kind: "connect",
+          method: "post",
+          url: `/network/request/${user._id || user.id}`,
+          dedupeKey: `connect:${user._id || user.id}`,
+        });
+      } catch {
+        // permanent error (e.g. already requested) — keep the optimistic state,
+        // matching the prior behaviour (this action was already fire-and-forget).
+      }
     }
   };
   return (

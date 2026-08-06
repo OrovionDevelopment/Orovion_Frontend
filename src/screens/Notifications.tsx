@@ -7,6 +7,7 @@ import { CardRowsSkeleton } from "@/components/ui/Skeletons";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import { dok } from "@/lib/api";
+import { readCache, writeCache } from "@/lib/offline-cache";
 import { routeFor } from "@/lib/notify";
 import { broadcastFollow } from "@/lib/followBus";
 import { cn, timeAgo } from "@/lib/utils";
@@ -41,7 +42,7 @@ const nid = (n) => n?._id || n?.id;
 const uid = (u) => u?.id || u?._id;
 
 export default function Notifications() {
-  const { demo } = useAuth();
+  const { user, demo } = useAuth();
   const nav = useNavigate();
   const toast = useToast();
   const [tab, setTab] = useState("All");
@@ -49,8 +50,29 @@ export default function Notifications() {
   const [acted, setActed] = useState({}); // { [id]: "confirmed" | "followedback" | "accepted" | "ignored" }
   const [busy, setBusy] = useState({});
 
+  // Offline-first: paint per-user cached notifications instantly, let the live
+  // list win when it resolves, fall back to cache when offline.
+  const uidKey = user?._id || user?.id;
   useEffect(() => {
-    dok.notifications.list().then((d) => setItems(d.notifications || [])).catch(() => setItems([]));
+    let settled = false;
+    const key = "notifications:list";
+    readCache<any[]>(uidKey, key).then((c) => {
+      if (!settled && items === null && c?.data) setItems(c.data);
+    });
+    dok.notifications
+      .list()
+      .then((d) => {
+        settled = true;
+        const list = d.notifications || [];
+        setItems(list);
+        writeCache(uidKey, key, list);
+      })
+      .catch(async () => {
+        settled = true;
+        const c = await readCache<any[]>(uidKey, key);
+        setItems((p) => p ?? c?.data ?? []);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const matcher = FILTERS.find((f) => f.key === tab)?.match || (() => true);

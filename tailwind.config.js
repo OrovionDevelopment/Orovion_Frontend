@@ -34,8 +34,9 @@ module.exports = {
           950: "#0e1213",
         },
         accent: {
-          sage: "#a9c7a4", coral: "#e8957a", ochre: "#d8b25a", sky: "#7aa9cf",
+          sage: "#a9c7a4", coral: "#e8957a", ochre: "#d8b25a", sky: "#7aa9cf", narvik: "#F4FBF8",
         },
+        narvik: "#F4FBF8",
         // Semantic ramps: 50 is a themed tint; 500/700 stay stable for solid fills.
         // Themed *text* shades live under textColor below.
         success: { 50: v("success-50"), 500: "#2e9d4a", 700: "#1f6f34" },
