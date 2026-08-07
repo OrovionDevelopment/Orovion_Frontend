@@ -34,7 +34,8 @@ export default function Landing() {
   // instead of flashing the landing. Gated on `mounted` so the server-rendered
   // and first client render both show the landing — no hydration mismatch.
   if (!loading && user) return <Navigate to={isProfileComplete ? "/app" : "/onboarding"} replace />;
-  const sessionHint = mounted && typeof window !== "undefined" && !!localStorage.getItem("dl_csrf");
+  const sessionHint = mounted && typeof window !== "undefined" &&
+    (!!localStorage.getItem("dl_csrf") || !!localStorage.getItem("dl_has_session"));
   if (loading && sessionHint) {
     return (
       <div className="grid min-h-screen place-items-center bg-ink-50">
