@@ -518,5 +518,17 @@ export const dok = {
     feedback: (params = {}) => unwrap(api.get("/admin/feedback", { params })),
     deletions: (params = {}) => unwrap(api.get("/admin/deletions", { params })),
     audit: (params = {}) => unwrap(api.get("/admin/audit", { params })),
+
+    // ── Consultation settlements (doctor payouts) ──
+    settlements: (params = {}) => unwrap(api.get("/admin/consultations/settlements", { params })),
+    settlementSummary: () => unwrap(api.get("/admin/consultations/settlements/summary")),
+    settlementRevenue: (params = {}) => unwrap(api.get("/admin/consultations/revenue", { params })),
+    settlementLiability: () => unwrap(api.get("/admin/consultations/liability")),
+    generateSettlements: (b) => unwrap(api.post("/admin/consultations/settlements/generate", b)),
+    approveSettlement: (id) => unwrap(api.post(`/admin/consultations/settlements/${id}/approve`, {})),
+    markSettlementPaid: (id, bankReference) =>
+      unwrap(api.post(`/admin/consultations/settlements/${id}/mark-paid`, { bankReference })),
+    retrySettlement: (id) => unwrap(api.post(`/admin/consultations/settlements/${id}/retry`, {})),
+    cancelSettlement: (id) => unwrap(api.post(`/admin/consultations/settlements/${id}/cancel`, {})),
   },
 };
