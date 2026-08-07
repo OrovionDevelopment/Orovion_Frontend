@@ -6,6 +6,7 @@ import {
   Trash2, ScrollText, LogOut, Loader2, KeyRound, UserRound, Search, X, ChevronRight,
   CheckCircle2, XCircle, RotateCcw, Eye, Ban, UserX, RefreshCw, Circle, AlertTriangle,
   Stethoscope, GraduationCap, User, Film, FileText, BookOpen, Dot,
+  Banknote, Send,
 } from "lucide-react";
 import { Avatar, Logo, Spinner } from "@/components/ui/Primitives";
 import { RowsSkeleton, StatGridSkeleton } from "@/components/ui/Skeletons";
@@ -124,6 +125,7 @@ const NAV = [
   { key: "users", label: "Users", icon: Users2 },
   { key: "content", label: "Content", icon: FileStack },
   { key: "verifications", label: "Verifications", icon: BadgeCheck },
+  { key: "settlements", label: "Settlements", icon: Banknote },
   { key: "reports", label: "Reports", icon: Flag },
   { key: "feedback", label: "Feedback", icon: MessageSquareText },
   { key: "deletions", label: "Deletions", icon: Trash2 },
@@ -179,6 +181,7 @@ function AdminConsole({ admin, onSignOut }: { admin: any; onSignOut: () => void 
           {tab === "users" && <UsersSection />}
           {tab === "content" && <ContentSection />}
           {tab === "verifications" && <VerificationsSection />}
+          {tab === "settlements" && <SettlementsSection />}
           {tab === "reports" && <ReportsSection />}
           {tab === "feedback" && <FeedbackSection />}
           {tab === "deletions" && <DeletionsSection />}
@@ -322,6 +325,188 @@ function Row({ label, value, tone = "ink", icon: Icon }: any) {
     <div className="flex items-center justify-between py-2">
       <span className="flex items-center gap-2 text-sm text-ink-600">{Icon && <Icon size={15} className="text-ink-400" />}{label}</span>
       <span className={cn("text-sm font-extrabold", tones[tone])}>{compact(value ?? 0)}</span>
+    </div>
+  );
+}
+
+/* =========================================================================
+   Settlements — doctor payouts (platform-held earnings, monthly bank transfer)
+   ========================================================================= */
+const SETTLEMENT_CHIP: any = {
+  GENERATED:  "bg-sky-50 text-sky-600",
+  PROCESSING: "bg-amber-50 text-amber-600",
+  PAID:       "bg-emerald-50 text-emerald-600",
+  FAILED:     "bg-rose-50 text-rose-600",
+  CANCELLED:  "bg-ink-900/[.06] text-ink-500",
+  PENDING:    "bg-ink-900/[.06] text-ink-500",
+};
+const rupee = (paise: any) => "₹" + Math.round((Number(paise) || 0) / 100).toLocaleString("en-IN");
+const firstOfMonth = (offset = 0) => {
+  const d = new Date();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + offset, 1)).toISOString().slice(0, 10);
+};
+const SETTLE_STATUSES = ["", "GENERATED", "PROCESSING", "PAID", "FAILED", "CANCELLED"];
+
+function SettlementsSection() {
+  const [sum, setSum] = useState<any>(null);
+  const [liab, setLiab] = useState<any>(null);
+  const [rev, setRev] = useState<any>(null);
+  const [list, setList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("");
+  const [busy, setBusy] = useState("");        // settlement id currently acting
+  const [payFor, setPayFor] = useState("");    // id showing the UTR input
+  const [utr, setUtr] = useState("");
+  const [gen, setGen] = useState({ periodStart: firstOfMonth(-1), periodEnd: firstOfMonth(0), doctorId: "" });
+  const [genBusy, setGenBusy] = useState(false);
+  const [msg, setMsg] = useState<{ tone: string; text: string } | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [s, l, r, ls] = await Promise.all([
+        dok.admin.settlementSummary().catch(() => null),
+        dok.admin.settlementLiability().catch(() => null),
+        dok.admin.settlementRevenue().catch(() => null),
+        dok.admin.settlements(status ? { status } : {}).catch(() => ({ items: [] })),
+      ]);
+      setSum(s?.settlements ?? null);
+      setLiab(s?.liability ?? l?.liability ?? null);
+      setRev(r?.revenue ?? null);
+      setList(ls?.items ?? []);
+    } catch { setList([]); }
+    setLoading(false);
+  }, [status]);
+  useEffect(() => { load(); }, [load]);
+
+  const act = async (id: string, fn: () => Promise<any>, ok: string) => {
+    setBusy(id); setMsg(null);
+    try { await fn(); setMsg({ tone: "emerald", text: ok }); await load(); }
+    catch (e: any) { setMsg({ tone: "rose", text: e?.response?.data?.message || "Action failed" }); }
+    setBusy(""); setPayFor(""); setUtr("");
+  };
+
+  const generate = async () => {
+    setGenBusy(true); setMsg(null);
+    try {
+      const out = await dok.admin.generateSettlements({
+        periodStart: gen.periodStart, periodEnd: gen.periodEnd,
+        doctorId: gen.doctorId.trim() || undefined,
+      });
+      setMsg({ tone: "emerald", text: `Generated ${out.generated} settlement(s) — ${out.payable} payable.` });
+      await load();
+    } catch (e: any) { setMsg({ tone: "rose", text: e?.response?.data?.message || "Generation failed" }); }
+    setGenBusy(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionHead title="Settlements" subtitle="Platform-held doctor earnings, settled monthly by bank transfer"
+        right={<button onClick={load} className="btn-outline px-3 py-2 text-xs"><RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh</button>} />
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Owed to doctors" value={rupee(liab?.pendingPaise)} tone="amber" />
+        <Stat label="Outstanding (unpaid)" value={rupee(sum?.outstandingPaise)} tone="sky" />
+        <Stat label="Paid all-time" value={rupee(sum?.paidPaise)} tone="emerald" />
+        <Stat label="Platform revenue" value={rupee(rev?.platformFeePaise)} tone="brand" />
+      </div>
+
+      {msg && (
+        <p className={cn("anim-pop rounded-xl px-3 py-2 text-xs font-semibold",
+          msg.tone === "emerald" ? "bg-emerald-50 text-emerald-700" : "bg-danger-50 text-danger-700")}>{msg.text}</p>
+      )}
+
+      <Panel title="Generate settlements for a period">
+        <div className="flex flex-wrap items-end gap-3 pt-2">
+          <label className="text-xs font-bold text-ink-600">Period start
+            <input type="date" value={gen.periodStart} onChange={(e) => setGen((g) => ({ ...g, periodStart: e.target.value }))} className="input mt-1 block" /></label>
+          <label className="text-xs font-bold text-ink-600">Period end
+            <input type="date" value={gen.periodEnd} onChange={(e) => setGen((g) => ({ ...g, periodEnd: e.target.value }))} className="input mt-1 block" /></label>
+          <label className="text-xs font-bold text-ink-600">Doctor ID (optional)
+            <input value={gen.doctorId} onChange={(e) => setGen((g) => ({ ...g, doctorId: e.target.value }))} placeholder="all doctors" className="input mt-1 block" /></label>
+          <button onClick={generate} disabled={genBusy || !gen.periodStart || !gen.periodEnd} className="btn-primary px-4 py-2.5 text-xs">
+            {genBusy ? <Loader2 size={14} className="animate-spin" /> : <Banknote size={14} />} Generate
+          </button>
+        </div>
+        <p className="pt-2 text-xs text-ink-500">Idempotent per doctor + period — safe to re-run. Aggregates each doctor’s net earnings for the window.</p>
+      </Panel>
+
+      <div className="flex flex-wrap gap-2">
+        {SETTLE_STATUSES.map((st) => (
+          <button key={st || "all"} onClick={() => setStatus(st)}
+            className={cn("chip transition", status === st ? "bg-brand-600 text-white" : "bg-surface text-ink-600 hover:bg-ink-900/[.04]")}>
+            {st || "All"}
+          </button>
+        ))}
+      </div>
+
+      {loading && list.length === 0 ? <RowsSkeleton count={6} />
+        : list.length === 0 ? <Empty icon={Banknote} title="No settlements" sub="Generate a period above to create payouts." />
+          : (
+            <div className="card overflow-hidden p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-ink-900/[.06] text-left text-xs text-ink-500">
+                      <th className="px-4 py-3 font-semibold">Doctor</th>
+                      <th className="px-4 py-3 font-semibold">Period</th>
+                      <th className="px-4 py-3 text-right font-semibold">Gross</th>
+                      <th className="px-4 py-3 text-right font-semibold">Fee</th>
+                      <th className="px-4 py-3 text-right font-semibold">Net</th>
+                      <th className="px-4 py-3 text-center font-semibold">Consults</th>
+                      <th className="px-4 py-3 font-semibold">Status</th>
+                      <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {list.map((s) => (
+                      <tr key={s.id} className="border-b border-ink-900/[.04] align-middle last:border-0">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-ink-900">{s.doctorName || "—"}</p>
+                          <p className="text-xs text-ink-400">{s.doctorEmail || s.doctorId}</p>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-ink-600">{s.periodStart} → {s.periodEnd}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{rupee(s.grossPaise)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums text-ink-500">{rupee(s.platformFeePaise)}</td>
+                        <td className="px-4 py-3 text-right font-bold tabular-nums text-ink-900">{rupee(s.netPaise)}</td>
+                        <td className="px-4 py-3 text-center">{s.consultationCount}</td>
+                        <td className="px-4 py-3">
+                          <span className={cn("chip", SETTLEMENT_CHIP[s.status] || SETTLEMENT_CHIP.PENDING)}>{s.status}</span>
+                          {s.bankReference && <p className="mt-1 text-[10px] text-ink-400">UTR {s.bankReference}</p>}
+                          {s.failureReason && <p className="mt-1 text-[10px] text-rose-500">{s.failureReason}</p>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {s.status === "GENERATED" && (
+                              <button disabled={busy === s.id} onClick={() => act(s.id, () => dok.admin.approveSettlement(s.id), "Approved")} className="btn-outline px-2.5 py-1.5 text-xs"><CheckCircle2 size={13} /> Approve</button>
+                            )}
+                            {["GENERATED", "PROCESSING", "FAILED"].includes(s.status) && payFor !== s.id && (
+                              <button disabled={busy === s.id} onClick={() => { setPayFor(s.id); setUtr(""); }} className="btn-primary px-2.5 py-1.5 text-xs"><Send size={13} /> Mark paid</button>
+                            )}
+                            {payFor === s.id && (
+                              <div className="flex items-center gap-1">
+                                <input autoFocus value={utr} onChange={(e) => setUtr(e.target.value)} placeholder="Bank UTR / ref" className="input h-8 w-32 text-xs" />
+                                <button disabled={busy === s.id || !utr.trim()} onClick={() => act(s.id, () => dok.admin.markSettlementPaid(s.id, utr.trim()), "Marked paid")} className="btn-primary px-2.5 py-1.5 text-xs">
+                                  {busy === s.id ? <Loader2 size={13} className="animate-spin" /> : "Confirm"}
+                                </button>
+                                <button onClick={() => setPayFor("")} className="btn-outline px-2 py-1.5 text-xs"><X size={13} /></button>
+                              </div>
+                            )}
+                            {s.status === "FAILED" && (
+                              <button disabled={busy === s.id} onClick={() => act(s.id, () => dok.admin.retrySettlement(s.id), "Retrying")} className="btn-outline px-2.5 py-1.5 text-xs"><RotateCcw size={13} /> Retry</button>
+                            )}
+                            {["GENERATED", "PROCESSING", "FAILED"].includes(s.status) && (
+                              <button disabled={busy === s.id} title="Cancel" onClick={() => act(s.id, () => dok.admin.cancelSettlement(s.id), "Cancelled")} className="btn-outline px-2 py-1.5 text-xs text-rose-500"><XCircle size={13} /></button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
     </div>
   );
 }
