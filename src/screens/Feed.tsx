@@ -104,11 +104,14 @@ export default function Feed() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, demo, refreshKey]);
 
+  const loadingMoreRef = useRef(false);
+
   /* cursor-paginated infinite scroll */
   useEffect(() => {
     if (!hasMore || !sentinel.current || demo) return;
     const io = new IntersectionObserver(async ([e]) => {
-      if (!e.isIntersecting || loadingMore) return;
+      if (!e.isIntersecting || loadingMoreRef.current) return;
+      loadingMoreRef.current = true;
       setLoadingMore(true);
       const seq = reqSeq.current;
       try {
@@ -120,12 +123,13 @@ export default function Feed() {
       } catch {
         setHasMore(false);
       } finally {
+        loadingMoreRef.current = false;
         setLoadingMore(false);
       }
     }, { rootMargin: "600px" });
     io.observe(sentinel.current);
     return () => io.disconnect();
-  }, [hasMore, cursor, loadingMore, filter, demo, buildQuery]);
+  }, [hasMore, cursor, filter, demo, buildQuery]);
 
   const removePost = (id) => setPosts((p) => (p || []).filter((x) => (x._id || x.id) !== id));
 

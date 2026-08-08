@@ -530,5 +530,10 @@ export const dok = {
       unwrap(api.post(`/admin/consultations/settlements/${id}/mark-paid`, { bankReference })),
     retrySettlement: (id) => unwrap(api.post(`/admin/consultations/settlements/${id}/retry`, {})),
     cancelSettlement: (id) => unwrap(api.post(`/admin/consultations/settlements/${id}/cancel`, {})),
+
+    // ── Consultation transactions (per-user history + invoices) ──
+    txnUsers: (params = {}) => unwrap(api.get("/admin/consultations/transactions/users", { params })),
+    userTransactions: (userId) => unwrap(api.get(`/admin/consultations/transactions/users/${userId}`)),
+    txnInvoice: (requestId) => unwrap(api.get(`/admin/consultations/transactions/invoice/${requestId}`)),
   },
 };
