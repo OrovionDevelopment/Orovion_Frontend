@@ -6,7 +6,7 @@ import {
   Trash2, ScrollText, LogOut, Loader2, KeyRound, UserRound, Search, X, ChevronRight,
   CheckCircle2, XCircle, RotateCcw, Eye, Ban, UserX, RefreshCw, Circle, AlertTriangle,
   Stethoscope, GraduationCap, User, Film, FileText, BookOpen, Dot,
-  Banknote, Send,
+  Banknote, Send, Receipt, ArrowLeft, ExternalLink,
 } from "lucide-react";
 import { Avatar, Logo, Spinner } from "@/components/ui/Primitives";
 import { RowsSkeleton, StatGridSkeleton } from "@/components/ui/Skeletons";
@@ -125,6 +125,7 @@ const NAV = [
   { key: "users", label: "Users", icon: Users2 },
   { key: "content", label: "Content", icon: FileStack },
   { key: "verifications", label: "Verifications", icon: BadgeCheck },
+  { key: "transactions", label: "Transactions", icon: Receipt },
   { key: "settlements", label: "Settlements", icon: Banknote },
   { key: "reports", label: "Reports", icon: Flag },
   { key: "feedback", label: "Feedback", icon: MessageSquareText },
@@ -181,6 +182,7 @@ function AdminConsole({ admin, onSignOut }: { admin: any; onSignOut: () => void 
           {tab === "users" && <UsersSection />}
           {tab === "content" && <ContentSection />}
           {tab === "verifications" && <VerificationsSection />}
+          {tab === "transactions" && <TransactionsSection />}
           {tab === "settlements" && <SettlementsSection />}
           {tab === "reports" && <ReportsSection />}
           {tab === "feedback" && <FeedbackSection />}
@@ -325,6 +327,193 @@ function Row({ label, value, tone = "ink", icon: Icon }: any) {
     <div className="flex items-center justify-between py-2">
       <span className="flex items-center gap-2 text-sm text-ink-600">{Icon && <Icon size={15} className="text-ink-400" />}{label}</span>
       <span className={cn("text-sm font-extrabold", tones[tone])}>{compact(value ?? 0)}</span>
+    </div>
+  );
+}
+
+/* =========================================================================
+   Transactions — per-user consultation payment history + invoices
+   ========================================================================= */
+const TXN_CHIP: any = {
+  CAPTURED: "bg-emerald-50 text-emerald-600",
+  CREATED: "bg-ink-900/[.06] text-ink-500",
+  FAILED: "bg-rose-50 text-rose-600",
+  REFUND_PENDING: "bg-amber-50 text-amber-600",
+  REFUNDED: "bg-sky-50 text-sky-600",
+};
+const fmtDateTime = (iso: any) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+  } catch { return String(iso); }
+};
+
+// Small avatar: initials on a tinted circle (no external image dependency).
+function UserAv({ user }: any) {
+  const initials = String(user?.fullName || "?").trim().split(/\s+/)
+    .map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
+  return (
+    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+      {initials}
+    </span>
+  );
+}
+
+function TransactionsSection() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [detail, setDetail] = useState<any>(null); // { user, summary, transactions } | { loading:true }
+  const [invoiceBusy, setInvoiceBusy] = useState("");
+  const [msg, setMsg] = useState("");
+
+  const load = useCallback(async (search = "") => {
+    setLoading(true);
+    try { const d = await dok.admin.txnUsers(search ? { search } : {}); setUsers(d.users || []); }
+    catch { setUsers([]); }
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const openUser = async (id: string) => {
+    setMsg(""); setDetail({ loading: true });
+    try { setDetail(await dok.admin.userTransactions(id)); }
+    catch { setDetail(null); setMsg("Couldn't load this user's transactions."); }
+  };
+
+  const openInvoice = async (requestId: string) => {
+    if (!requestId) return;
+    setInvoiceBusy(requestId); setMsg("");
+    try {
+      const r = await dok.admin.txnInvoice(requestId);
+      if (r?.url) window.open(r.url, "_blank", "noopener");
+      else setMsg("Invoice not available.");
+    } catch (e: any) { setMsg(e?.response?.data?.message || "Invoice not available."); }
+    setInvoiceBusy("");
+  };
+
+  // ── User detail (full history) ──
+  if (detail) {
+    const u = detail.user, txns = detail.transactions || [], sum = detail.summary || {};
+    return (
+      <div className="space-y-6">
+        <button onClick={() => setDetail(null)} className="flex items-center gap-1.5 text-sm font-semibold text-ink-600 transition hover:text-ink-900">
+          <ArrowLeft size={16} /> All users
+        </button>
+
+        {detail.loading ? <StatGridSkeleton count={4} /> : (
+          <>
+            <div className="card flex items-center gap-4 p-5">
+              <UserAv user={u} />
+              <div className="min-w-0">
+                <p className="truncate font-display text-xl font-extrabold text-ink-900">{u?.fullName || "—"}</p>
+                <p className="text-sm text-ink-500">{u?.email || u?.phoneNumber || u?.id}</p>
+              </div>
+              <span className="chip ml-auto bg-brand-50 capitalize text-brand-700">{String(u?.role || "").replace("_", " ")}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Stat label="Transactions" value={sum.total ?? 0} tone="brand" />
+              <Stat label="Captured" value={sum.captured ?? 0} tone="emerald" />
+              <Stat label="Total paid" value={rupee(sum.paidPaise)} tone="sky" />
+              <Stat label="Total earned" value={rupee(sum.earnedPaise)} tone="emerald" />
+            </div>
+
+            {msg && <p className="rounded-xl bg-danger-50 px-3 py-2 text-xs font-semibold text-danger-700">{msg}</p>}
+
+            {txns.length === 0 ? <Empty icon={Receipt} title="No transactions" /> : (
+              <div className="card overflow-hidden p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-900/[.06] text-left text-xs text-ink-500">
+                        <th className="px-4 py-3 font-semibold">Direction</th>
+                        <th className="px-4 py-3 font-semibold">Payer → Doctor</th>
+                        <th className="px-4 py-3 text-right font-semibold">Amount</th>
+                        <th className="px-4 py-3 font-semibold">Date &amp; time</th>
+                        <th className="px-4 py-3 font-semibold">Status</th>
+                        <th className="px-4 py-3 font-semibold">Txn ID</th>
+                        <th className="px-4 py-3 text-right font-semibold">Invoice</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {txns.map((t: any) => (
+                        <tr key={t.id} className="border-b border-ink-900/[.04] align-middle last:border-0">
+                          <td className="px-4 py-3">
+                            <span className={cn("chip", t.direction === "paid" ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600")}>
+                              {t.direction === "paid" ? "Paid" : "Earned"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-ink-600">
+                            <span className="font-semibold text-ink-900">{t.payerName || "—"}</span>
+                            {" → "}
+                            <span className="font-semibold text-ink-900">Dr. {t.doctorName || "—"}</span>
+                            {t.reason && <p className="mt-0.5 max-w-[220px] truncate text-ink-400">{t.reason}</p>}
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold tabular-nums text-ink-900">
+                            {rupee(t.totalPaise)}
+                            <p className="text-[10px] font-normal text-ink-400">
+                              fee {rupee(t.consultationFeePaise)} + {rupee((Number(t.platformFeePaise) || 0) + (Number(t.gstPaise) || 0))}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-ink-600">{fmtDateTime(t.capturedAt || t.createdAt)}</td>
+                          <td className="px-4 py-3"><span className={cn("chip", TXN_CHIP[t.status] || TXN_CHIP.CREATED)}>{t.status}</span></td>
+                          <td className="px-4 py-3 font-mono text-[11px] text-ink-500">{t.razorpayPaymentId || "—"}</td>
+                          <td className="px-4 py-3 text-right">
+                            {t.status === "CAPTURED" ? (
+                              <button disabled={invoiceBusy === t.requestId} onClick={() => openInvoice(t.requestId)} className="btn-outline px-2.5 py-1.5 text-xs">
+                                {invoiceBusy === t.requestId ? <Loader2 size={13} className="animate-spin" /> : <><FileText size={13} /> Invoice <ExternalLink size={11} /></>}
+                              </button>
+                            ) : <span className="text-xs text-ink-400">—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ── User cards grid ──
+  return (
+    <div className="space-y-6">
+      <SectionHead title="Transactions" subtitle="Every consultation payment, grouped by user — click a card for the full history"
+        right={<button onClick={() => load(q)} className="btn-outline px-3 py-2 text-xs"><RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh</button>} />
+
+      <div className="relative max-w-sm">
+        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") load(q); }}
+          placeholder="Search by name or email…" className="input pl-9" />
+      </div>
+
+      {loading ? <RowsSkeleton count={6} />
+        : users.length === 0 ? <Empty icon={Receipt} title="No transactions yet" sub="Consultation payments will appear here." />
+          : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {users.map((u) => (
+                <button key={u.id} onClick={() => openUser(u.id)} className="card press flex items-center gap-3 p-4 text-left transition hover:border-brand-300">
+                  <UserAv user={u} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-ink-900">{u.fullName || "—"}</p>
+                    <p className="truncate text-xs text-ink-400">{u.email || u.id}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <span className="chip bg-ink-900/[.05] text-ink-600">{u.txnCount} txns</span>
+                      {Number(u.paidPaise) > 0 && <span className="chip bg-sky-50 text-sky-600">paid {rupee(u.paidPaise)}</span>}
+                      {Number(u.earnedPaise) > 0 && <span className="chip bg-emerald-50 text-emerald-600">earned {rupee(u.earnedPaise)}</span>}
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-ink-300" />
+                </button>
+              ))}
+            </div>
+          )}
     </div>
   );
 }
