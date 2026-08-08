@@ -531,6 +531,13 @@ export const dok = {
     retrySettlement: (id) => unwrap(api.post(`/admin/consultations/settlements/${id}/retry`, {})),
     cancelSettlement: (id) => unwrap(api.post(`/admin/consultations/settlements/${id}/cancel`, {})),
 
+    // ── Payments dashboard ──
+    paymentsSummary: (params = {}) => unwrap(api.get("/admin/payments/summary", { params })),
+    paymentsRevenue: (params = {}) => unwrap(api.get("/admin/payments/revenue", { params })),
+    payments: (params = {}) => unwrap(api.get("/admin/payments", { params })),
+    paymentDetail: (id) => unwrap(api.get(`/admin/payments/${id}`)),
+    paymentInvoice: (id) => unwrap(api.get(`/admin/payments/${id}/invoice`)),
+
     // ── Consultation transactions (per-user history + invoices) ──
     txnUsers: (params = {}) => unwrap(api.get("/admin/consultations/transactions/users", { params })),
     userTransactions: (userId) => unwrap(api.get(`/admin/consultations/transactions/users/${userId}`)),

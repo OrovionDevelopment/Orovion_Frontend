@@ -7,6 +7,7 @@ import {
   CheckCircle2, XCircle, RotateCcw, Eye, Ban, UserX, RefreshCw, Circle, AlertTriangle,
   Stethoscope, GraduationCap, User, Film, FileText, BookOpen, Dot,
   Banknote, Send, Receipt, ArrowLeft, ExternalLink,
+  Wallet, TrendingUp, Download, SlidersHorizontal, Landmark, PiggyBank, CalendarDays,
 } from "lucide-react";
 import { Avatar, Logo, Spinner } from "@/components/ui/Primitives";
 import { RowsSkeleton, StatGridSkeleton } from "@/components/ui/Skeletons";
@@ -126,6 +127,7 @@ const NAV = [
   { key: "content", label: "Content", icon: FileStack },
   { key: "verifications", label: "Verifications", icon: BadgeCheck },
   { key: "transactions", label: "Transactions", icon: Receipt },
+  { key: "payments", label: "Payments", icon: Wallet },
   { key: "settlements", label: "Settlements", icon: Banknote },
   { key: "reports", label: "Reports", icon: Flag },
   { key: "feedback", label: "Feedback", icon: MessageSquareText },
@@ -183,6 +185,7 @@ function AdminConsole({ admin, onSignOut }: { admin: any; onSignOut: () => void 
           {tab === "content" && <ContentSection />}
           {tab === "verifications" && <VerificationsSection />}
           {tab === "transactions" && <TransactionsSection />}
+          {tab === "payments" && <PaymentsSection onNav={setTab} />}
           {tab === "settlements" && <SettlementsSection />}
           {tab === "reports" && <ReportsSection />}
           {tab === "feedback" && <FeedbackSection />}
@@ -327,6 +330,457 @@ function Row({ label, value, tone = "ink", icon: Icon }: any) {
     <div className="flex items-center justify-between py-2">
       <span className="flex items-center gap-2 text-sm text-ink-600">{Icon && <Icon size={15} className="text-ink-400" />}{label}</span>
       <span className={cn("text-sm font-extrabold", tones[tone])}>{compact(value ?? 0)}</span>
+    </div>
+  );
+}
+
+/* =========================================================================
+   Payments — dedicated financial workspace (collections, revenue, refunds)
+   ========================================================================= */
+const PAY_CHIP: any = {
+  CAPTURED: "bg-emerald-50 text-emerald-600", CREATED: "bg-amber-50 text-amber-600",
+  PROCESSING: "bg-amber-50 text-amber-600", FAILED: "bg-rose-50 text-rose-600",
+  REFUNDED: "bg-sky-50 text-sky-600", REFUND_PENDING: "bg-amber-50 text-amber-600",
+};
+const PAY_LABEL: any = {
+  CAPTURED: "Success", CREATED: "Pending", PROCESSING: "Pending",
+  FAILED: "Failed", REFUNDED: "Refunded", REFUND_PENDING: "Refund pending",
+};
+const fmtMethod = (m: any) => {
+  if (!m) return "—";
+  const map: any = { upi: "UPI", card: "Card", netbanking: "Netbanking", wallet: "Wallet", emi: "EMI", paylater: "Pay Later", bank_transfer: "Bank Transfer" };
+  return map[String(m).toLowerCase()] || String(m).toUpperCase();
+};
+const KPI_TONE: any = {
+  brand: "bg-brand-50 text-brand-600", emerald: "bg-emerald-50 text-emerald-600",
+  sky: "bg-sky-50 text-sky-600", amber: "bg-amber-50 text-amber-600", rose: "bg-rose-50 text-rose-600",
+};
+const PRESETS: any[] = [
+  ["today", "Today"], ["yesterday", "Yesterday"], ["7d", "Last 7 Days"],
+  ["30d", "Last 30 Days"], ["month", "This Month"], ["lastmonth", "Last Month"], ["custom", "Custom Range"],
+];
+const _sod = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const _eod = (d: Date) => { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; };
+function presetRange(key: string): { from: string; to: string } {
+  const now = new Date(); const iso = (d: Date) => d.toISOString();
+  switch (key) {
+    case "today": return { from: iso(_sod(now)), to: iso(_eod(now)) };
+    case "yesterday": { const y = new Date(now.getTime() - 86400000); return { from: iso(_sod(y)), to: iso(_eod(y)) }; }
+    case "7d": return { from: iso(_sod(new Date(now.getTime() - 6 * 86400000))), to: iso(_eod(now)) };
+    case "month": return { from: iso(new Date(now.getFullYear(), now.getMonth(), 1)), to: iso(_eod(now)) };
+    case "lastmonth": return { from: iso(new Date(now.getFullYear(), now.getMonth() - 1, 1)), to: iso(new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)) };
+    default: return { from: iso(_sod(new Date(now.getTime() - 29 * 86400000))), to: iso(_eod(now)) };
+  }
+}
+const fmtDay = (iso: any) => { try { return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }); } catch { return ""; } };
+
+// Like Row but renders the value verbatim (no compact()) — for currency/% strings.
+function PRow({ label, value, tone = "ink" }: any) {
+  const tones: any = { ink: "text-ink-900", emerald: "text-emerald-600", rose: "text-rose-600", amber: "text-amber-600", brand: "text-brand-600" };
+  return (
+    <div className="flex items-center justify-between py-2">
+      <span className="text-sm text-ink-600">{label}</span>
+      <span className={cn("text-sm font-extrabold", tones[tone] || tones.ink)}>{value}</span>
+    </div>
+  );
+}
+
+function KpiCard({ icon: Icon, label, value, sub, subTone, tone = "brand" }: any) {
+  return (
+    <div className="card p-4">
+      <div className="mb-2.5 flex items-center gap-2">
+        <span className={cn("grid h-8 w-8 place-items-center rounded-lg", KPI_TONE[tone])}><Icon size={16} /></span>
+        <p className="text-[11px] font-medium leading-tight text-ink-500">{label}</p>
+      </div>
+      <p className="text-[22px] font-extrabold leading-none text-ink-900">{value}</p>
+      {sub && <p className={cn("mt-1.5 text-[11px] font-medium", subTone || "text-ink-400")}>{sub}</p>}
+    </div>
+  );
+}
+
+function RevenueChart({ series }: { series: any[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const W = 700, H = 240, pl = 10, pr = 10, pt = 14, pb = 22;
+  const n = series.length;
+  const max = Math.max(1, ...series.map((s) => Number(s.grossPaise) || 0));
+  const X = (i: number) => (n <= 1 ? W / 2 : pl + (i / (n - 1)) * (W - pl - pr));
+  const Y = (v: number) => pt + (1 - (Number(v) || 0) / max) * (H - pt - pb);
+  const pts = series.map((s, i) => [X(i), Y(s.grossPaise)]);
+  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const area = n ? `${line} L${X(n - 1).toFixed(1)},${H - pb} L${X(0).toFixed(1)},${H - pb} Z` : "";
+  const grid = [0, 0.25, 0.5, 0.75, 1];
+  const step = Math.max(1, Math.ceil(n / 6));
+  return (
+    <div className="relative w-full" style={{ aspectRatio: "700 / 240" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-full w-full">
+        {grid.map((g, i) => <line key={i} x1={pl} x2={W - pr} y1={Y(max * g)} y2={Y(max * g)} className="stroke-ink-900/[.06]" strokeWidth={1} />)}
+        {area && <path d={area} className="fill-brand-500/10" />}
+        {line && <path d={line} className="stroke-brand-500" strokeWidth={2} fill="none" strokeLinejoin="round" strokeLinecap="round" />}
+        {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r={hover === i ? 4 : 2.6} className="fill-brand-500" />)}
+        {pts.map((_, i) => <rect key={"h" + i} x={X(i) - (W / Math.max(n, 1)) / 2} y={0} width={W / Math.max(n, 1)} height={H} fill="transparent" onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} />)}
+      </svg>
+      <div className="pointer-events-none absolute inset-x-2 bottom-0 flex justify-between text-[10px] text-ink-400">
+        {series.filter((_, i) => i % step === 0).map((s, i) => <span key={i}>{fmtDay(s.period)}</span>)}
+      </div>
+      {hover != null && series[hover] && (
+        <div className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[130%] whitespace-nowrap rounded-lg bg-ink-900 px-2 py-1 text-center text-[11px] text-white shadow-lg"
+          style={{ left: `${(X(hover) / W) * 100}%`, top: `${(Y(series[hover].grossPaise) / H) * 100}%` }}>
+          <div className="font-semibold">{fmtDay(series[hover].period)}</div>
+          <div>{rupee(series[hover].grossPaise)}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Donut({ segs }: { segs: { pct: number; cls: string }[] }) {
+  const R = 42, C = 2 * Math.PI * R; let off = 0;
+  return (
+    <svg viewBox="0 0 120 120" className="h-40 w-40" style={{ transform: "rotate(-90deg)" }}>
+      <circle cx={60} cy={60} r={R} fill="none" className="stroke-ink-900/[.06]" strokeWidth={13} />
+      {segs.map((s, i) => {
+        const len = Math.max(0, (s.pct / 100) * C);
+        const el = <circle key={i} cx={60} cy={60} r={R} fill="none" className={s.cls} strokeWidth={13} strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-off} />;
+        off += len; return el;
+      })}
+    </svg>
+  );
+}
+
+function PaymentsSection({ onNav }: { onNav: (k: string) => void }) {
+  const [preset, setPreset] = useState("30d");
+  const [custom, setCustom] = useState({ from: "", to: "" });
+  const [showDates, setShowDates] = useState(false);
+  const [groupBy, setGroupBy] = useState("day");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ status: "", minRs: "", maxRs: "", search: "" });
+
+  const [sum, setSum] = useState<any>(null);
+  const [rev, setRev] = useState<any[]>([]);
+  const [pays, setPays] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [detail, setDetail] = useState<any>(null);
+  const [detailBusy, setDetailBusy] = useState(false);
+
+  const range = useCallback(() => (preset === "custom" && custom.from && custom.to
+    ? { from: new Date(custom.from).toISOString(), to: _eod(new Date(custom.to)).toISOString() }
+    : presetRange(preset)), [preset, custom]);
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr(false);
+    const r = range();
+    const payParams: any = { ...r, limit: showAll ? 50 : 8 };
+    if (filters.status) payParams.status = filters.status;
+    if (filters.search) payParams.search = filters.search;
+    if (filters.minRs) payParams.minPaise = Math.round(Number(filters.minRs) * 100);
+    if (filters.maxRs) payParams.maxPaise = Math.round(Number(filters.maxRs) * 100);
+    try {
+      const [s, v, p] = await Promise.all([
+        dok.admin.paymentsSummary(r),
+        dok.admin.paymentsRevenue({ ...r, groupBy }),
+        dok.admin.payments(payParams),
+      ]);
+      setSum(s); setRev(v.series || []); setPays(p.payments || []);
+    } catch { setErr(true); }
+    setLoading(false);
+  }, [range, groupBy, showAll, filters]);
+  useEffect(() => { load(); }, [load]);
+
+  const openDetail = async (id: string) => {
+    setDetailBusy(true); setDetail({ loading: true });
+    try { const d = await dok.admin.paymentDetail(id); setDetail(d.payment); }
+    catch { setDetail(null); }
+    setDetailBusy(false);
+  };
+  const openInvoice = async (id: string) => {
+    try { const r = await dok.admin.paymentInvoice(id); if (r?.url) window.open(r.url, "_blank", "noopener"); } catch { /* ignore */ }
+  };
+
+  const exportCsv = () => {
+    const head = ["Time", "Payment ID", "Patient", "Doctor", "Amount", "Platform Fee", "Doctor Earning", "Status", "Consultation ID"];
+    const rows = [head, ...pays.map((p) => [
+      fmtDateTime(p.capturedAt || p.createdAt), p.razorpayPaymentId || p.id, p.patientName || "",
+      p.doctorName || "", (p.totalPaise / 100).toFixed(2), (p.platformFeePaise / 100).toFixed(2),
+      (p.doctorEarningPaise / 100).toFixed(2), p.status, p.requestId || "",
+    ])];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const a = document.createElement("a"); a.href = url; a.download = `payments_${Date.now()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const k = sum?.kpis, br = sum?.breakdown, an = sum?.analytics, rf = sum?.refunds, st = sum?.settlements, fin = sum?.financial;
+  const presetLabel = PRESETS.find((p) => p[0] === preset)?.[1] || "Last 30 Days";
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-extrabold text-ink-900">Payments</h1>
+          <p className="text-sm text-ink-500">Track platform collections, revenue and transactions</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <button onClick={() => setShowDates((v) => !v)} className="btn-outline px-3 py-2 text-xs">
+              <CalendarDays size={14} /> {presetLabel}
+            </button>
+            {showDates && (
+              <div className="absolute right-0 z-20 mt-1 w-56 rounded-xl border border-ink-900/[.08] bg-surface p-1 shadow-xl">
+                {PRESETS.map(([key, label]) => (
+                  <button key={key} onClick={() => { setPreset(key); if (key !== "custom") setShowDates(false); }}
+                    className={cn("block w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition",
+                      preset === key ? "bg-brand-50 text-brand-700" : "text-ink-600 hover:bg-ink-900/[.04]")}>
+                    {label}
+                  </button>
+                ))}
+                {preset === "custom" && (
+                  <div className="space-y-2 border-t border-ink-900/[.06] p-2">
+                    <input type="date" value={custom.from} onChange={(e) => setCustom((c) => ({ ...c, from: e.target.value }))} className="input h-8 w-full text-xs" />
+                    <input type="date" value={custom.to} onChange={(e) => setCustom((c) => ({ ...c, to: e.target.value }))} className="input h-8 w-full text-xs" />
+                    <button onClick={() => setShowDates(false)} className="btn-primary w-full py-1.5 text-xs">Apply</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <button onClick={exportCsv} className="btn-outline px-3 py-2 text-xs"><Download size={14} /> Export</button>
+          <button onClick={() => setShowFilters((v) => !v)} className={cn("px-3 py-2 text-xs", showFilters ? "btn-primary" : "btn-outline")}>
+            <SlidersHorizontal size={14} /> Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      {showFilters && (
+        <div className="card flex flex-wrap items-end gap-3 p-4">
+          <label className="text-xs font-bold text-ink-600">Status
+            <select value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))} className="input mt-1 block h-9 text-xs">
+              <option value="">All</option><option value="CAPTURED">Success</option><option value="FAILED">Failed</option>
+              <option value="REFUNDED">Refunded</option><option value="CREATED">Pending</option>
+            </select>
+          </label>
+          <label className="text-xs font-bold text-ink-600">Min ₹
+            <input value={filters.minRs} onChange={(e) => setFilters((f) => ({ ...f, minRs: e.target.value }))} inputMode="numeric" className="input mt-1 block h-9 w-24 text-xs" /></label>
+          <label className="text-xs font-bold text-ink-600">Max ₹
+            <input value={filters.maxRs} onChange={(e) => setFilters((f) => ({ ...f, maxRs: e.target.value }))} inputMode="numeric" className="input mt-1 block h-9 w-24 text-xs" /></label>
+          <label className="text-xs font-bold text-ink-600">Search
+            <input value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} placeholder="patient / doctor / payment id" className="input mt-1 block h-9 w-56 text-xs" /></label>
+          <button onClick={() => setFilters({ status: "", minRs: "", maxRs: "", search: "" })} className="btn-outline px-3 py-2 text-xs">Reset</button>
+        </div>
+      )}
+
+      {loading && !sum ? <StatGridSkeleton count={6} />
+        : err ? <Empty icon={AlertTriangle} title="Couldn't load payments" sub="Try refreshing." />
+          : (
+            <>
+              {/* KPI cards */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+                <KpiCard icon={Wallet} tone="brand" label="Total Money Collected" value={rupee(k?.grossPaise)}
+                  sub={k?.grossDeltaPct != null ? `${k.grossDeltaPct >= 0 ? "▲" : "▼"} ${Math.abs(k.grossDeltaPct)}% vs previous period` : "vs previous period"}
+                  subTone={k?.grossDeltaPct >= 0 ? "text-emerald-600" : "text-rose-600"} />
+                <KpiCard icon={TrendingUp} tone="sky" label="Today's Collection" value={rupee(k?.todayPaise)} sub="captured today" />
+                <KpiCard icon={CalendarDays} tone="sky" label="This Month Collection" value={rupee(k?.monthPaise)} sub="month to date" />
+                <KpiCard icon={PiggyBank} tone="emerald" label="Platform Revenue" value={rupee(k?.platformRevenuePaise)} sub={`${k?.platformRevenuePct ?? 0}% of gross collection`} />
+                <KpiCard icon={Users2} tone="amber" label="Doctor Liability" value={rupee(k?.doctorLiabilityPaise)} sub="owed to doctors" />
+                <KpiCard icon={Landmark} tone="brand" label="Total Settled" value={rupee(k?.totalSettledPaise)} sub="paid to doctors" />
+              </div>
+
+              {/* Revenue + breakdown + analytics + refunds */}
+              <div className="grid gap-4 xl:grid-cols-5">
+                <div className="card p-5 xl:col-span-2">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-display text-lg font-extrabold text-ink-900">Revenue Overview</h3>
+                    <select value={groupBy} onChange={(e) => setGroupBy(e.target.value)} className="input h-8 text-xs">
+                      <option value="day">Daily</option><option value="week">Weekly</option><option value="month">Monthly</option>
+                    </select>
+                  </div>
+                  {rev.length === 0 ? <div className="grid h-48 place-items-center text-sm text-ink-400">No revenue in this range</div> : <RevenueChart series={rev} />}
+                </div>
+
+                <Panel title="Collection Breakdown">
+                  <div className="flex items-center gap-4 pt-2">
+                    <Donut segs={[
+                      { pct: br?.successful.pct || 0, cls: "stroke-emerald-500" },
+                      { pct: br?.refunded.pct || 0, cls: "stroke-sky-500" },
+                      { pct: br?.failed.pct || 0, cls: "stroke-rose-500" },
+                    ]} />
+                    <div className="flex-1 space-y-3 text-sm">
+                      {[["Successful", "bg-emerald-500", br?.successful], ["Refunded", "bg-sky-500", br?.refunded], ["Failed", "bg-rose-500", br?.failed]].map(([lbl, dot, d]: any) => (
+                        <div key={lbl}>
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-2 text-ink-700"><span className={cn("h-2.5 w-2.5 rounded-full", dot)} /> {lbl}</span>
+                            <span className="font-bold text-ink-900">{d?.pct ?? 0}%</span>
+                          </div>
+                          <p className="pl-4 text-xs text-ink-400">{rupee(d?.amountPaise)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Panel>
+
+                <Panel title="Payment Analytics">
+                  <PRow label="Total Payments" value={an?.total ?? 0} />
+                  <PRow label="Successful" value={an?.successCount ?? 0} tone="emerald" />
+                  <PRow label="Failed" value={an?.failedCount ?? 0} tone="rose" />
+                  <PRow label="Refunded" value={an?.refundedCount ?? 0} />
+                  <PRow label="Success Rate" value={`${an?.successRatePct ?? 0}%`} tone="emerald" />
+                </Panel>
+
+                <Panel title="Refund Summary">
+                  <PRow label="Total Refunded" value={rupee(rf?.totalPaise)} />
+                  <PRow label="Refunds (This Month)" value={rupee(rf?.monthPaise)} />
+                  <PRow label="Refunds (Today)" value={rupee(rf?.todayPaise)} />
+                  <PRow label="Refund Rate" value={`${rf?.refundRatePct ?? 0}%`} tone="amber" />
+                </Panel>
+              </div>
+
+              {/* Recent payments + top doctors + settlement summary */}
+              <div className="grid gap-4 xl:grid-cols-3">
+                <div className="card overflow-hidden p-0 xl:col-span-2">
+                  <div className="flex items-center justify-between px-5 py-4">
+                    <h3 className="font-display text-lg font-extrabold text-ink-900">Recent Payments</h3>
+                    <button onClick={() => setShowAll((v) => !v)} className="text-xs font-bold text-brand-600 hover:text-brand-700">{showAll ? "Show less" : "View All"}</button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-y border-ink-900/[.06] text-left text-xs text-ink-500">
+                          <th className="px-5 py-2.5 font-semibold">Time</th>
+                          <th className="px-3 py-2.5 font-semibold">Payment ID</th>
+                          <th className="px-3 py-2.5 font-semibold">Patient</th>
+                          <th className="px-3 py-2.5 font-semibold">Doctor</th>
+                          <th className="px-3 py-2.5 text-right font-semibold">Amount</th>
+                          <th className="px-3 py-2.5 text-right font-semibold">Fee</th>
+                          <th className="px-3 py-2.5 text-right font-semibold">Earning</th>
+                          <th className="px-3 py-2.5 font-semibold">Status</th>
+                          <th className="px-3 py-2.5 font-semibold">Method</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pays.length === 0 ? (
+                          <tr><td colSpan={9} className="px-5 py-10 text-center text-sm text-ink-400">No payments in this range</td></tr>
+                        ) : pays.map((p) => (
+                          <tr key={p.id} onClick={() => openDetail(p.id)} className="cursor-pointer border-b border-ink-900/[.04] transition last:border-0 hover:bg-ink-900/[.02]">
+                            <td className="px-5 py-3 text-xs text-ink-500">{fmtDateTime(p.capturedAt || p.createdAt)}</td>
+                            <td className="px-3 py-3 font-mono text-[11px] text-ink-500">{p.razorpayPaymentId || p.id.slice(0, 14)}</td>
+                            <td className="px-3 py-3 font-medium text-ink-900">{p.patientName || "—"}</td>
+                            <td className="px-3 py-3 text-ink-700">{p.doctorName ? `Dr. ${p.doctorName}` : "—"}</td>
+                            <td className="px-3 py-3 text-right font-bold tabular-nums text-ink-900">{rupee(p.totalPaise)}</td>
+                            <td className="px-3 py-3 text-right tabular-nums text-ink-500">{rupee(p.platformFeePaise)}</td>
+                            <td className="px-3 py-3 text-right tabular-nums text-emerald-600">{rupee(p.doctorEarningPaise)}</td>
+                            <td className="px-3 py-3"><span className={cn("chip", PAY_CHIP[p.status] || PAY_CHIP.CREATED)}>{PAY_LABEL[p.status] || p.status}</span></td>
+                            <td className="px-3 py-3 text-xs text-ink-600">{fmtMethod(p.method)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="card p-4">
+                    <div className="mb-1 flex items-center justify-between">
+                      <h3 className="font-display text-base font-extrabold text-ink-900">Top Doctors <span className="text-xs font-medium text-ink-400">(this period)</span></h3>
+                    </div>
+                    <div className="divide-y divide-ink-900/[.05]">
+                      {(sum?.topDoctors || []).length === 0 ? <p className="py-4 text-sm text-ink-400">No earnings yet</p>
+                        : sum.topDoctors.map((d: any) => (
+                          <div key={d.doctorId} className="flex items-center justify-between py-2.5">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-ink-900">Dr. {d.fullName}</p>
+                              <p className="truncate text-xs text-ink-400">{d.specialization || "—"}</p>
+                            </div>
+                            <span className="font-bold tabular-nums text-ink-900">{rupee(d.earningsPaise)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  <div className="card p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="font-display text-base font-extrabold text-ink-900">Settlement Summary</h3>
+                      <button onClick={() => onNav("settlements")} className="text-xs font-bold text-brand-600 hover:text-brand-700">View All</button>
+                    </div>
+                    <PRow label="Pending Settlements" value={rupee(st?.pendingPaise)} tone="amber" />
+                    <PRow label="Paid Settlements" value={rupee(st?.paidPaise)} tone="emerald" />
+                    <PRow label="Failed Settlements" value={rupee(st?.failedPaise)} tone="rose" />
+                    <PRow label="This Month Settlements" value={st?.monthCount ?? 0} />
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm text-ink-600">Last Settlement</span>
+                      <span className="text-right text-sm">
+                        <span className="block font-semibold text-ink-900">{st?.last?.paidAt ? fmtDay(st.last.paidAt) : "—"}</span>
+                        {st?.last && <span className="block text-xs text-ink-400">{rupee(st.last.netPaise)}</span>}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial summary */}
+              <Panel title="Financial Summary">
+                <div className="grid gap-4 pt-2 sm:grid-cols-3 lg:grid-cols-5">
+                  {[["Gross Collection", fin?.grossCollectionPaise, "ink"], ["Platform Fee", fin?.platformFeePaise, "brand"],
+                    ["Refunds", fin?.refundsPaise, "rose"], ["Net Platform Revenue", fin?.netRevenuePaise, "emerald"],
+                    ["Outstanding Liability", fin?.outstandingLiabilityPaise, "amber"]].map(([lbl, val, tone]: any) => (
+                    <div key={lbl}>
+                      <p className="text-xs text-ink-500">{lbl}</p>
+                      <p className={cn("mt-0.5 text-lg font-extrabold",
+                        tone === "emerald" ? "text-emerald-600" : tone === "rose" ? "text-rose-600" : tone === "amber" ? "text-amber-600" : tone === "brand" ? "text-brand-600" : "text-ink-900")}>
+                        {rupee(val)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Quick actions */}
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => setShowAll(true)} className="btn-outline px-3 py-2 text-xs"><Wallet size={14} /> View All Payments</button>
+                <button onClick={() => onNav("settlements")} className="btn-outline px-3 py-2 text-xs"><Banknote size={14} /> View Settlements</button>
+                <button onClick={() => onNav("transactions")} className="btn-outline px-3 py-2 text-xs"><Receipt size={14} /> View Transactions</button>
+                <button onClick={exportCsv} className="btn-outline px-3 py-2 text-xs"><Download size={14} /> Export Report</button>
+                <button onClick={() => onNav("settlements")} className="btn-primary px-3 py-2 text-xs"><Send size={14} /> Generate Settlement</button>
+              </div>
+            </>
+          )}
+
+      {/* Payment detail drawer */}
+      {detail && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-ink-950/40" onClick={() => setDetail(null)}>
+          <div className="h-full w-full max-w-md overflow-y-auto bg-surface p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-lg font-extrabold text-ink-900">Payment details</h3>
+              <button onClick={() => setDetail(null)} className="rounded-full p-1.5 text-ink-500 hover:bg-ink-900/[.05]"><X size={18} /></button>
+            </div>
+            {detail.loading || detailBusy ? <div className="grid h-40 place-items-center"><Spinner className="h-6 w-6" /></div>
+              : !detail.id ? <Empty icon={AlertTriangle} title="Couldn't load payment" />
+                : (
+                  <div className="space-y-1">
+                    <span className={cn("chip mb-3 inline-block", PAY_CHIP[detail.status] || PAY_CHIP.CREATED)}>{PAY_LABEL[detail.status] || detail.status}</span>
+                    {[["Payment ID", detail.id], ["Razorpay Order ID", detail.razorpayOrderId || "—"], ["Razorpay Payment ID", detail.razorpayPaymentId || "—"],
+                      ["Patient", detail.patient?.name || "—"], ["Doctor", detail.doctor?.name ? `Dr. ${detail.doctor.name}` : "—"],
+                      ["Consultation", detail.consultationReason || "—"], ["Consultation ID", detail.consultationId || "—"],
+                      ["Gross Amount", rupee(detail.grossPaise)], ["Platform Fee", rupee(detail.platformFeePaise)], ["Doctor Earnings", rupee(detail.doctorEarningPaise)],
+                      ["Payment Method", fmtMethod(detail.method)],
+                      ["Payment Status", detail.status], ["Created At", fmtDateTime(detail.createdAt)], ["Paid At", detail.capturedAt ? fmtDateTime(detail.capturedAt) : "—"],
+                      ["Refund Status", detail.refundStatus], ["Refund Amount", rupee(detail.refundAmountPaise)]].map(([lbl, val]: any) => (
+                      <div key={lbl} className="flex items-start justify-between gap-4 border-b border-ink-900/[.05] py-2 text-sm">
+                        <span className="text-ink-500">{lbl}</span>
+                        <span className="max-w-[60%] break-words text-right font-medium text-ink-900">{val}</span>
+                      </div>
+                    ))}
+                    {detail.status === "CAPTURED" && (
+                      <button onClick={() => openInvoice(detail.id)} className="btn-outline mt-4 w-full py-2.5 text-sm"><FileText size={14} /> View invoice <ExternalLink size={12} /></button>
+                    )}
+                    <p className="mt-3 text-[11px] text-ink-400">Payout is via the monthly settlement (see Settlements). Card/UPI/OTP details are never stored or shown.</p>
+                  </div>
+                )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
