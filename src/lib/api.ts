@@ -166,6 +166,34 @@ api.interceptors.response.use(
 // Unwrap the standard { statusCode, success, message, data } envelope
 const unwrap = (p) => p.then((r) => r.data?.data ?? r.data);
 
+// --- Trending hashtags: client cache + in-flight dedup ---
+// Trending tags are global, slow-changing data rendered by RightRail, which
+// remounts on every Feed/Explore navigation (and on background→foreground). With
+// no coalescing that fans out into one identical request per mount, all charged
+// to the single shared per-user /api rate-limit bucket — the source of the 429s
+// on /posts/trending/hashtags. We (1) serve an in-memory copy for a few minutes,
+// (2) collapse concurrent callers onto ONE in-flight request, and (3) back off
+// briefly after a failure so a 429/500 can't be retried into a storm. It stays
+// optional: any failure surfaces to the caller's .catch (RightRail renders empty).
+let _trendingCache: { data: any; ts: number } | null = null;
+let _trendingInflight: Promise<any> | null = null;
+let _trendingCooldownUntil = 0;
+const TRENDING_TTL_MS = 5 * 60 * 1000;      // serve cache without refetching
+const TRENDING_COOLDOWN_MS = 60 * 1000;      // after a failure, don't refetch
+
+const trendingTags = () => {
+  const now = Date.now();
+  if (_trendingCache && now - _trendingCache.ts < TRENDING_TTL_MS) return Promise.resolve(_trendingCache.data);
+  if (_trendingInflight) return _trendingInflight;
+  // Recent failure — degrade to last-known (or empty) instead of hammering.
+  if (now < _trendingCooldownUntil) return Promise.resolve(_trendingCache?.data ?? { hashtags: [] });
+  _trendingInflight = unwrap(api.get("/posts/trending/hashtags?limit=8"))
+    .then((d) => { _trendingCache = { data: d, ts: Date.now() }; return d; })
+    .catch((e) => { _trendingCooldownUntil = Date.now() + TRENDING_COOLDOWN_MS; throw e; })
+    .finally(() => { _trendingInflight = null; });
+  return _trendingInflight;
+};
+
 // POST multipart/form-data (file uploads). Content-Type is left undefined so the
 // browser/axios set the correct multipart boundary instead of our JSON default.
 const postForm = (url, formData) =>
@@ -299,7 +327,7 @@ export const dok = {
     shareInApp: (id, recipientIds) => unwrap(api.post(`/posts/${id}/share/inapp`, { recipientIds })),
     shareLink: (id) => unwrap(api.get(`/posts/${id}/share/link`)), // { deepLink, webFallback }
     byUser: (userId, q = "") => unwrap(api.get(`/posts/user/${userId}${q}`)),
-    trendingTags: () => unwrap(api.get("/posts/trending/hashtags?limit=8")),
+    trendingTags, // cached + in-flight-deduped (see definition above)
     create: (form) => postForm("/posts", form), // multipart: media (×10) + JSON fields
   },
   reels: {

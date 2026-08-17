@@ -140,13 +140,13 @@ export default function Notifications() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-extrabold text-ink-900">Notifications</h1>
         <div className="flex items-center gap-3">
-          <button onClick={markAllRead} className="flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline"><Check size={15} /> Mark all read</button>
-          <button onClick={clearAll} className="flex items-center gap-1.5 text-sm font-semibold text-ink-500 transition hover:text-danger-500"><Trash2 size={15} /> Clear</button>
+          <button onClick={markAllRead} className="flex h-[30px] items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline"><Check size={15} /> Mark all read</button>
+          <button onClick={clearAll} className="flex h-[30px] items-center gap-1.5 text-sm font-semibold text-ink-500 transition hover:text-danger-500"><Trash2 size={15} /> Clear</button>
         </div>
       </div>
       <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto">
         {FILTERS.map((f) => (
-          <button key={f.key} onClick={() => setTab(f.key)} className={cn("shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold", tab === f.key ? "bg-brand-600 text-white" : "bg-surface text-ink-600 hover:bg-brand-50")}>{f.key}</button>
+          <button key={f.key} onClick={() => setTab(f.key)} className={cn("shrink-0 h-[30px] flex items-center rounded-full px-4 text-sm font-semibold", tab === f.key ? "bg-brand-600 text-white" : "bg-surface text-ink-600 hover:bg-brand-50")}>{f.key}</button>
         ))}
       </div>
 
@@ -199,25 +199,25 @@ function Row({ n, onOpen, onAct, acted, busy }) {
         {(isFollowReq || isConnReq) && (
           <div className="mt-2.5 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {acted === "confirmed" ? (
-              <button onClick={() => onAct(n, "followedback")} disabled={busy} className="btn-outline px-3 py-1.5 text-xs">
+              <button onClick={() => onAct(n, "followedback")} disabled={busy} className="btn-outline h-[30px] flex items-center gap-1 px-3 text-xs">
                 {busy === "followedback" ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />} Follow back
               </button>
             ) : acted === "followedback" ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700"><Check size={13} /> Following</span>
+              <span className="inline-flex h-[30px] items-center gap-1 rounded-full bg-brand-50 px-3 text-xs font-bold text-brand-700"><Check size={13} /> Following</span>
             ) : acted === "accepted" ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-600"><Check size={13} /> Connected</span>
+              <span className="inline-flex h-[30px] items-center gap-1 rounded-full bg-emerald-50 px-3 text-xs font-bold text-emerald-600"><Check size={13} /> Connected</span>
             ) : acted === "ignored" ? (
               <span className="text-xs text-ink-400">Ignored</span>
             ) : isFollowReq ? (
-              <button onClick={() => onAct(n, "confirmed")} disabled={busy} className="btn-primary px-3.5 py-1.5 text-xs">
+              <button onClick={() => onAct(n, "confirmed")} disabled={busy} className="btn-primary h-[30px] flex items-center gap-1 px-3.5 text-xs">
                 {busy === "confirmed" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Confirm
               </button>
             ) : (
               <>
-                <button onClick={() => onAct(n, "accepted")} disabled={busy} className="btn-primary px-3.5 py-1.5 text-xs">
+                <button onClick={() => onAct(n, "accepted")} disabled={busy} className="btn-primary h-[30px] flex items-center gap-1 px-3.5 text-xs">
                   {busy === "accepted" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Accept
                 </button>
-                <button onClick={() => onAct(n, "ignored")} disabled={busy} className="btn-outline px-3 py-1.5 text-xs">
+                <button onClick={() => onAct(n, "ignored")} disabled={busy} className="btn-outline h-[30px] flex items-center gap-1 px-3 text-xs">
                   {busy === "ignored" ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />} Ignore
                 </button>
               </>
