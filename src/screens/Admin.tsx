@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "@/lib/router";
+import { AnalyticsDashboard } from "@/features/analytics";
 import {
   ShieldCheck, LayoutDashboard, Users2, FileStack, BadgeCheck, Flag, MessageSquareText,
   Trash2, ScrollText, LogOut, Loader2, KeyRound, UserRound, Search, X, ChevronRight,
@@ -133,6 +134,7 @@ const NAV = [
   { key: "feedback", label: "Feedback", icon: MessageSquareText },
   { key: "deletions", label: "Deletions", icon: Trash2 },
   { key: "audit", label: "Audit log", icon: ScrollText },
+  { key: "analytics", label: "Analytics", icon: TrendingUp },
 ];
 
 function AdminConsole({ admin, onSignOut }: { admin: any; onSignOut: () => void }) {
@@ -165,11 +167,6 @@ function AdminConsole({ admin, onSignOut }: { admin: any; onSignOut: () => void 
                 <n.icon size={17} /> {n.label}
               </button>
             ))}
-            {/* Isolated analytics feature lives on its own route, not as a tab. */}
-            <a href="/admin/analytics"
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-600 transition hover:bg-surface">
-              <TrendingUp size={17} /> Analytics
-            </a>
           </div>
         </nav>
 
@@ -196,6 +193,9 @@ function AdminConsole({ admin, onSignOut }: { admin: any; onSignOut: () => void 
           {tab === "feedback" && <FeedbackSection />}
           {tab === "deletions" && <DeletionsSection />}
           {tab === "audit" && <AuditSection />}
+          {/* Isolated analytics module — rendered inside the secret admin console
+              (not a /admin/* route, which middleware 404s). */}
+          {tab === "analytics" && <AnalyticsDashboard />}
         </div>
       </div>
     </div>
