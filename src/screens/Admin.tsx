@@ -165,6 +165,11 @@ function AdminConsole({ admin, onSignOut }: { admin: any; onSignOut: () => void 
                 <n.icon size={17} /> {n.label}
               </button>
             ))}
+            {/* Isolated analytics feature lives on its own route, not as a tab. */}
+            <a href="/admin/analytics"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-600 transition hover:bg-surface">
+              <TrendingUp size={17} /> Analytics
+            </a>
           </div>
         </nav>
 
