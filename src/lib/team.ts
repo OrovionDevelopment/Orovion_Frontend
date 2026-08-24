@@ -22,7 +22,7 @@ export const TEAM: TeamMember[] = [
   {
     slug: "pawan-gupta",
     name: "Pawan Gupta",
-    role: "Founder & CEO",
+    role: "",
     tagline: "The best technology doesn't replace people—it helps them find, understand, and care for one another more easily. That's the future I'm building with Orovion.",
     story: [
       "For Pawan, meaningful products begin with identifying problems people have simply learned to work around. Orovion started from that belief—the idea that healthcare interactions could be more connected and built around the people who are part of the community.",
@@ -38,7 +38,7 @@ export const TEAM: TeamMember[] = [
   {
     slug: "adarsh-singh",
     name: "Adarsh Singh",
-    role: "Co-founder & Product Lead",
+    role: "",
     tagline: "Shapes Orovion's product direction, turning complex ideas and user needs into clear, connected digital experiences.",
     story: [
       "From the earliest conversations around Orovion, Adarsh has been closely involved in shaping what the platform could become. His focus has been on understanding the people it is built for, mapping how different roles connect, share, and communicate, and turning an ambitious idea into a clear and connected product experience.",
@@ -54,7 +54,7 @@ export const TEAM: TeamMember[] = [
   {
     slug: "Sachan-Ayush",
     name: "Ayush Sachan",
-    role: "Co-founder & Frontend Lead",
+    role: "",
     tagline: "Leads frontend development and product implementation, turning complex designs and flows into smooth, responsive, and reliable digital experiences.",
     story: [
       "For Ayush, technology has always been about turning ideas into experiences people can actually use. He approaches development with a focus on making products feel smooth, reliable, and simple, while ensuring that what is designed translates effectively into a working product.",
