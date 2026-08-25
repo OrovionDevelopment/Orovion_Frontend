@@ -280,7 +280,7 @@ function Team() {
         {TEAM.map((m, i) => (
           <Link
             key={m.slug}
-            to={`/team#${m.slug}`}
+            to={`/team/${m.slug}`}
             className="reveal card group flex flex-col p-6 transition duration-300 hover:-translate-y-1.5 hover:border-brand-200 hover:shadow-glow"
             style={{ transitionDelay: `${i * 80}ms` }}
           >

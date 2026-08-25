@@ -98,6 +98,14 @@ function MemberProfile({ member: m, flip }: { member: TeamMember; flip: boolean 
           <div className="mt-7 flex flex-wrap gap-2">
             {m.focus.map((f) => <span key={f} className="chip bg-brand-50 text-brand-700">{f}</span>)}
           </div>
+          {/* Internal link to the member's own page — keeps /team/[slug] out of
+              orphan status so it is crawled, not just listed in the sitemap. */}
+          <Link
+            to={`/team/${m.slug}`}
+            className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition hover:gap-2.5"
+          >
+            {m.name}&rsquo;s page <ArrowRight size={15} />
+          </Link>
         </div>
       </div>
     </article>
