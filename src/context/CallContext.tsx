@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import { useAuth } from "./AuthContext";
 import { connectCallSocket } from "@/lib/callClient";
 import { WebRTCService } from "@/lib/webrtcService";
+import { refreshTurnCredentials, clearTurnCredentials } from "@/lib/turnCredentials";
 
 export type CallPhase = "idle" | "outgoing" | "incoming" | "connecting" | "connected" | "ended";
 export type CallType = "audio" | "video";
@@ -120,6 +121,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     peerRang.current = false;
     svcRef.current?.close();
     svcRef.current = null;
+    clearTurnCredentials(); // drop ephemeral relay creds so the next call re-fetches
     setLocalStream(null);
     setRemoteStream(null);
     setMicOn(true);
@@ -188,6 +190,9 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       log("CALL_ACCEPTED (callee) → starting media/offer");
       setPhase("connecting");
       const svc = buildService(c);
+      // Per-call TURN relay creds (ephemeral, minted server-side) BEFORE start()
+      // builds the pc, so relay candidates gather from the first offer.
+      await refreshTurnCredentials();
       await svc.start();
       setLocalStream(svc.localStream);
       log("OFFER_CREATED");
@@ -282,6 +287,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     // the offer. On localhost the caller's offer arrives in ~ms while getUserMedia
     // can take hundreds of ms — accepting first would drop the offer onto a null pc.
     const svc = buildService(c);
+    await refreshTurnCredentials(); // per-call TURN before the pc is built
     await svc.start();
     setLocalStream(svc.localStream);
     socket.current?.emit("user_call_accept", { callId: c.callId, toUserId: c.peerId });

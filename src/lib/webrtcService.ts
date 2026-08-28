@@ -2,7 +2,35 @@
 // Mirrors the Flutter WebRtcConfig: STUN + optional TURN from NEXT_PUBLIC_* env.
 // Signaling is injected (`send`) so this class stays transport-agnostic.
 
-export function iceServers() {
+// Runtime ICE servers fetched per-call from the backend
+// (GET /api/v2/consultations/turn-credentials). Preferred over the compile-time
+// NEXT_PUBLIC_TURN_* env when present, so production TURN needs no rebuild and
+// survives ephemeral-credential rotation. Set via [setRuntimeIceServers] (see
+// src/lib/turnCredentials.ts); cleared at end of call so stale creds aren't reused.
+let runtimeIceServers: RTCIceServer[] | null = null;
+
+export function setRuntimeIceServers(servers: RTCIceServer[] | null) {
+  runtimeIceServers = servers && servers.length ? servers : null;
+}
+
+function serversHaveTurn(servers: RTCIceServer[]): boolean {
+  return servers.some((s) => {
+    const u = s.urls;
+    const list = Array.isArray(u) ? u : [u];
+    return list.some((x) => typeof x === "string" && (x.startsWith("turn:") || x.startsWith("turns:")));
+  });
+}
+
+/** True when a relay is available (runtime creds OR compile-time env). */
+export function hasTurn(): boolean {
+  if (runtimeIceServers && serversHaveTurn(runtimeIceServers)) return true;
+  return Boolean(process.env.NEXT_PUBLIC_TURN_URL && process.env.NEXT_PUBLIC_TURN_USERNAME && process.env.NEXT_PUBLIC_TURN_PASSWORD);
+}
+
+export function iceServers(): RTCIceServer[] {
+  // Runtime creds win outright (they already include STUN from the backend).
+  if (runtimeIceServers) return runtimeIceServers;
+
   const servers: RTCIceServer[] = [
     {
       urls: [
@@ -29,6 +57,7 @@ export function iceServers() {
 export function rtcConfig(): RTCConfiguration {
   return {
     iceServers: iceServers(),
+    iceTransportPolicy: "all", // direct > srflx > relay; relay used only as fallback
     bundlePolicy: "max-bundle",
     rtcpMuxPolicy: "require",
   };
@@ -54,6 +83,10 @@ export class WebRTCService {
   private pending: RTCIceCandidateInit[] = [];
   private hasRemote = false;
   private facing: "user" | "environment" = "user";
+  // Serializes incoming-offer processing so two offers (e.g. an initial + a
+  // renegotiation) can't interleave their setRemote→createAnswer→setLocal steps —
+  // the race that throws "Called in wrong state: stable" / "cannot create answer".
+  private negotiation: Promise<void> = Promise.resolve();
 
   constructor(
     public callId: string,
@@ -218,17 +251,36 @@ export class WebRTCService {
     }
   }
 
-  async handleOffer(offer: any) {
-    if (!this.pc) return;
+  /** Serialize so overlapping offers process strictly one-at-a-time (no glare/race). */
+  handleOffer(offer: any): Promise<void> {
+    const next = this.negotiation.then(() => this._handleOffer(offer));
+    this.negotiation = next.catch(() => {}); // one failure must not break the chain
+    return next;
+  }
+
+  private async _handleOffer(offer: any) {
+    const pc = this.pc;
+    if (!pc) return;
     console.log("[WEBRTC] OFFER_RECEIVED");
     this.log("offer received");
     try {
-      await this.pc.setRemoteDescription(new RTCSessionDescription(offer));
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
       console.log("[WEBRTC] setRemoteDescription(offer) success");
+      // A valid offer leaves us in have-remote-offer. If we're not there (a
+      // concurrent op already answered, or the pc was closed), do NOT answer —
+      // that is exactly what throws "wrong state: stable" / "cannot create answer".
+      if (this.pc !== pc || pc.signalingState !== "have-remote-offer") {
+        console.log(`[WEBRTC] skip answer — signalingState=${pc.signalingState}`);
+        return;
+      }
       await this.drain();
-      const answer = await this.pc.createAnswer();
+      const answer = await pc.createAnswer();
       console.log("[WEBRTC] ANSWER_CREATED");
-      await this.pc.setLocalDescription(answer);
+      if (this.pc !== pc || pc.signalingState !== "have-remote-offer") {
+        console.log(`[WEBRTC] abort setLocal(answer) — signalingState=${pc.signalingState}`);
+        return;
+      }
+      await pc.setLocalDescription(answer);
       console.log("[WEBRTC] setLocalDescription(answer) success");
       this.h.send("webrtc_answer", {
         recipientId: this.peerId,
@@ -243,10 +295,17 @@ export class WebRTCService {
   }
 
   async handleAnswer(answer: any) {
-    if (!this.pc) return;
+    const pc = this.pc;
+    if (!pc) return;
     console.log("[WEBRTC] ANSWER_RECEIVED");
     try {
-      await this.pc.setRemoteDescription(new RTCSessionDescription(answer));
+      // Only apply an answer when we're actually awaiting one (have-local-offer).
+      // A stale/duplicate answer in 'stable' would throw "wrong state: stable".
+      if (pc.signalingState !== "have-local-offer") {
+        console.log(`[WEBRTC] ignoring answer — signalingState=${pc.signalingState}`);
+        return;
+      }
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
       console.log("[WEBRTC] setRemoteDescription(answer) success");
       await this.drain();
       this.log("answer received");
