@@ -226,7 +226,8 @@ function ScheduledPanel({ req, viewerIsDoctor, otherId, otherName, otherPhoto, o
     setJoining(true);
     try {
       await dok.consults.joinCall(req.id).catch(() => {}); // mark call started server-side (best-effort)
-      call.startCall(otherId, otherName || "Consultation", otherPhoto || null, "video");
+      call.startCall(otherId, otherName || "Consultation", otherPhoto || null, "video",
+        { requestId: req.id, viewerIsDoctor });
     } catch { toast?.error("Couldn't start the call."); }
     finally { setJoining(false); }
   };
