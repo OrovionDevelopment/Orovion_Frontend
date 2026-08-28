@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, SwitchCamera, ChevronDown } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, SwitchCamera, ChevronDown, Pill, FileText, ShieldCheck } from "lucide-react";
 import { useCall } from "@/context/CallContext";
 import { cn } from "@/lib/utils";
 import { useFloatingDrag } from "./useFloatingDrag";
+import ConsultPrescriptionSheet from "./ConsultPrescriptionSheet";
+import ConsultReportsSheet from "./ConsultReportsSheet";
 
 export default function VideoCallPage() {
   const { call, phase, minimized, setMinimized, localStream, remoteStream, micOn, camOn, toggleMic, toggleCam, switchCamera, endCall } = useCall();
   const localRef = useRef<HTMLVideoElement>(null);
   const remoteRef = useRef<HTMLVideoElement>(null);
   const [secs, setSecs] = useState(0);
+  const [sheet, setSheet] = useState<"rx" | "reports" | null>(null);
   const { style, handlers } = useFloatingDrag(() => setMinimized(false));
 
   useEffect(() => { if (localRef.current) localRef.current.srcObject = localStream; }, [localStream]);
@@ -90,7 +93,39 @@ export default function VideoCallPage() {
           </div>
         </>
       )}
+
+      {/* ── Consultation surface: label + in-call tools (Rx for the doctor,
+          Reports for both) — parity with the Flutter consult call screen. ── */}
+      {call.consult && !minimized && (
+        <>
+          <div className="absolute left-1/2 top-16 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-brand-600/90 px-3 py-1 text-xs font-semibold">
+            <ShieldCheck size={13} /> Encrypted consultation
+          </div>
+          <div className="absolute right-4 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3">
+            {call.consult.viewerIsDoctor && (
+              <ConsultBtn label="Rx" onClick={() => setSheet("rx")} icon={<Pill size={20} />} />
+            )}
+            <ConsultBtn label="Reports" onClick={() => setSheet("reports")} icon={<FileText size={20} />} />
+          </div>
+        </>
+      )}
+
+      {sheet === "rx" && call.consult && (
+        <ConsultPrescriptionSheet requestId={call.consult.requestId} onClose={() => setSheet(null)} />
+      )}
+      {sheet === "reports" && call.consult && (
+        <ConsultReportsSheet requestId={call.consult.requestId} onClose={() => setSheet(null)} />
+      )}
     </div>
+  );
+}
+
+function ConsultBtn({ label, onClick, icon }: { label: string; onClick: () => void; icon: React.ReactNode }) {
+  return (
+    <button onClick={onClick} className="flex flex-col items-center gap-1">
+      <span className="grid h-12 w-12 place-items-center rounded-full bg-white/15 backdrop-blur transition hover:bg-white/25">{icon}</span>
+      <span className="text-[10px] font-semibold text-white/80">{label}</span>
+    </button>
   );
 }
 

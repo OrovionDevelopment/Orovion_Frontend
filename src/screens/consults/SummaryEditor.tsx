@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { getConsultDraft, clearConsultDraft } from "@/lib/consultCallDraft";
 import {
   parseRequest, ConsultationRequest, Medicine, emptyMedicine, dosagePattern,
   ConsultAttachment, ClinicalSummary, isCompleted,
@@ -44,6 +45,16 @@ export default function SummaryEditor() {
         setDiagnosis(cs.diagnosis); setSummary(cs.summary); setAdvice(cs.advice);
         setFollowUp(cs.followUp); setNextVisit(cs.nextVisit || "");
         setMedicines(cs.medicines); setAtts(cs.attachments);
+      } else {
+        // Pre-load whatever the doctor wrote in the in-call Rx sheet (parity with
+        // the app, where the in-call prescription flows into the finish screen).
+        const draft = getConsultDraft(requestId);
+        if (draft) {
+          if (draft.diagnosis) setDiagnosis(draft.diagnosis);
+          if (draft.notes) setAdvice(draft.notes);
+          if (draft.medicines?.length) setMedicines(draft.medicines);
+          clearConsultDraft(requestId);
+        }
       }
     }).catch(() => setDenied(true));
     /* eslint-disable-next-line */
