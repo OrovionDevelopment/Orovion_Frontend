@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, RotateCcw, Eye, Ban, UserX, RefreshCw, Circle, AlertTriangle,
   Stethoscope, GraduationCap, User, Film, FileText, BookOpen, Dot,
   Banknote, Send, Receipt, ArrowLeft, ExternalLink,
-  Wallet, TrendingUp, Download, SlidersHorizontal, Landmark, PiggyBank, CalendarDays,
+  Wallet, TrendingUp, Download, SlidersHorizontal, Landmark, PiggyBank, CalendarDays, Star,
 } from "lucide-react";
 import { Avatar, Logo, Spinner } from "@/components/ui/Primitives";
 import { RowsSkeleton, StatGridSkeleton } from "@/components/ui/Skeletons";
@@ -132,6 +132,7 @@ const NAV = [
   { key: "settlements", label: "Settlements", icon: Banknote },
   { key: "reports", label: "Reports", icon: Flag },
   { key: "feedback", label: "Feedback", icon: MessageSquareText },
+  { key: "ratings", label: "Consultation ratings", icon: Star },
   { key: "deletions", label: "Deletions", icon: Trash2 },
   { key: "audit", label: "Audit log", icon: ScrollText },
   { key: "analytics", label: "Analytics", icon: TrendingUp },
@@ -191,6 +192,7 @@ function AdminConsole({ admin, onSignOut }: { admin: any; onSignOut: () => void 
           {tab === "settlements" && <SettlementsSection />}
           {tab === "reports" && <ReportsSection />}
           {tab === "feedback" && <FeedbackSection />}
+          {tab === "ratings" && <RatingsSection />}
           {tab === "deletions" && <DeletionsSection />}
           {tab === "audit" && <AuditSection />}
           {/* Isolated analytics module — rendered inside the secret admin console
@@ -1645,6 +1647,66 @@ function FeedbackSection() {
                 <div className="flex items-center gap-2"><span className="chip bg-brand-50 text-brand-700 text-[10px]">{f.category?.replace("_", " ").toLowerCase()}</span><span className="text-xs text-ink-400">{f.user?.fullName} · {timeAgo(f.createdAt)}</span></div>
                 <p className="mt-1 text-sm text-ink-800">{f.message}</p>
                 {f.imageUrls?.length > 0 && <div className="mt-2 flex gap-1.5">{f.imageUrls.map((u: string, i: number) => <a key={i} href={u} target="_blank" rel="noreferrer" className="text-xs text-brand-600 underline">image {i + 1}</a>)}</div>}
+              </div>
+            </div>
+          ))}
+      </div>
+      {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
+    </div>
+  );
+}
+
+/* =========================================================================
+   Consultation ratings (patient star feedback after a completed consult)
+   ========================================================================= */
+const RATING_STARS = ["", "1", "2", "3", "4", "5"];
+
+function RatingsSection() {
+  const [stars, setStars] = useState("");
+  const [rows, setRows] = useState<any[]>([]);
+  const [summary, setSummary] = useState<{ avgRating: number; totalRatings: number } | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async (reset = true) => {
+    setLoading(true);
+    try {
+      const params: any = { limit: 20 };
+      if (stars) params.stars = stars;
+      if (!reset && cursor) params.cursor = cursor;
+      const d = await dok.admin.consultationRatings(params);
+      setRows((p) => (reset ? d.ratings : [...p, ...d.ratings]));
+      setHasMore(d.hasMore); setCursor(d.nextCursor); setSummary(d.summary);
+    } catch { if (reset) setRows([]); }
+    setLoading(false);
+  }, [stars, cursor]);
+  useEffect(() => { load(true); /* eslint-disable-next-line */ }, [stars]);
+
+  return (
+    <div>
+      <SectionHead title="Consultation ratings" subtitle="Star feedback patients left after a completed consultation." />
+      {summary && (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="chip bg-brand-50 text-brand-700"><Star size={13} /> {summary.avgRating.toFixed(1)} avg</span>
+          <span className="chip bg-surface text-ink-600">{summary.totalRatings} total</span>
+        </div>
+      )}
+      <div className="mb-4 flex gap-2 overflow-x-auto">
+        {RATING_STARS.map((c) => <button key={c} onClick={() => setStars(c)} className={cn("whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold", stars === c ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}>{c ? `${c} ★` : "all"}</button>)}
+      </div>
+      <div className="card divide-y divide-ink-900/[.05]">
+        {loading && rows.length === 0 ? <RowsSkeleton count={4} />
+          : rows.length === 0 ? <Empty icon={Star} title="No ratings yet" />
+          : rows.map((r) => (
+            <div key={r.id} className="flex gap-3 p-4">
+              <Avatar user={r.requester} size={38} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="chip bg-brand-50 text-brand-700 text-[10px]">{"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}</span>
+                  <span className="text-xs text-ink-400">{r.requester?.fullName} → Dr. {r.doctor?.fullName} · {timeAgo(r.createdAt)}</span>
+                </div>
+                {r.comment && <p className="mt-1 text-sm text-ink-800">{r.comment}</p>}
               </div>
             </div>
           ))}

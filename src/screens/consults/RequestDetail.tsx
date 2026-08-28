@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "@/lib/router";
 import {
   Video, MessageSquare, CheckCircle2, XCircle, CalendarClock, Clock, Loader2,
-  Receipt, Star, FileText, Pill, Stethoscope, ClipboardList, X,
+  Receipt, Star, FileText, Pill, Stethoscope, ClipboardList, X, Download,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Avatar, Verified } from "@/components/ui/Primitives";
@@ -385,7 +385,48 @@ export function ClinicalSummaryView({ req }: { req: ConsultationRequest }) {
           <div className="flex flex-wrap gap-2">{cs.attachments.map((a, i) => <AttachmentChip key={i} att={a} />)}</div>
         </div>
       )}
+      {/* A prescription PDF is generated only when the doctor recorded a diagnosis
+          and/or medicines — the same gate the backend uses before it 404s. */}
+      {(cs.diagnosis || cs.medicines.length > 0) && (
+        <DownloadPrescriptionButton requestId={req.id} />
+      )}
     </div>
+  );
+}
+
+// Downloads the backend-generated prescription PDF (streamed from our authenticated
+// API — Cloudinary blocks raw PDFs) and saves it via a temporary object URL.
+function DownloadPrescriptionButton({ requestId }: { requestId: string }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const download = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const blob = await dok.consults.prescriptionPdfBlob(requestId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Orovion_Prescription_${requestId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch {
+      toast?.error("Prescription isn't ready yet. Please try again shortly.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      onClick={download}
+      disabled={busy}
+      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-brand-300 bg-brand-50 py-2.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-100 disabled:opacity-60"
+    >
+      {busy ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+      {busy ? "Preparing…" : "Download prescription"}
+    </button>
   );
 }
 function Field({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {

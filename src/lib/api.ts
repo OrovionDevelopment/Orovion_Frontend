@@ -489,6 +489,15 @@ export const dok = {
     uploadAttachment: (file) => { const f = new FormData(); f.append("file", file); return postForm("/v2/consultations/attachments", f); }, // → { attachment: { url, publicId, name } }
     getInvoice: (requestId) => unwrap(api.get(`/v2/consultations/payment/invoice/${requestId}`)), // { invoice }
 
+    // ── Prescription (generated after a consultation is COMPLETED) ─────────────
+    getPrescription: (requestId) => unwrap(api.get(`/v2/consultations/prescription/${requestId}`)), // { prescription } | 404
+    // PDF bytes streamed from our authenticated backend (Cloudinary blocks raw PDFs).
+    prescriptionPdfBlob: (requestId) =>
+      api.get(`/v2/consultations/prescription/${requestId}/pdf/file`, { responseType: "blob" }).then((r) => r.data as Blob),
+
+    // ── WebRTC ICE servers (per-call; TURN provider key stays server-side) ─────
+    turnCredentials: () => unwrap(api.get("/v2/consultations/turn-credentials")), // { iceServers, ttl }
+
     // ── E2EE consult chat (chat-service proxy) ─────────────────────────────
     getThread: (peerId, q = "") => unwrap(api.get(`/chat/consultations/threads/${peerId}${q}`)),  // { messages }
     sendThreadMessage: (peerId, b) => unwrap(api.post(`/chat/consultations/threads/${peerId}`, b)),
@@ -544,6 +553,7 @@ export const dok = {
 
     // ── Feedback / deletion queue / audit ──
     feedback: (params = {}) => unwrap(api.get("/admin/feedback", { params })),
+    consultationRatings: (params = {}) => unwrap(api.get("/admin/consultations/ratings", { params })),
     deletions: (params = {}) => unwrap(api.get("/admin/deletions", { params })),
     audit: (params = {}) => unwrap(api.get("/admin/audit", { params })),
 
