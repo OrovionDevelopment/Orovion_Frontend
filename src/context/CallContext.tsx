@@ -25,6 +25,11 @@ export interface ActiveCall {
   type: CallType;
   isCaller: boolean;
   consult?: CallConsult | null;
+  /** True when this call flows over the app's consultation signaling channel
+   *  (consultation_call_invite/_accepted/_end, WebRTC keyed by consultationId)
+   *  so the Flutter doctor opens its real VideoConsultScreen. Patient→doctor only
+   *  (the backend routes consult invites to the doctor). */
+  useConsultProtocol?: boolean;
 }
 
 export interface CallDebug {
@@ -260,6 +265,50 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       await svcRef.current?.addIce(d.candidate);
     };
 
+    // ── Consultation signaling channel (parity with the Flutter consult call) ──
+    // Incoming consult call — this web user is the doctor. Ring with consult context.
+    const onConsultInvite = (d: any) => {
+      const requestId = String(d.consultationId || d.callSessionId || "");
+      const callerId = String(d.callerId || "");
+      if (!requestId || !callerId) return;
+      log(`CONSULT_INVITE ${requestId} from ${callerId}`);
+      if (callRef.current) { s.emit("consultation_call_rejected", { callerId, callSessionId: d.callSessionId || requestId, consultationId: requestId, reason: "busy" }); return; }
+      connectedRef.current = false;
+      setCall({
+        callId: d.callSessionId || requestId,
+        peerId: callerId, peerName: d.callerName || "Patient", peerPhoto: d.callerPhoto,
+        type: d.hasVideo === false ? "audio" : "video", isCaller: false,
+        consult: { requestId, viewerIsDoctor: true }, useConsultProtocol: true,
+      });
+      setPhase("incoming");
+    };
+    // Caller (patient): doctor accepted → build the pc and send the offer.
+    const onConsultAccepted = async (d: any) => {
+      const c = callRef.current;
+      if (!c || !c.isCaller || !c.useConsultProtocol || d.callSessionId !== c.callId) return;
+      if (ringTimeout.current) clearTimeout(ringTimeout.current);
+      if (reachTimeout.current) clearTimeout(reachTimeout.current);
+      setCallStatus("Connecting…");
+      log("CONSULT_ACCEPTED → starting media/offer");
+      setPhase("connecting");
+      const svc = buildService(c);
+      await refreshTurnCredentials();
+      await svc.start();
+      setLocalStream(svc.localStream);
+      await svc.createOffer();
+    };
+    const onConsultRejected = (d: any) => {
+      const c = callRef.current;
+      if (c && c.useConsultProtocol && (d.callSessionId === c.callId || d.consultationId === c.consult?.requestId)) {
+        setCallStatus(d.reason === "busy" ? "User is busy" : "Call declined");
+        cleanup("consult rejected/timeout");
+      }
+    };
+    const onConsultEnded = (d: any) => {
+      const c = callRef.current;
+      if (c && c.useConsultProtocol && (d.callSessionId === c.callId || d.consultationId === c.consult?.requestId)) cleanup("consult remote ended");
+    };
+
     s.on("connect", onConnect);
     s.on("disconnect", onDisconnect);
     s.on("user_call_invite", onInvite);
@@ -274,6 +323,12 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     s.on("webrtc_offer", onOffer);
     s.on("webrtc_answer", onAnswer);
     s.on("webrtc_ice_candidate", onIce);
+    // Consultation channel
+    s.on("consultation_call_invite", onConsultInvite);
+    s.on("consultation_call_accepted", onConsultAccepted);
+    s.on("consultation_call_rejected", onConsultRejected);
+    s.on("consultation_call_timeout", onConsultRejected);
+    s.on("consultation_call_end", onConsultEnded);
     if (s.connected) onConnect();
 
     return () => {
@@ -291,29 +346,48 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       s.off("webrtc_offer", onOffer);
       s.off("webrtc_answer", onAnswer);
       s.off("webrtc_ice_candidate", onIce);
+      s.off("consultation_call_invite", onConsultInvite);
+      s.off("consultation_call_accepted", onConsultAccepted);
+      s.off("consultation_call_rejected", onConsultRejected);
+      s.off("consultation_call_timeout", onConsultRejected);
+      s.off("consultation_call_end", onConsultEnded);
     };
   }, [myId, buildService, cleanup, log]);
 
   // ── Public actions ──────────────────────────────────────────────────────────
   const startCall = useCallback((peerId: string, peerName: string, peerPhoto: string | null, type: CallType, consult?: CallConsult | null) => {
     if (!peerId || callRef.current) return;
-    const c: ActiveCall = { callId: newCallId(), peerId, peerName, peerPhoto, type, isCaller: true, consult: consult || null };
+    // A patient calling the doctor uses the consultation signaling channel so the
+    // Flutter doctor opens its real VideoConsultScreen. The WebRTC session is keyed
+    // by the consultationId (requestId) — so callId = requestId here — matching what
+    // VideoConsultScreen listens on. (Doctor→patient stays on the generic path: the
+    // backend only routes consult invites to the doctor.)
+    const useConsultProtocol = !!consult && !consult.viewerIsDoctor;
+    const callId = useConsultProtocol ? consult!.requestId : newCallId();
+    const c: ActiveCall = { callId, peerId, peerName, peerPhoto, type, isCaller: true, consult: consult || null, useConsultProtocol };
     peerRang.current = false;
     connectedRef.current = false;
     setCall(c);
     setPhase("outgoing");
     setCallStatus("Calling…");
-    socket.current?.emit("user_call_invite", {
-      callId: c.callId, toUserId: peerId, callType: type,
-      callerName: user?.fullName, callerPhoto: user?.profilePhoto || null,
-      // Carry consult context so the callee's surface shows the consult flow.
-      // The pair is always doctor↔patient, so the callee's role is the caller's inverse.
-      ...(consult ? { consultRequestId: consult.requestId, consultCallerIsDoctor: consult.viewerIsDoctor } : {}),
-    });
-    log(`INVITE_SENT ${c.callId} → ${peerId} (${type})`);
+    if (useConsultProtocol) {
+      socket.current?.emit("consultation_call_invite", {
+        callSessionId: callId, consultationId: consult!.requestId, doctorId: peerId,
+        callerName: user?.fullName, callerPhoto: user?.profilePhoto || null,
+        hasVideo: type === "video", sessionLength: 30,
+      });
+    } else {
+      socket.current?.emit("user_call_invite", {
+        callId, toUserId: peerId, callType: type,
+        callerName: user?.fullName, callerPhoto: user?.profilePhoto || null,
+        ...(consult ? { consultRequestId: consult.requestId, consultCallerIsDoctor: consult.viewerIsDoctor } : {}),
+      });
+    }
+    log(`INVITE_SENT ${callId} → ${peerId} (${type}${useConsultProtocol ? ", consult" : ""})`);
     // Step 12: 30s ring timeout → missed call.
     ringTimeout.current = setTimeout(() => {
-      socket.current?.emit("user_call_timeout", { callId: c.callId, toUserId: peerId });
+      if (useConsultProtocol) socket.current?.emit("consultation_call_timeout", { recipientId: peerId, callSessionId: callId, consultationId: callId });
+      else socket.current?.emit("user_call_timeout", { callId, toUserId: peerId });
       cleanup("no answer (missed)");
     }, 30000);
   }, [user, log, cleanup]);
@@ -329,19 +403,29 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     await refreshTurnCredentials(); // per-call TURN before the pc is built
     await svc.start();
     setLocalStream(svc.localStream);
-    socket.current?.emit("user_call_accept", { callId: c.callId, toUserId: c.peerId });
+    if (c.useConsultProtocol) {
+      socket.current?.emit("consultation_call_accepted", { callerId: c.peerId, callSessionId: c.callId, consultationId: c.consult?.requestId });
+    } else {
+      socket.current?.emit("user_call_accept", { callId: c.callId, toUserId: c.peerId });
+    }
     log("CALL_ACCEPTED → ACCEPT sent, waiting for offer");
   }, [buildService, log]);
 
   const rejectCall = useCallback(() => {
     const c = callRef.current;
-    if (c) socket.current?.emit("user_call_reject", { callId: c.callId, toUserId: c.peerId });
+    if (c) {
+      if (c.useConsultProtocol) socket.current?.emit("consultation_call_rejected", { callerId: c.peerId, callSessionId: c.callId, consultationId: c.consult?.requestId, reason: "declined" });
+      else socket.current?.emit("user_call_reject", { callId: c.callId, toUserId: c.peerId });
+    }
     cleanup("rejected locally");
   }, [cleanup]);
 
   const endCall = useCallback(() => {
     const c = callRef.current;
-    if (c) socket.current?.emit("user_call_end", { callId: c.callId, toUserId: c.peerId });
+    if (c) {
+      if (c.useConsultProtocol) socket.current?.emit("consultation_call_end", { recipientId: c.peerId, callSessionId: c.callId, consultationId: c.consult?.requestId });
+      else socket.current?.emit("user_call_end", { callId: c.callId, toUserId: c.peerId });
+    }
     cleanup("ended locally");
   }, [cleanup]);
 
