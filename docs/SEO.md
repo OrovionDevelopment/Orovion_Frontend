@@ -63,7 +63,7 @@ occasionally not).
    *If you cannot edit DNS*, use **URL prefix** → **HTML tag**, and put the
    token in `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`, then rebuild and redeploy.
 3. **Sitemaps** → submit `sitemap.xml`.
-4. **URL Inspection** → paste `https://orovion.com/` → **Request indexing**.
+4. **URL Inspection** → paste `https://www.orovion.com/` → **Request indexing**.
    Repeat for `/team` and `/mobile-app`. This is the fastest path to a first
    crawl; the rest follow from internal links.
 5. Wait. First indexing is typically 2–14 days for a new domain. There is no

@@ -9,6 +9,7 @@ import { PostFeedSkeleton } from "@/components/ui/Skeletons";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
 import { readCache, writeCache } from "@/lib/offline-cache";
+import { shouldForceFresh } from "@/lib/feedFreshness";
 import { sendOrQueue } from "@/lib/offline-queue";
 import { cn, roleLabel } from "@/lib/utils";
 import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
@@ -48,11 +49,14 @@ export default function Feed() {
   const { pull, refreshing: pulling } = usePullToRefresh(refresh);
   useAutoRefresh(refresh);
 
-  const buildQuery = useCallback((f, cur) => {
+  const buildQuery = useCallback((f, cur, fresh = false) => {
     const parts = [PAGE];
     if (f.kind === "specialty") parts.push(`specialty=${encodeURIComponent(f.key)}`);
     if (f.kind === "type") parts.push(`type=${f.key}`);
     if (cur) parts.push(`cursor=${encodeURIComponent(cur)}`);
+    // Bypass the gateway's SWR cache. Never on cursor pages — those are already
+    // served live server-side, so the flag would only add noise.
+    if (fresh && !cur) parts.push("refresh=1");
     return `?${parts.join("&")}`;
   }, []);
 
@@ -62,10 +66,17 @@ export default function Feed() {
      the cache when the request fails (offline). The first page is cached on every
      successful load so a returning visitor never sees an empty feed. */
   const uid = user?._id || user?.id;
+  const lastRefreshKey = useRef(-1);
   useEffect(() => {
     const seq = ++reqSeq.current;
     const key = `feed:home:${filter.kind}:${filter.key}`;
     let settled = false; // the network (success OR failure) has produced a result
+
+    // User intent = a fresh mount (page load / reload, posts still null) or a
+    // refreshKey bump (refresh button, pull-to-refresh, return-to-tab). Those must
+    // BYPASS the gateway cache; a plain chip switch may still ride it.
+    const userIntent = posts === null || refreshKey !== lastRefreshKey.current;
+    lastRefreshKey.current = refreshKey;
 
     if (posts === null) {
       // Instant paint from cache — only applied while the network is still in
@@ -78,7 +89,7 @@ export default function Feed() {
     }
 
     dok.feed
-      .home(buildQuery(filter, null))
+      .home(buildQuery(filter, null, shouldForceFresh(key, userIntent)))
       .then((d) => {
         settled = true;
         if (seq !== reqSeq.current) return; // a newer chip tap superseded this payload
