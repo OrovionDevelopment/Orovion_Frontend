@@ -85,10 +85,17 @@ Discovery-first vertical feed: **true-random** global selection, **48-hour** wat
 suppression, per-session de-dup, and an exhaustion loop that recycles watched reels.
 
 ```
-GET /api/reels/feed?sessionId=&specialty=&limit=10
+GET /api/reels/feed?sessionId=&cursor=&specialty=&limit=10
 ```
 - Omit `sessionId` (e.g. every time the user enters the Reel tab) → a **fresh**
-  session, returned in the response. Pass it back while scrolling to avoid repeats.
+  session, returned in the response.
+- ⚠️ **Pass back `sessionId` AND `cursor` together** on every continuation.
+  `cursor` is the numeric OFFSET into the frozen ranked list, echoed as
+  `nextCursor`. The server only continues a session when both are present —
+  `sessionId` on its own is ignored and the session is rebuilt from offset 0,
+  re-serving page 1 (`feedSession.service.js`). End of feed is
+  `nextCursor === null`; `exhausted` is only `!hasMore` and is **not** a stop
+  signal.
 
 **Response `data`:** `{ sessionId, reels: [ { …, author:{…isFollowing, connectionStatus} } ], hasMore, exhausted }`
 
@@ -114,12 +121,16 @@ Call when a reel is watched past 50% or for >10s. Upserts `reel_watch_history`
 // frontend (per reel, once threshold met)
 api.post(`/reels/${reelId}/watched`);
 // feed:
-let reelSession;
-async function loadReels() {
-  const d = await api.get(`/reels/feed?limit=10${reelSession ? `&sessionId=${reelSession}` : ''}`);
-  reelSession = d.sessionId; return d;          // d.exhausted → "replaying top reels"
+let reelSession, reelCursor;
+async function loadReels({ fresh = false } = {}) {
+  const q = new URLSearchParams({ limit: '10' });
+  if (!fresh && reelSession && reelCursor) { q.set('sessionId', reelSession); q.set('cursor', reelCursor); }
+  const d = await api.get(`/reels/feed?${q}`);
+  reelSession = d.sessionId;
+  reelCursor  = d.nextCursor ?? null;           // null → genuine end of feed
+  return d;                                     // d.exhausted → "replaying top reels"
 }
-function enterReelTab() { reelSession = undefined; return loadReels(); }   // always fresh
+function enterReelTab() { reelSession = reelCursor = undefined; return loadReels({ fresh: true }); }
 ```
 
 ---

@@ -72,14 +72,23 @@ const poll = setInterval(async () => {
   if (r.processingStatus === "FAILED")    { clearInterval(poll); toast("Transcode failed"); }
 }, 4000);
 
-// discovery feed: fresh session each tab entry, then reuse sessionId while scrolling
-let reelSession;
-async function loadReels() {
-  const d = await api.get(`/reels/feed?limit=10${reelSession ? `&sessionId=${reelSession}` : ""}`);
-  reelSession = d.sessionId;          // d.exhausted → "replaying top reels"
-  return d;
+// discovery feed: fresh session each tab entry, then page with sessionId + cursor.
+// ⚠️ `cursor` is REQUIRED on continuations. The server only slices the frozen
+// ranked list when BOTH sessionId and a non-zero cursor arrive; sessionId alone
+// makes it rebuild the session and re-serve page 1 (feedSession.service.js).
+let reelSession, reelCursor;
+async function loadReels({ fresh = false } = {}) {
+  const q = new URLSearchParams({ limit: "10" });
+  if (!fresh && reelSession && reelCursor) {
+    q.set("sessionId", reelSession);
+    q.set("cursor", reelCursor);       // numeric OFFSET into the ranked session
+  }
+  const d = await api.get(`/reels/feed?${q}`);
+  reelSession = d.sessionId;
+  reelCursor  = d.nextCursor ?? null;  // null → genuine end of feed
+  return d;                            // d.exhausted → "replaying top reels" (NOT a stop signal)
 }
-function enterReelTab() { reelSession = undefined; return loadReels(); }   // always fresh
+function enterReelTab() { reelSession = reelCursor = undefined; return loadReels({ fresh: true }); }
 await api.post(`/reels/${id}/view`);                       // view ping
 await api.post(`/reels/${id}/watched`);                    // when watched >50% or >10s
 ```
