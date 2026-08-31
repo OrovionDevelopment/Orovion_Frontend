@@ -210,6 +210,7 @@ function MedicineSheet({ med, onSave, onCancel }: { med: Medicine; onSave: (m: M
         </div>
         <Input label="Duration" value={m.duration} onChange={(v) => up({ duration: v })} placeholder="e.g. 5 days" />
         <Input label="Instructions" value={m.instructions} onChange={(v) => up({ instructions: v })} placeholder="Optional" />
+        <Input label="Test" value={m.test} onChange={(v) => up({ test: v })} placeholder="Recommended tests (optional), e.g. CBC" />
         <button onClick={() => onSave(m)} disabled={!m.name.trim()} className="btn-primary mt-4 w-full justify-center py-2.5 text-sm disabled:opacity-50">Save medicine</button>
       </div>
     </div>

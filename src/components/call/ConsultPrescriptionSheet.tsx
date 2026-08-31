@@ -79,6 +79,8 @@ export default function ConsultPrescriptionSheet({ requestId, onClose }: { reque
               </div>
               <input value={m.instructions} onChange={(e) => update(i, { instructions: e.target.value })} placeholder="Instructions (optional)"
                 className="w-full rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1.5 text-xs outline-none focus:border-brand-400" />
+              <input value={m.test} onChange={(e) => update(i, { test: e.target.value })} placeholder="Recommended tests (optional)"
+                className="mt-2 w-full rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1.5 text-xs outline-none focus:border-brand-400" />
             </div>
           ))}
         </div>
