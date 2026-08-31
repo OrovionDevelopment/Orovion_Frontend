@@ -102,13 +102,22 @@ export interface Medicine {
   beforeFood: boolean; // false = after food
   duration: string;
   instructions: string;
+  test: string; // recommended lab test(s), e.g. "CBC, LFT"
 }
 export const emptyMedicine = (): Medicine => ({
   name: "", strength: "", morning: false, afternoon: false, night: false,
-  beforeFood: false, duration: "", instructions: "",
+  beforeFood: false, duration: "", instructions: "", test: "",
 });
 export const dosagePattern = (m: Medicine) =>
   `${m.morning ? 1 : 0}-${m.afternoon ? 1 : 0}-${m.night ? 1 : 0}`;
+/** Human-readable frequency: the morning-afternoon-night pattern (+ before/after
+ * food) when meaningful, then the free-text instructions. */
+export const medicineFrequency = (m: Medicine): string => {
+  const parts: string[] = [];
+  if (dosagePattern(m) !== "0-0-0") parts.push(dosagePattern(m), m.beforeFood ? "before food" : "after food");
+  if (m.instructions.trim()) parts.push(m.instructions.trim());
+  return parts.join(" · ");
+};
 export function parseMedicine(j: any): Medicine {
   return {
     name: String(j?.name ?? ""),
@@ -119,6 +128,7 @@ export function parseMedicine(j: any): Medicine {
     beforeFood: j?.beforeFood === true,
     duration: String(j?.duration ?? ""),
     instructions: String(j?.instructions ?? ""),
+    test: String(j?.test ?? ""),
   };
 }
 

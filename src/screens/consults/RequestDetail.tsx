@@ -19,7 +19,7 @@ import {
 } from "@/lib/consultations/types";
 import { openRazorpayCheckout } from "@/lib/consultations/razorpay";
 import { StatusPill, AttachmentChip, FeeTable, Rating } from "@/components/consult/parts";
-import { dosagePattern } from "@/lib/consultations/types";
+import { PrescriptionTable } from "@/components/consult/PrescriptionTable";
 
 export default function RequestDetail() {
   const { requestId } = useParams<{ requestId: string }>();
@@ -367,17 +367,7 @@ export function ClinicalSummaryView({ req }: { req: ConsultationRequest }) {
       {cs.medicines.length > 0 && (
         <div className="mt-3">
           <p className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-ink-400"><Pill size={13} /> Prescription</p>
-          <div className="space-y-2">
-            {cs.medicines.map((m, i) => (
-              <div key={i} className="rounded-xl border border-ink-900/[.06] bg-surface p-3">
-                <p className="text-sm font-semibold text-ink-900">{m.name} {m.strength && <span className="font-normal text-ink-500">· {m.strength}</span>}</p>
-                <p className="mt-0.5 text-xs text-ink-500">
-                  {dosagePattern(m)} · {m.beforeFood ? "Before food" : "After food"}{m.duration ? ` · ${m.duration}` : ""}
-                </p>
-                {m.instructions && <p className="mt-0.5 text-xs text-ink-500">{m.instructions}</p>}
-              </div>
-            ))}
-          </div>
+          <PrescriptionTable medicines={cs.medicines} />
         </div>
       )}
       {cs.attachments.length > 0 && (
