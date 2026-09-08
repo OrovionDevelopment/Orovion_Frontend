@@ -1,12 +1,12 @@
 import { io, Socket } from "socket.io-client";
 import { dok, TOKENS } from "./api";
-import { socketUrl, onBackendChange } from "./backend";
+import { socketUrl } from "./backend";
 import { planReauth } from "./socketReauth";
 
 // Main realtime socket (notifications + chat). Lives in chat-service (5001) —
 // api-service has no Socket.IO server, so the socket URL must point at
-// chat-service (NEXT_PUBLIC_SOCKET_URL, or the *_RENDER/_AWS pair when the
-// backend runs on both deployments — see lib/backend.ts).
+// chat-service: NEXT_PUBLIC_SOCKET_URL, e.g. https://chat.orovion.com
+// (see lib/backend.ts).
 // Typed like callClient.ts's `callSocket`: `= null` alone makes TS infer the
 // type as `null`, which errored on every later use of this variable.
 let socket: Socket | null = null;
@@ -18,22 +18,6 @@ function socketOrigin() {
   return socketUrl(); // undefined => same origin via proxy
 }
 
-// Dual-deployment failover: when the app switches between Render and AWS,
-// re-point the existing manager at the new chat-service origin (same-origin
-// for a proxied deployment). socket.io reads io.uri on every (re)connect
-// attempt, so all registered event listeners survive the switch.
-onBackendChange((d) => {
-  const s = socket;
-  if (!s || typeof window === "undefined") return;
-  // `uri` is marked private in the typings but is the documented way to
-  // re-point a live manager, so the double cast is deliberate.
-  (s.io as unknown as { uri?: string }).uri = d.socketUrl || window.location.origin;
-  if (s.connected) {
-    s.disconnect();
-    s.connect();
-  }
-});
-
 export function getSocket(): Socket {
   if (socket) return socket;
 
@@ -41,8 +25,10 @@ export function getSocket(): Socket {
   // doesn't have to re-narrow the module-level `socket` inside each callback.
   const s: Socket = io(socketOrigin(), {
     autoConnect: false,
-    // Polling first, then upgrade to WebSocket — a websocket-only handshake is
-    // rejected by Render's edge / many proxies (the onrender.com WS failures).
+    // Polling first, then upgrade to WebSocket. This is socket.io's default and
+    // the resilient choice — KEEP IT. A websocket-only handshake is rejected by
+    // many corporate proxies and captive networks; Caddy upgrades either way, so
+    // switching to websocket-only would buy one round-trip and cost reachability.
     transports: ["polling", "websocket"],
     // Function form so every (re)connect sends the CURRENT token. A static
     // object snapshots the token once and goes stale after it rotates, which

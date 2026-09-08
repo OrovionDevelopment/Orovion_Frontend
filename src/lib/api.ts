@@ -1,5 +1,5 @@
 import axios from "axios";
-import { apiBase, resolveBackend, failover } from "./backend";
+import { apiBase } from "./backend";
 
 // --- Web client token transport (see backend docs: "Clients: mobile vs web") ---
 // access token: kept in memory only (re-minted on load via the refresh cookie)
@@ -63,10 +63,9 @@ export const api = axios.create({
 
 // Attach the right bearer token. /admin/* calls use the admin JWT; everything
 // else uses the product user access token (+ CSRF on cookie-auth calls).
-api.interceptors.request.use(async (cfg) => {
-  // Dual deployment (Render + AWS): the first request awaits the /health probe
-  // that picks the live backend; afterwards this is an already-settled promise.
-  await resolveBackend();
+api.interceptors.request.use((cfg) => {
+  // Re-read the base each request: it is cheap, and it keeps this correct if the
+  // origin is ever resolved later than module load.
   cfg.baseURL = `${apiBase()}/api`;
   const url = cfg.url || "";
   if (url.startsWith("/admin")) {
@@ -98,19 +97,6 @@ api.interceptors.response.use(
   async (error) => {
     const { config, response } = error;
     const url = config?.url || "";
-
-    // The active deployment (Render or AWS) may have gone down. A direct
-    // deployment dies as a network error (no response); a proxied one dies as
-    // a 502/503/504 from our own Next server. Re-probe both deployments, and
-    // if the live one changed, retry this request once against it.
-    const gatewayDown = response && [502, 503, 504].includes(response.status);
-    if ((!response || gatewayDown) && config && !config._failover && !axios.isCancel(error)) {
-      config._failover = true;
-      if (await failover()) {
-        config.baseURL = `${apiBase()}/api`;
-        return api(config);
-      }
-    }
 
     // Admin calls are self-contained: never fall through to the product user
     // refresh path. Refresh the admin JWT once on 401 (except on auth endpoints,

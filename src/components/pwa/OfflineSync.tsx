@@ -6,7 +6,7 @@ import { setReplayer, startOfflineSync } from "@/lib/offline-queue";
 
 /**
  * Boots the offline write queue: injects the HTTP replayer (the axios `api`, so
- * queued writes reuse auth-refresh, CSRF and failover) and starts the replay
+ * queued writes reuse auth-refresh and CSRF) and starts the replay
  * engine (drains on reconnect + periodically). Renders nothing. Runs in all
  * environments — it only replays real mutations the user made. See
  * src/lib/offline-queue.ts.
