@@ -67,6 +67,11 @@ export function useSearchParams(): [URLSearchParams, (next: any) => void] {
   return [(sp as unknown) as URLSearchParams, setSearchParams];
 }
 
+// Pathname only. Prefer this over useLocation() in anything mounted high in the
+// tree (e.g. the root layout): useLocation() also reads useSearchParams(), which
+// forces a CSR bail-out and breaks static prerendering of every page under it.
+export { usePathname };
+
 export function useLocation() {
   const pathname = usePathname() || "";
   const sp = useNextSearchParams();

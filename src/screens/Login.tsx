@@ -127,7 +127,12 @@ export default function Login() {
   if (!loading && user) return <Navigate to={isProfileComplete ? "/app" : "/onboarding"} replace />;
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+    // data-clarity-mask: /login is one of the few routes Microsoft Clarity is
+    // allowed to record (src/lib/clarity.ts), and this screen handles the email,
+    // phone, OTP and QR-login challenge. Masking is enforced HERE rather than via
+    // Clarity's dashboard masking mode, which a teammate could flip. Clicks and
+    // scroll still register, so heatmaps are unaffected — only content is hidden.
+    <div data-clarity-mask="true" className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       <NavArrows variant="floating" />
 
       {/* Brand panel */}

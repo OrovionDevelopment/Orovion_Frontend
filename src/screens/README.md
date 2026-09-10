@@ -71,6 +71,16 @@ the vertical swipe between reels. Auto-refresh is skipped unless the user is
 still on slide 0, so returning to the tab never yanks them out of a deep
 position. Needs no `refresh=1`: this path has no gateway cache.
 
+## `Login.tsx`
+
+Carries `data-clarity-mask="true"` on its root. `/login` is one of the few routes
+Microsoft Clarity records (`src/lib/clarity.ts`) and this screen handles email,
+phone, OTP and the QR-login challenge, so masking is enforced in our code rather
+than via Clarity's dashboard masking mode — which anyone with dashboard access
+could flip. Masking hides content only; clicks and scroll still register, so
+heatmaps are unaffected. Any new sensitive UI on a recorded route needs the same
+attribute.
+
 ## Others
 
 `Create.tsx`, `PostDetail.tsx`, `Profile.tsx`, `UserProfile.tsx`, `Explore.tsx`,

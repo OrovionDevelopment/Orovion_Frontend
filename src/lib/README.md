@@ -53,6 +53,20 @@ than inside a component, so it can be tested without React or a DOM.
   unbroken ~16ms stream, so its momentum tail slamming into the top can never
   self-trigger a refresh; a deliberate second flick, made after a pause, can.
 
+## Analytics
+
+- `clarity.ts` — the pure half of the Microsoft Clarity integration
+  (`isTrackablePath`, `clarityInitSnippet`, `isValidProjectId`); the DOM side is
+  `src/components/analytics/ClarityAnalytics.tsx`.
+
+  The route list is an **allowlist**, not a denylist, and that is load-bearing:
+  session replay captures the DOM, `/app/*` renders private clinician DMs, cases,
+  prescriptions and consult notes, and the operator console lives at a
+  server-only `ADMIN_PANEL_SLUG` this client code cannot know. Fail-closed means
+  a route added in future is untracked until someone adds it deliberately.
+  `isValidProjectId` exists because the id is interpolated into an **inline
+  script tag** — a malformed env value must never become executable code.
+
 ## Other
 
 `utils.ts`, `theme.ts`, `appearance.ts`, `schema.ts`, `seo.ts`, `faq.ts`,

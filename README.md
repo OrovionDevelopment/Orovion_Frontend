@@ -82,6 +82,29 @@ setup and an honest account of what code can and cannot do for ranking.
   on preview deployments so they don't emit production canonicals.
   `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` is optional (HTML-tag verification).
 
+## Analytics — Microsoft Clarity
+
+Heatmaps and session recordings, off by default. Set
+`NEXT_PUBLIC_CLARITY_PROJECT_ID` (clarity.microsoft.com → Settings → Overview)
+and **redeploy** — like every `NEXT_PUBLIC_*` value it is inlined at build time,
+so setting it in Vercel alone changes nothing until the next build. Leave it
+blank and the tag is never injected.
+
+Scope is restricted on purpose, because session replay captures the DOM and
+`/app/*` renders private clinician DMs, case studies, prescriptions and consult
+notes:
+
+- **Recorded:** `/` `/login` `/help` `/privacy` `/terms` `/mobile-app` `/team` `/team/*`
+- **Never:** `/app/*`, `/onboarding`, `/admin` and the secret `ADMIN_PANEL_SLUG` route
+
+The route list in `src/lib/clarity.ts` is an allowlist, so it is fail-closed — a
+route added later stays untracked until it is added there. The tag also boots
+cookie-less (`consentv2` with both storage types denied), so it sets no
+`_clck`/`_clsk` cookies and needs no consent banner today.
+
+Full reasoning, including why unmounting the script is *not* a sufficient guard:
+`src/components/analytics/README.md`.
+
 ## Notes / TODO to tighten later
 
 - `next.config.mjs` currently sets `typescript.ignoreBuildErrors` and `eslint.ignoreDuringBuilds`, and `tsconfig.json` is lenient — this kept the large JS→TS port building. Remove these and add real types incrementally.

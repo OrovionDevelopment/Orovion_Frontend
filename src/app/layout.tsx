@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "./providers";
 import JsonLd from "@/components/seo/JsonLd";
+import ClarityAnalytics from "@/components/analytics/ClarityAnalytics";
 import { organizationSchema, webSiteSchema } from "@/lib/schema";
 import { TEAM } from "@/lib/team";
 import { SITE_NAME, SITE_URL, DEFAULT_TITLE, DEFAULT_DESCRIPTION } from "@/lib/seo";
@@ -90,6 +91,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Providers>{children}</Providers>
+        {/* Microsoft Clarity — public marketing/auth routes only; never /app/*.
+            No-op unless NEXT_PUBLIC_CLARITY_PROJECT_ID is set. */}
+        <ClarityAnalytics />
       </body>
     </html>
   );

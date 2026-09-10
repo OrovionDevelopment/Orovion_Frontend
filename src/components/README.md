@@ -1,10 +1,14 @@
 # src/components
 
 Shared UI. Screens (`src/screens/`) compose these; route files never do.
-Everything here is `"use client"`. Subfolders group by domain (`call/`,
-`comments/`, `consult/`, `landing/`, `legal/`, `profile/`, `pwa/`, `search/`,
-`seo/`, `settings/`), `layout/` holds the app shell, and `ui/` holds the
-primitives (`Primitives`, `Overlays`, `Skeletons`, `Toast`, `FollowButton`, …).
+Everything here is `"use client"`. Subfolders group by domain (`analytics/`,
+`call/`, `comments/`, `consult/`, `landing/`, `legal/`, `profile/`, `pwa/`,
+`search/`, `seo/`, `settings/`), `layout/` holds the app shell, and `ui/` holds
+the primitives (`Primitives`, `Overlays`, `Skeletons`, `Toast`, `FollowButton`, …).
+
+`analytics/` holds **third-party** tags (Microsoft Clarity) and has its own
+README — note it is scoped to public routes and must never load inside `/app/*`.
+Orovion's own admin dashboard is `src/features/analytics/`, a different thing.
 
 Follow the theming rules in the root `CLAUDE.md`: `bg-surface` for cards and
 sheets (never `bg-white`), the flipping `ink` ramp for content, and the static
