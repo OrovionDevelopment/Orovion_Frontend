@@ -61,14 +61,13 @@ describe("avatarColor", () => {
 });
 
 describe("reelPoster", () => {
-  const mp4 = "https://res.cloudinary.com/x/video/upload/v1/r/a.mp4";
-  it("derives a Cloudinary .jpg frame from the video url", () => {
-    expect(reelPoster({ videoUrl: mp4 })).toBe("https://res.cloudinary.com/x/video/upload/v1/r/a.jpg");
+  const mp4 = "https://cdn.example.com/videos/v1/a.mp4";
+  it("derives a .jpg frame from the video url", () => {
+    expect(reelPoster({ videoUrl: mp4 })).toBe("https://cdn.example.com/videos/v1/a.jpg");
   });
-  it("ignores thumbnailUrl/posterUrl when they point at a video file (the backend's current bug)", () => {
-    // backend sends every media field as the same .mp4 — an <img> can't render that
+  it("ignores thumbnailUrl/posterUrl when they point at a video file", () => {
     expect(reelPoster({ videoUrl: mp4, thumbnailUrl: mp4, posterUrl: mp4 }))
-      .toBe("https://res.cloudinary.com/x/video/upload/v1/r/a.jpg");
+      .toBe("https://cdn.example.com/videos/v1/a.jpg");
   });
   it("prefers a real image thumbnail when the backend provides one", () => {
     expect(reelPoster({ videoUrl: mp4, thumbnailUrl: "https://cdn/x/cover.jpg" })).toBe("https://cdn/x/cover.jpg");

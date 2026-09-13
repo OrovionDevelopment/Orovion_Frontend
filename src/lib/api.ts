@@ -491,7 +491,7 @@ export const dok = {
 
     // ── Prescription (generated after a consultation is COMPLETED) ─────────────
     getPrescription: (requestId) => unwrap(api.get(`/v2/consultations/prescription/${requestId}`)), // { prescription } | 404
-    // PDF bytes streamed from our authenticated backend (Cloudinary blocks raw PDFs).
+    // PDF bytes streamed from our authenticated backend.
     prescriptionPdfBlob: (requestId) =>
       api.get(`/v2/consultations/prescription/${requestId}/pdf/file`, { responseType: "blob" }).then((r) => r.data as Blob),
 

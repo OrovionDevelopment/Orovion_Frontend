@@ -386,7 +386,7 @@ export function ClinicalSummaryView({ req }: { req: ConsultationRequest }) {
 }
 
 // Downloads the backend-generated prescription PDF (streamed from our authenticated
-// API — Cloudinary blocks raw PDFs) and saves it via a temporary object URL.
+// API) and saves it via a temporary object URL.
 function DownloadPrescriptionButton({ requestId }: { requestId: string }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);

@@ -97,13 +97,13 @@
   --grad-mid: #63c0b4;
   --grad-to: #85d4c8;
 
-  --surface: 22 30 32;      /* raised card over the page */
+  --surface: 14 14 14;      /* raised card over the page */
 
-  --ink-0: 11 16 17;
-  --ink-25: 14 19 20;
-  --ink-50: 16 22 23;       /* page background */
-  --ink-100: 26 34 36;      /* hover fills */
-  --ink-200: 38 48 51;      /* strong dividers */
+  --ink-0: 0 0 0;
+  --ink-25: 8 8 8;
+  --ink-50: 0 0 0;          /* page background (pure #000000 black) */
+  --ink-100: 20 20 20;      /* hover fills */
+  --ink-200: 34 34 34;      /* strong dividers */
   --ink-300: 60 74 77;
   --ink-400: 125 140 143;   /* placeholders, muted icons */
   --ink-500: 159 176 178;   /* secondary text */

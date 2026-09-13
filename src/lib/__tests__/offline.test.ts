@@ -22,7 +22,7 @@ describe("swStrategyFor", () => {
 
   it("bypasses cross-origin (fonts / CDN / firebase / media)", () => {
     expect(req({ url: "https://fonts.gstatic.com/x.woff2" })).toBe("bypass");
-    expect(req({ url: "https://res.cloudinary.com/img.jpg" })).toBe("bypass");
+    expect(req({ url: "https://cdn.orovion.com/img.jpg" })).toBe("bypass");
   });
 
   it("cache-first for immutable hashed build output", () => {

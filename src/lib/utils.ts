@@ -54,11 +54,8 @@ export const roleLabel = (r) =>
 const isImageUrl = (u) => /\.(jpe?g|png|webp|gif|avif)(\?|#|$)/i.test(u || "");
 
 /**
- * Poster frame for a reel/Pulse. The backend currently points `thumbnailUrl`/
- * `posterUrl` at the raw Cloudinary .mp4 (not an image), so an <img> with those
- * fails to load. Cloudinary serves a real JPEG frame when the video extension is
- * swapped to .jpg, so derive that — and only trust the thumbnail fields when they
- * actually are an image (e.g. if the backend starts returning real posters).
+ * Poster frame for a reel/Pulse. Returns real image thumbnail if present,
+ * otherwise derives a .jpg frame from the video extension.
  */
 export function reelPoster(r) {
   if (!r) return undefined;
