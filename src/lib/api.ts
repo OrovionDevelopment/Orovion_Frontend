@@ -337,15 +337,16 @@ export const dok = {
     deleteComment: (id, commentId) => unwrap(api.delete(`/reels/${id}/comments/${commentId}`)),
   },
   follows: {
-    follow: (id) => unwrap(api.post(`/follows/${id}`)), // public → { status:"following" } · private → { status:"requested" }
+    // Always immediate — private accounts were removed, so there is no
+    // "requested" outcome any more. → { status:"following", viewerFollowingCount, targetFollowersCount }
+    follow: (id) => unwrap(api.post(`/follows/${id}`)),
     unfollow: (id) => unwrap(api.delete(`/follows/${id}`)),
-    check: (id) => unwrap(api.get(`/follows/check/${id}`)), // { status, isFollowing, isFollowedBy, isRequested }
+    check: (id) => unwrap(api.get(`/follows/check/${id}`)), // { isFollowing, isFollowedBy }
     followers: (userId, q = "") => unwrap(api.get(`/follows/${userId}/followers${q}`)), // { followers: [...] }
     following: (userId, q = "") => unwrap(api.get(`/follows/${userId}/following${q}`)), // { following: [...] }
-    withdraw: (id) => unwrap(api.delete(`/follows/requests/${id}`)), // silent request withdrawal
-    requests: (q = "") => unwrap(api.get(`/follows/requests${q}`)), // incoming (private accounts)
-    acceptRequest: (requesterId) => unwrap(api.post(`/follows/requests/${requesterId}/accept`)),
-    rejectRequest: (requesterId) => unwrap(api.post(`/follows/requests/${requesterId}/reject`)),
+    // withdraw / requests / acceptRequest / rejectRequest were removed with
+    // private accounts. The server keeps those routes mounted as no-ops for one
+    // release so an older cached bundle degrades quietly instead of erroring.
     suggestions: () => unwrap(api.get("/follows/suggestions?limit=15")),
   },
   search: {

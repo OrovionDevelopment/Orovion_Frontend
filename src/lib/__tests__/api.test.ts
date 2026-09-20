@@ -82,8 +82,20 @@ describe("dok — existing post + network contracts still hold", () => {
     await dok.network.accept("req1");
     expect(last()).toMatchObject({ method: "put", url: "/network/request/req1/accept" });
 
-    await dok.follows.acceptRequest("u1");
-    expect(last()).toMatchObject({ method: "post", url: "/follows/requests/u1/accept" });
+    // dok.follows.acceptRequest / rejectRequest / withdraw / requests were removed
+    // along with private accounts — a follow is never pending approval now.
+    expect((dok.follows as any).acceptRequest).toBeUndefined();
+    expect((dok.follows as any).rejectRequest).toBeUndefined();
+    expect((dok.follows as any).withdraw).toBeUndefined();
+    expect((dok.follows as any).requests).toBeUndefined();
+  });
+
+  it("follow and unfollow hit the documented paths", async () => {
+    await dok.follows.follow("u1");
+    expect(last()).toMatchObject({ method: "post", url: "/follows/u1" });
+
+    await dok.follows.unfollow("u1");
+    expect(last()).toMatchObject({ method: "delete", url: "/follows/u1" });
   });
 });
 

@@ -42,6 +42,26 @@ Setup: `cp .env.example .env.local` and set the backend URL + Firebase keys. If 
 
 **API layer (`src/lib/api.ts`):** all backend calls go through the `dok` object — a flat endpoint map (`dok.posts.like(id)`, `dok.network.accept(id)`, …). Responses arrive in a `{ statusCode, success, message, data }` envelope that `unwrap` strips, so callers receive `data` directly. Add new endpoints here rather than calling axios from screens. Admin endpoints attach an `x-admin-key` header from localStorage (`setAdminKey`).
 
+**Follow / Connect (`src/lib/relationships.ts` + `src/lib/useFollowAction.ts`).**
+There are **no private accounts**: every profile is public, a follow is immediate
+and unilateral, and there is no `requested` state. States are
+`self | follow | following | connect | connecting | accept | message`.
+
+The button is rendered by three genuinely different layouts — the shared
+`components/ui/FollowButton.tsx` chip (post cards, reel cards, search, likes
+sheet), the `components/UserCard.tsx` list row, and `screens/UserProfile.tsx`'s
+two-control profile header. They stay separate, but **all three share
+`useFollowAction()`**, which owns the 500 ms debounce, the optimistic commit,
+the exact rollback, and the `followBus` broadcast. Put behaviour changes there,
+not in a layout.
+
+Two rules that are easy to break:
+- **Unfollow is silent** and always available — never hide it behind a connected
+  state. A connection survives an unfollow; the two are independent.
+- **Follow Back** in the notification tray renders off the server's live
+  `isFollowingSender` flag, never a stored one. That is what makes the button
+  vanish instead of becoming a dead click.
+
 **No mock/demo data:** the app is fully backed by the live API — there is no `src/data/mock.ts`, no demo mode, and no offline tour. Screens fetch from `dok` and render loading skeletons then empty states when there's nothing (never fake content). `useAuth()` still exposes a `demo` flag that is permanently `false` (legacy guards are harmless no-ops); don't reintroduce mock fallbacks.
 
 **Theming (light/dark).** `darkMode: "class"`; themed tokens are CSS variables in `src/app/globals.css` (`:root` = light, `.dark` = dark) consumed by `tailwind.config.js`. Rules when writing UI:

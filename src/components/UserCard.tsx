@@ -4,32 +4,36 @@ import { useNavigate } from "@/lib/router";
 import { Avatar, Verified } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
 import { compact, roleLabel } from "@/lib/utils";
-import { dok } from "@/lib/api";
-import { sendOrQueue } from "@/lib/offline-queue";
-import { reconcileFollowState } from "@/lib/relationships";
-import { broadcastFollow, onFollowChange } from "@/lib/followBus";
+import { reconcileFollowState, type RelationshipState } from "@/lib/relationships";
+import { onFollowChange } from "@/lib/followBus";
+import { useFollowAction } from "@/lib/useFollowAction";
 
 // Single morphing action button used on suggestion cards (vs. the two distinct
 // buttons on a full profile). Tap the avatar/name to open the profile; tap the
-// button to follow/unfollow (or request/withdraw on private accounts).
+// button to follow/unfollow.
+//
+// Private accounts were removed, so there is no request/withdraw path: a follow
+// is immediate, and Connect is valid even for someone the viewer does not follow
+// yet (the server creates that edge first). Debounce, optimistic commit, rollback
+// and the cross-surface broadcast come from useFollowAction, shared with
+// FollowButton and the profile header.
 export default function UserCard({ user, action = "follow", demo, onAction }) {
   const nav = useNavigate();
   const toast = useToast();
   const id = user._id || user.id;
 
-  const initState =
+  const initState: RelationshipState =
     action === "connect"
-      ? (user.isRequested ? "requested" : "connect")
-      : (user.isFollowing ? "following" : user.isRequested ? "requested" : "follow");
+      ? (user.connectionStatus === "pending_outgoing" ? "connecting" : "connect")
+      : (user.isFollowing ? "following" : "follow");
 
-  const [state, setState] = useState(initState);
-  const [busy, setBusy] = useState(false);
+  const [state, setState] = useState<RelationshipState>(initState);
   const src = useRef(Math.random().toString(36).slice(2)); // ignore our own broadcast echo
   const stateRef = useRef(state);
   stateRef.current = state;
 
   // Re-sync if the suggestion list reloads with fresh relationship flags.
-  useEffect(() => { setState(initState); /* eslint-disable-next-line */ }, [id, user.isFollowing, user.isRequested]);
+  useEffect(() => { setState(initState); /* eslint-disable-next-line */ }, [id, user.isFollowing, user.connectionStatus]);
 
   // Resync when the same user is followed/unfollowed on another surface (connect cards opt out).
   useEffect(() => {
@@ -43,58 +47,34 @@ export default function UserCard({ user, action = "follow", demo, onAction }) {
 
   const openProfile = () => { if (id) nav(`/app/profile/${id}`); };
 
+  const action_ = useFollowAction({
+    userId: id,
+    commit: setState,
+    current: state,
+    source: src.current,
+    demo,
+    onError: (m) => toast?.error(m),
+  });
+  const busy = action_.busy;
+
   const handle = async () => {
     if (!id || busy) return;
-    const prev = state;
     onAction?.(user, state);
 
-    // Optimistic next state, then reconcile with the backend.
-    if (action === "connect") {
-      setState("requested");
-      if (demo) return;
-      setBusy(true);
-      // Offline-first: queued when offline, replayed on reconnect.
-      try { await sendOrQueue({ kind: "connect", method: "post", url: `/network/request/${id}`, dedupeKey: `connect:${id}` }); }
-      catch (e) { setState(prev); toast?.error(e?.response?.data?.message || "Couldn't send the request"); }
-      finally { setBusy(false); }
-      return;
-    }
+    if (action === "connect") { await action_.connect(); return; }
 
-    // follow action — toggle between follow / following / requested
-    if (prev === "follow") {
-      setState("following");
-      broadcastFollow(id, true, { source: src.current });
-      if (demo) return;
-      setBusy(true);
-      try { const d = await dok.follows.follow(id); if (d?.status === "requested") { setState("requested"); broadcastFollow(id, false, { requested: true, source: src.current }); } }
-      catch { setState("follow"); broadcastFollow(id, false, { source: src.current }); toast?.error("Couldn't follow — try again"); }
-      finally { setBusy(false); }
-    } else if (prev === "following") {
-      setState("follow");
-      broadcastFollow(id, false, { source: src.current });
-      if (demo) return;
-      setBusy(true);
-      try { await dok.follows.unfollow(id); }
-      catch { setState("following"); broadcastFollow(id, true, { source: src.current }); toast?.error("Couldn't unfollow — try again"); }
-      finally { setBusy(false); }
-    } else if (prev === "requested") {
-      setState("follow");
-      broadcastFollow(id, false, { source: src.current });
-      if (demo) return;
-      setBusy(true);
-      try { await dok.follows.withdraw(id); }
-      catch { setState("requested"); broadcastFollow(id, false, { requested: true, source: src.current }); toast?.error("Couldn't withdraw the request"); }
-      finally { setBusy(false); }
-    }
+    // Follow surfaces are a plain two-state toggle.
+    if (state === "follow") await action_.follow(true);
+    else if (state === "following") await action_.unfollow();
   };
 
   const labels = {
     follow: "Follow",
     following: "Following",
-    requested: "Requested",
-    connect: "+ Connect",
+    connect: "Connect",
+    connecting: "Connecting",
   };
-  const isActive = state === "following" || state === "requested";
+  const isActive = state === "following" || state === "connecting";
 
   return (
     <div className="flex items-center gap-3">

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Check, X, Loader2, Users } from "lucide-react";
-import { useNavigate } from "@/lib/router";
+import { useNavigate, useSearchParams } from "@/lib/router";
 import { Avatar, Verified, Skeleton } from "@/components/ui/Primitives";
 import FollowButton from "@/components/ui/FollowButton";
 import { useAuth } from "@/context/AuthContext";
@@ -16,7 +16,13 @@ export default function Network() {
   const { demo } = useAuth();
   const nav = useNavigate();
   const toast = useToast();
-  const [tab, setTab] = useState("Suggestions");
+  // A connection-request notification deep-links straight here with ?tab=requests
+  // so the decision the notification asked for is the first thing on screen.
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const t = (params?.get?.("tab") || "").toLowerCase();
+    return TABS.find((x) => x.toLowerCase() === t) || "Suggestions";
+  });
   const [discover, setDiscover] = useState(null);
   const [requests, setRequests] = useState(null);
   const [connections, setConnections] = useState(null);

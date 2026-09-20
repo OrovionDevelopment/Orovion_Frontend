@@ -22,7 +22,9 @@ export function routeFor(n) {
       if (senderId) return `/app/profile/${senderId}`;
       break;
     case "connection_request":
-      return "/app/network";
+      // PRD: land on the Incoming Requests view itself, not the Network page's
+      // default Suggestions tab — the notification is asking for a decision.
+      return "/app/network?tab=requests";
     case "message":
       return "/app/messages";
     case "verification_approved": case "verification_rejected":

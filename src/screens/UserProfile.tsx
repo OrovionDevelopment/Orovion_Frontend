@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Navigate } from "@/lib/router";
-import { ArrowLeft, MapPin, Share2, Lock, MoreHorizontal, ShieldOff, UserMinus, Mail, Phone, Languages as LangIcon, Briefcase, GraduationCap, Stethoscope, Activity, CalendarDays, Award, UserPlus, UserCheck, Clock, Link2, Loader2, MessageSquare } from "lucide-react";
+import { ArrowLeft, MapPin, Share2, UserX, MoreHorizontal, ShieldOff, UserMinus, Mail, Phone, Languages as LangIcon, Briefcase, GraduationCap, Stethoscope, Activity, CalendarDays, Award, UserPlus, UserCheck, Clock, Link2, Loader2, MessageSquare } from "lucide-react";
 import { Avatar, Verified, RoleBadge, Skeleton } from "@/components/ui/Primitives";
 import PostCard from "@/components/PostCard";
 import ShareSheet from "@/components/ShareSheet";
@@ -9,17 +9,17 @@ import MediaViewer from "@/components/profile/MediaViewer";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
-import { sendOrQueue } from "@/lib/offline-queue";
 import { compact, roleLabel } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { reconcileFollowState } from "@/lib/relationships";
 import { broadcastFollow, onFollowChange } from "@/lib/followBus";
+import { useFollowAction } from "@/lib/useFollowAction";
 
 /**
  * Another user's profile — the routing target for every DP / display-name tap
  * across feed cards, like lists, and comment rows. Renders the documented
  * third-party shape (docs/profile.md §9): { user, roleDetails, isFollowing,
- * isRequested, connectionStatus, … }, with the list-visibility privacy gate.
+ * connectionStatus, … }. Every profile is public — no visibility gate.
  */
 const yr = (d) => (d ? new Date(d).getFullYear() : "Now");
 const monthYear = (d) => (d ? new Date(d).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : null);
@@ -55,7 +55,6 @@ export default function UserProfile() {
             isSelf: u.isSelf ?? profile.isSelf,
             isFollowing: profile.isFollowing ?? rel.isFollowing ?? u.isFollowing,
             isFollowedBy: profile.isFollowedBy ?? rel.isFollowedBy ?? u.isFollowedBy,
-            isRequested: profile.isRequested ?? rel.isRequested ?? u.isRequested,
             connectionStatus: profile.connectionStatus ?? u.connectionStatus ?? rel.connectionStatus,
             connectionRequestId: profile.connectionRequestId ?? u.connectionRequestId,
           },
@@ -73,9 +72,11 @@ export default function UserProfile() {
     return (
       <div className="mx-auto max-w-2xl">
         <div className="card grid place-items-center gap-3 py-16 text-center">
-          <span className="grid h-14 w-14 place-items-center rounded-full bg-ink-900/[.05] text-ink-400"><Lock size={24} /></span>
+          <span className="grid h-14 w-14 place-items-center rounded-full bg-ink-900/[.05] text-ink-400"><UserX size={24} /></span>
           <p className="text-lg font-semibold text-ink-900">Profile unavailable</p>
-          <p className="text-sm text-ink-500">This account may be private, deactivated, or removed.</p>
+          {/* "private" is no longer a reason a profile can be unreachable — the
+              remaining causes are deactivation, removal, or a block either way. */}
+          <p className="text-sm text-ink-500">This account has been deactivated or removed, or one of you has blocked the other.</p>
           <button onClick={() => nav(-1)} className="btn-ghost px-5 py-2 text-sm">Go back</button>
         </div>
       </div>
@@ -88,17 +89,17 @@ export default function UserProfile() {
   const headline = u.professionalHeadline || u.headline || rd.mainSpecialization || rd.course || roleLabel(u.role);
   const place = [rd.hospitals?.[0]?.name || rd.institution, u.city].filter(Boolean).join(" · ");
   const since = monthYear(u.createdAt);
-  const isPrivate = Boolean(u.isPrivate);
-  const canViewLists = !isPrivate; // public, or a private account the viewer already follows (then byId returns full data)
+  // Private accounts were removed — every profile, its lists and its content are
+  // public, so there is no visibility gate here any more. The API still sends
+  // `isPrivate` (permanently false) until the cleanup release; nothing reads it.
   const patients = rd.patientVerificationCount;
 
   const uid = u.id || u._id;
   const listLink = (t) => `/app/connections?user=${uid}&tab=${t}&name=${encodeURIComponent(u.fullName || "")}`;
   const metrics = [
     { n: u.postsCount, label: "Posts" },
-    // Followers/Following open for any user when the privacy wall allows (§3B).
-    { n: u.followersCount, label: "Followers", to: canViewLists ? listLink("followers") : null },
-    { n: u.followingCount, label: "Following", to: canViewLists ? listLink("following") : null },
+    { n: u.followersCount, label: "Followers", to: listLink("followers") },
+    { n: u.followingCount, label: "Following", to: listLink("following") },
     // No backend endpoint for a third party's connections list — display-only.
     { n: u.connectionsCount, label: "Connections" },
   ];
@@ -163,12 +164,9 @@ export default function UserProfile() {
             </button>
           )}
 
-          {/* interactive metrics with the private-account visibility gate (§3B) */}
+          {/* interactive metrics — always open, every profile is public */}
           <div className="mt-4 border-t border-ink-900/[.06] pt-4">
-            {!canViewLists && (
-              <p className="mb-2 flex items-center gap-1.5 text-xs text-ink-400"><Lock size={12} /> Followers, following and connections are hidden on this private account.</p>
-            )}
-            <div className={cn("flex", !canViewLists && "opacity-60")}>
+            <div className="flex">
               {metrics.map((m) =>
                 m.to ? (
                   <button key={m.label} onClick={() => nav(m.to)} className="press flex flex-1 flex-col items-start rounded-xl px-2 py-1.5 text-left transition hover:bg-ink-900/[.03]">
@@ -188,17 +186,10 @@ export default function UserProfile() {
       </div>
 
       {/* role-based detail sections */}
-      {!isPrivate && <Details user={u} rd={rd} />}
-      {isPrivate && (
-        <div className="mt-5 card flex flex-col items-center gap-2 py-12 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-full bg-ink-900/[.05] text-ink-400"><Lock size={22} /></span>
-          <p className="font-semibold text-ink-900">This account is private</p>
-          <p className="max-w-xs text-sm text-ink-500">Follow {u.fullName?.split(" ")[0]} to see their posts, reels and network.</p>
-        </div>
-      )}
+      <Details user={u} rd={rd} />
 
       {/* content (the 6-tab archive grid is a later build; public posts shown for now) */}
-      {!isPrivate && (
+      {(
         <div className="mt-5 space-y-5">
           {posts === null ? (
             <Skeleton className="h-48 w-full rounded-2xl" />
@@ -278,16 +269,28 @@ function ProfileMenu({ user, demo, onChanged }) {
   );
 }
 
-/* Two independent profile actions (PRD State A/B): a Follow button and a Connect button,
-   both visible on the profile (unlike the single morphing button used on feed/reel cards). */
+/* The profile's two independent actions: a Follow control and a networking
+   control, both visible at once (unlike the single morphing button on feed and
+   reel cards).
+
+   PRD State C: once the viewer follows, the networking control takes priority —
+   but Following is deliberately RETAINED beside it rather than replaced, so the
+   unfollow action is never taken away from the user.
+
+   Private accounts are gone: no Requested state on the follow side. The connect
+   side keeps a pending state, because a connection genuinely does await the
+   other person's approval. */
 function ProfileActions({ user, demo }) {
   const nav = useNavigate();
   const toast = useToast();
   const id = user.id || user._id;
 
-  const initFollow = user.isFollowing ? "following" : user.isRequested ? "requested" : "follow";
+  const initFollow = user.isFollowing ? "following" : "follow";
   const cs = user.connectionStatus;
-  const initConnect = cs === "connected" ? "message" : cs === "pending_outgoing" ? "requested" : cs === "pending_incoming" ? "accept" : "connect";
+  const initConnect = cs === "connected" ? "message"
+    : cs === "pending_outgoing" ? "connecting"
+    : cs === "pending_incoming" ? "accept"
+    : "connect";
 
   const [fState, setF] = useState(initFollow);
   const [cState, setC] = useState(initConnect);
@@ -295,67 +298,57 @@ function ProfileActions({ user, demo }) {
   const src = useRef(Math.random().toString(36).slice(2)); // ignore our own broadcast echo
   const fRef = useRef(fState);
   fRef.current = fState;
-  const reqIdRef = useRef(user.connectionRequestId || null); // connection request id, captured for cancel
+  const reqIdRef = useRef(user.connectionRequestId || null); // captured for cancel
 
-  // re-sync if the viewed user changes (block/unfollow from the 3-dot menu, navigation, etc.)
-  useEffect(() => { setF(initFollow); setC(initConnect); /* eslint-disable-next-line */ }, [id, user.isFollowing, user.isRequested, cs]);
+  // re-sync if the viewed user changes (block/unfollow from the 3-dot menu, nav)
+  useEffect(() => { setF(initFollow); setC(initConnect); /* eslint-disable-next-line */ }, [id, user.isFollowing, cs]);
 
-  // Resync when this user is followed/unfollowed on another surface (post, reel, suggestion card).
+  // Resync when this user is followed/unfollowed on another surface.
   useEffect(() => {
     return onFollowChange((d) => {
       if (d.source === src.current || String(d.id) !== String(id)) return;
-      const next = reconcileFollowState(fRef.current, d, true); // the profile's Follow button is a plain toggle
-      if (next !== fRef.current) { setF(next); if (next === "follow") setC("connect"); } // unfollow resets the connect side
+      const next = reconcileFollowState(fRef.current, d, true); // plain toggle here
+      if (next !== fRef.current) {
+        setF(next);
+        // Unfollowing resets the networking side ONLY while nothing is
+        // established. An accepted connection survives an unfollow — the two are
+        // independent relationships — so "message" must not be torn down here.
+        if (next === "follow" && cState !== "message") setC("connect");
+      }
     });
-  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, cState]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const followAction = useFollowAction({
+    userId: id, commit: setF, current: fState, source: src.current, demo,
+    onError: (m) => toast?.error(m),
+  });
+  const connectAction = useFollowAction({
+    userId: id, commit: setC, current: cState, source: src.current, demo,
+    onError: (m) => toast?.error(m),
+  });
 
   if (!id) return null;
 
-  /* follow side */
-  const doFollow = async () => {
-    setF("following");
-    broadcastFollow(id, true, { source: src.current });
-    if (demo) return;
-    try { const d = await dok.follows.follow(id); if (d?.status === "requested") { setF("requested"); broadcastFollow(id, false, { requested: true, source: src.current }); } }
-    catch { setF("follow"); broadcastFollow(id, false, { source: src.current }); toast?.error("Couldn't follow — try again"); }
-  };
-  const doUnfollow = async () => {
-    setF("follow");
-    broadcastFollow(id, false, { source: src.current });
-    if (demo) return;
-    try { await dok.follows.unfollow(id); } catch { setF("following"); broadcastFollow(id, true, { source: src.current }); toast?.error("Couldn't unfollow"); }
-  };
-  const doWithdraw = async () => {
-    setF("follow");
-    broadcastFollow(id, false, { source: src.current });
-    if (demo) return;
-    try { await dok.follows.withdraw(id); } catch { setF("requested"); broadcastFollow(id, false, { requested: true, source: src.current }); toast?.error("Couldn't withdraw the request"); }
-  };
+  /* follow side — a plain two-state toggle */
+  const doFollow = () => followAction.follow(true);
+  const doUnfollow = () => followAction.unfollow();
 
   /* connect side */
   const doConnect = async () => {
-    setC("requested"); // optimistic — pending outgoing request
-    if (demo) return;
-    try {
-      // Offline-first: queued when offline (replayed on reconnect); when it runs
-      // now, `r.data` is the unwrapped payload so we can still capture the id.
-      const r = await sendOrQueue({ kind: "connect", method: "post", url: `/network/request/${id}`, dedupeKey: `connect:${id}` });
-      const d = r.data as any;
-      reqIdRef.current = d?.request?.id || d?.request?._id || d?.requestId || d?.connectionRequest?.id || reqIdRef.current;
-    } catch (e) { setC("connect"); toast?.error(e?.response?.data?.message || "Couldn't send the connection request"); }
+    // Connecting implies following; the server creates that edge itself, so the
+    // follow control is mirrored optimistically here rather than waiting a round
+    // trip to catch up.
+    if (fRef.current === "follow") setF("following");
+    await connectAction.connect();
   };
-  // Tap the pending "Requested" button to cancel the outgoing request (docs/feed.md §5: cancel = reject).
+  // Tap the pending control to cancel the outgoing request.
   const doCancelConnect = async () => {
     setC("connect");
     if (demo) return;
     try { await dok.network.reject(reqIdRef.current || user.connectionRequestId || id); reqIdRef.current = null; }
-    catch { setC("requested"); toast?.error("Couldn't cancel the request"); }
+    catch { setC("connecting"); toast?.error("Couldn't cancel the request"); }
   };
-  const doAccept = async () => {
-    setC("message");
-    if (demo) return;
-    try { await dok.network.accept(user.connectionRequestId || id); } catch { setC("accept"); toast?.error("Couldn't accept the request"); }
-  };
+  const doAccept = () => connectAction.accept(user.connectionRequestId);
   const doMessage = async () => {
     if (demo) { nav("/app/messages"); return; }
     setBusyMsg(true);
@@ -367,29 +360,54 @@ function ProfileActions({ user, demo }) {
     finally { setBusyMsg(false); }
   };
 
-  const FOLLOW = {
-    follow: { label: "Follow", icon: UserPlus, onClick: doFollow, cls: "btn-primary" },
-    following: { label: "Following", icon: UserCheck, onClick: doUnfollow, cls: "btn-outline" },
-    requested: { label: "Requested", icon: Clock, onClick: doWithdraw, cls: "btn-outline" },
-  }[fState];
+  // Not following: Follow owns the whole row as the single primary action.
+  // Following: the networking control takes the primary slot and Following
+  // shrinks to a secondary control beside it — still one tap from unfollow,
+  // which State B requires to always be available.
+  const isFollowing = fState === "following";
 
   const CONNECT = {
-    connect: { label: "Connect", icon: Link2, onClick: doConnect, cls: "btn-outline" },
-    requested: { label: "Requested", icon: Clock, onClick: doCancelConnect, cls: "btn-outline", title: "Tap to cancel request" },
-    accept: { label: "Accept", icon: UserCheck, onClick: doAccept, cls: "btn-primary" },
-    message: { label: "Message", icon: MessageSquare, onClick: doMessage, cls: "btn-ghost", busy: busyMsg },
-  }[cState];
+    connect:    { label: "Connect",    icon: Link2,          onClick: doConnect,       cls: "btn-primary" },
+    connecting: { label: "Connecting", icon: Clock,          onClick: doCancelConnect, cls: "btn-outline", title: "Tap to cancel request" },
+    accept:     { label: "Accept",     icon: UserCheck,      onClick: doAccept,        cls: "btn-primary" },
+    message:    { label: "Message",    icon: MessageSquare,  onClick: doMessage,       cls: "btn-primary", busy: busyMsg },
+  }[cState] || { label: "Connect", icon: Link2, onClick: doConnect, cls: "btn-primary" };
 
-  const FIcon = FOLLOW.icon;
   const CIcon = CONNECT.icon;
+
+  if (!isFollowing) {
+    return (
+      <div className="mt-4">
+        <button
+          onClick={doFollow}
+          disabled={followAction.busy}
+          className={cn("btn-primary w-full py-2.5 text-sm")}
+        >
+          <UserPlus size={16} /> Follow
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4 flex gap-2">
-      <button onClick={FOLLOW.onClick} className={cn(FOLLOW.cls, "flex-1 py-2.5 text-sm")}>
-        <FIcon size={16} /> {FOLLOW.label}
+      <button
+        onClick={CONNECT.onClick}
+        disabled={!CONNECT.onClick || CONNECT.busy || connectAction.busy}
+        title={CONNECT.title}
+        className={cn(CONNECT.cls, "flex-1 py-2.5 text-sm")}
+      >
+        {CONNECT.busy ? <Loader2 size={16} className="animate-spin" /> : <CIcon size={16} />} {CONNECT.label}
       </button>
-      <button onClick={CONNECT.onClick} disabled={!CONNECT.onClick || CONNECT.busy} title={CONNECT.title} className={cn(CONNECT.cls, "flex-1 py-2.5 text-sm")}>
-        {CONNECT.busy || CONNECT.spin ? <Loader2 size={16} className="animate-spin" /> : <CIcon size={16} />} {CONNECT.label}
+      <button
+        onClick={doUnfollow}
+        disabled={followAction.busy}
+        title="Tap to unfollow"
+        aria-label={`Unfollow ${user.fullName || "this user"}`}
+        className="btn-outline shrink-0 px-4 py-2.5 text-sm text-ink-600 transition hover:border-danger-500/40 hover:text-danger-600"
+      >
+        {followAction.busy ? <Loader2 size={16} className="animate-spin" /> : <UserCheck size={16} />}
+        <span className="hidden sm:inline">Following</span>
       </button>
     </div>
   );

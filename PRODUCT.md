@@ -26,7 +26,7 @@ Trusted, clinical, calm. Premium through precision and motion quality, not ornam
 
 1. **Attribution before content** — author identity, verification, and specialty render first and identically everywhere.
 2. **Optimistic, never dishonest** — interactions respond instantly, roll back visibly with a toast when the server disagrees.
-3. **One state machine, every surface** — Follow → Requested/Following → Connect → Connecting → Message renders identically in feed headers, like lists, and profiles.
+3. **One state machine, every surface** — Follow → Following → Connect → Connecting → Message renders identically in feed headers, like lists, and profiles. There is no Requested state: accounts are public and every follow is immediate. On a profile the networking action owns the primary slot once the viewer follows, with Following retained beside it so unfollow is never more than one tap away.
 4. **Motion conveys state** — 150–300ms ease-out transitions for sheets, collapses, and toggles; no decorative choreography. Reduced-motion users get crossfades.
 5. **Earned familiarity** — standard affordances (bottom sheets, chips, pills) executed precisely; no invented controls.
 

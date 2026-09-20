@@ -24,8 +24,10 @@ describe("routeFor — notification deep-link routing", () => {
     expect(routeFor({ type: "connection_accepted", sender: { _id: "u2" } })).toBe("/app/profile/u2");
   });
 
-  it("routes connection requests to the network page", () => {
-    expect(routeFor({ type: "connection_request" })).toBe("/app/network");
+  it("routes connection requests to the network page's Requests tab", () => {
+    // The notification asks for an Accept/Ignore decision, so it must land on
+    // that view rather than the Network page's default Suggestions tab.
+    expect(routeFor({ type: "connection_request" })).toBe("/app/network?tab=requests");
   });
 
   it("routes messages and verification updates", () => {

@@ -63,7 +63,7 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
     items: [
       ["How do I report a post or user?", "Use Report in the post's ⋯ menu and pick a category. Reports go to the moderation team, who can remove content network-wide. Reporting is anonymous."],
       ["How do I block someone?", "From their profile's menu choose Block. They won't be able to see your profile, message you, or appear in your feed. Manage your block list in Settings → Privacy."],
-      ["How do private accounts work?", "When your account is private, new followers must send a request you approve from Network → Requests before they see your content."],
+      ["Can I make my account private?", "No. Every Orovion profile is public: anyone can see your posts, pulses and follower lists, and anyone can follow you without approval. If you do not want someone seeing your profile or reaching you, block them from their profile menu."],
     ],
   },
 ];

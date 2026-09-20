@@ -115,13 +115,17 @@ export default function Notifications() {
   const act = async (n, action) => {
     const id = nid(n);
     const m = n.meta || {};
-    const requesterId = m.requesterId || uid(n.sender);
+    // `followerId` is what the new follow notifications carry; the others are
+    // legacy shapes kept so historical rows still act correctly.
+    const requesterId = m.followerId || m.requesterId || uid(n.sender);
     const requestId = m.connectionRequestId || m.requestId || requesterId;
     setBusy((b) => ({ ...b, [id]: action }));
     try {
       if (!demo) {
-        if (action === "confirmed") await dok.follows.acceptRequest(requesterId);
-        else if (action === "followedback") { await dok.follows.follow(requesterId); broadcastFollow(requesterId, true); }
+        // "followedback" is a plain follow. If the viewer had since unfollowed
+        // the person, or the original follow was withdrawn, this still does the
+        // right thing — it is not an "accept" of anything, just a follow.
+        if (action === "followedback") { await dok.follows.follow(requesterId); broadcastFollow(requesterId, true); }
         else if (action === "accepted") await dok.network.accept(requestId);
         else if (action === "ignored") await dok.network.reject(requestId);
       }
@@ -181,7 +185,16 @@ export default function Notifications() {
 function Row({ n, onOpen, onAct, acted, busy }) {
   const meta = ICON[n.type] || { i: Bell, c: "bg-ink-900/5 text-ink-500" };
   const Icon = meta.i;
-  const isFollowReq = n.type === "follow_request";
+  // A plain `follow` tile offers Follow Back — but ONLY while the viewer does not
+  // already follow them back. `isFollowingSender` is computed live by the server
+  // on every read rather than stored on the notification, so the button
+  // disappears on its own once the follow-back happens (no dead click), and a
+  // click that races an unfollow elsewhere is just an ordinary follow.
+  //
+  // `follow_request` is legacy: private accounts were removed, so no new ones are
+  // created. Historical rows still render, and are treated as a plain follow.
+  const isFollow = n.type === "follow" || n.type === "follow_request";
+  const canFollowBack = isFollow && n.isFollowingSender === false;
   const isConnReq = n.type === "connection_request";
 
   return (
@@ -191,26 +204,29 @@ function Row({ n, onOpen, onAct, acted, busy }) {
         <span className={cn("absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full ring-2 ring-surface", meta.c)}><Icon size={12} className={n.type.includes("like") ? "fill-current" : ""} /></span>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm text-ink-900"><span className="font-semibold">{n.sender?.fullName}</span> {n.sender?.isVerified && <Verified size={11} />} <span className="text-ink-600">{n.body || n.title}</span></p>
+        <p className="text-sm text-ink-900">
+          <span className="font-semibold">{n.sender?.fullName}</span>
+          {n.sender?.isVerified && <> <Verified size={11} /></>}
+          {n.sender?.uniqueUsername && (
+            <span className="ml-1 text-ink-400">@{n.sender.uniqueUsername}</span>
+          )}{" "}
+          <span className="text-ink-600">{n.body || n.title}</span>
+        </p>
         {n.meta?.text && <p className="mt-1 rounded-lg bg-ink-900/[.03] px-3 py-2 text-sm text-ink-600">{n.meta.text}</p>}
         <p className="mt-1 text-xs text-ink-400">{timeAgo(n.createdAt)}</p>
 
         {/* inline relationship actions */}
-        {(isFollowReq || isConnReq) && (
+        {(canFollowBack || isConnReq) && (
           <div className="mt-2.5 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            {acted === "confirmed" ? (
-              <button onClick={() => onAct(n, "followedback")} disabled={busy} className="btn-outline h-[30px] flex items-center gap-1 px-3 text-xs">
-                {busy === "followedback" ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />} Follow back
-              </button>
-            ) : acted === "followedback" ? (
+            {acted === "followedback" ? (
               <span className="inline-flex h-[30px] items-center gap-1 rounded-full bg-brand-50 px-3 text-xs font-bold text-brand-700"><Check size={13} /> Following</span>
             ) : acted === "accepted" ? (
               <span className="inline-flex h-[30px] items-center gap-1 rounded-full bg-emerald-50 px-3 text-xs font-bold text-emerald-600"><Check size={13} /> Connected</span>
             ) : acted === "ignored" ? (
               <span className="text-xs text-ink-400">Ignored</span>
-            ) : isFollowReq ? (
-              <button onClick={() => onAct(n, "confirmed")} disabled={busy} className="btn-primary h-[30px] flex items-center gap-1 px-3.5 text-xs">
-                {busy === "confirmed" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Confirm
+            ) : canFollowBack ? (
+              <button onClick={() => onAct(n, "followedback")} disabled={busy} className="btn-outline h-[30px] flex items-center gap-1 px-3 text-xs">
+                {busy === "followedback" ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />} Follow back
               </button>
             ) : (
               <>

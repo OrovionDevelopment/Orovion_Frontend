@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const SECTIONS = [
   { key: "account", icon: User, label: "Account", desc: "Name, headline, contact" },
-  { key: "privacy", icon: Lock, label: "Privacy", desc: "Visibility & calls" },
+  { key: "privacy", icon: Lock, label: "Privacy", desc: "Calls & blocked accounts" },
   { key: "devices", icon: Smartphone, label: "Sessions & devices", desc: "Logged-in devices" },
   { key: "notifications", icon: Bell, label: "Notifications", desc: "What you get pinged about" },
   { key: "appearance", icon: Palette, label: "Appearance", desc: "Theme, colors, chat & fonts" },
@@ -258,8 +258,10 @@ function Privacy() {
 
   const CALLS = [{ v: "everyone", l: "Everyone" }, { v: "connections", l: "Connections" }, { v: "nobody", l: "Nobody" }];
   return (
-    <Card title="Visibility & calls" className="bg-narvik dark:bg-ink-100">
-      <Toggle icon={Eye} label="Private account" desc="Only approved followers see your full profile" on={p.profileVisibility === "private"} onChange={(v) => update({ profileVisibility: v ? "private" : "public" })} />
+    <Card title="Calls" className="bg-narvik dark:bg-ink-100">
+      {/* The "Private account" toggle was removed: every profile on Orovion is
+          public. Followers, following, posts and pulses are visible to anyone,
+          and a follow never needs approval. */}
       <div>
         <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink-700"><Globe size={15} className="text-ink-400" /> Who can call you</p>
         <div className="flex gap-2">
