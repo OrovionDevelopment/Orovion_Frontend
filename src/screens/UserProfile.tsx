@@ -375,40 +375,56 @@ function ProfileActions({ user, demo }) {
 
   const CIcon = CONNECT.icon;
 
-  if (!isFollowing) {
-    return (
-      <div className="mt-4">
-        <button
-          onClick={doFollow}
-          disabled={followAction.busy}
-          className={cn("btn-primary w-full py-2.5 text-sm")}
-        >
-          <UserPlus size={16} /> Follow
-        </button>
-      </div>
-    );
-  }
+  // BOTH controls are always present. Only their EMPHASIS swaps with state:
+  //
+  //   not following  →  Follow is primary, Connect sits beside it as secondary
+  //   following      →  the networking action takes primary, Following steps back
+  //
+  // Connect is deliberately available to a non-follower: the server creates the
+  // follow edge itself before sending the request (sendConnectionRequest ->
+  // ensureFollow), so one tap does both and the pair can never end up connected
+  // without following. Hiding it here would strand that capability and force two
+  // taps for something the backend already handles in one.
+  const FollowControl = isFollowing ? (
+    <button
+      onClick={doUnfollow}
+      disabled={followAction.busy}
+      title="Tap to unfollow"
+      aria-label={`Unfollow ${user.fullName || "this user"}`}
+      className="btn-outline shrink-0 px-4 py-2.5 text-sm text-ink-600 transition hover:border-danger-500/40 hover:text-danger-600"
+    >
+      {followAction.busy ? <Loader2 size={16} className="animate-spin" /> : <UserCheck size={16} />}
+      <span className="hidden sm:inline">Following</span>
+    </button>
+  ) : (
+    <button
+      onClick={doFollow}
+      disabled={followAction.busy}
+      className="btn-primary flex-1 py-2.5 text-sm"
+    >
+      {followAction.busy ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />} Follow
+    </button>
+  );
+
+  const ConnectControl = (
+    <button
+      onClick={CONNECT.onClick}
+      disabled={!CONNECT.onClick || CONNECT.busy || connectAction.busy}
+      title={CONNECT.title}
+      className={cn(
+        // Primary only once following — before that, Follow owns the primary slot
+        // (PRD State A) and Connect is the secondary option.
+        isFollowing ? CONNECT.cls : "btn-outline",
+        "flex-1 py-2.5 text-sm",
+      )}
+    >
+      {CONNECT.busy || connectAction.busy ? <Loader2 size={16} className="animate-spin" /> : <CIcon size={16} />} {CONNECT.label}
+    </button>
+  );
 
   return (
     <div className="mt-4 flex gap-2">
-      <button
-        onClick={CONNECT.onClick}
-        disabled={!CONNECT.onClick || CONNECT.busy || connectAction.busy}
-        title={CONNECT.title}
-        className={cn(CONNECT.cls, "flex-1 py-2.5 text-sm")}
-      >
-        {CONNECT.busy ? <Loader2 size={16} className="animate-spin" /> : <CIcon size={16} />} {CONNECT.label}
-      </button>
-      <button
-        onClick={doUnfollow}
-        disabled={followAction.busy}
-        title="Tap to unfollow"
-        aria-label={`Unfollow ${user.fullName || "this user"}`}
-        className="btn-outline shrink-0 px-4 py-2.5 text-sm text-ink-600 transition hover:border-danger-500/40 hover:text-danger-600"
-      >
-        {followAction.busy ? <Loader2 size={16} className="animate-spin" /> : <UserCheck size={16} />}
-        <span className="hidden sm:inline">Following</span>
-      </button>
+      {isFollowing ? <>{ConnectControl}{FollowControl}</> : <>{FollowControl}{ConnectControl}</>}
     </div>
   );
 }
