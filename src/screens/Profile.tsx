@@ -162,12 +162,15 @@ export default function Profile() {
           )}
           {subtitle && <p className="mt-2 flex items-center gap-1.5 text-sm text-ink-500"><Building2 size={14} className="shrink-0 text-ink-400" /> {subtitle}</p>}
 
-          {/* credential strip — uniform, refined pills */}
+          {/* Credential strip — uniform, refined pills. Clinical credentials lead;
+              "Member since" is the weakest signal, so it trails the row. Keeping it
+              last (not merely second) is what keeps the date on the right even when
+              the experience pill is present. */}
           {(since || (user.role === "doctor" && (patients != null || yearsExp != null))) && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {since && <MetaPill icon={CalendarDays}>Member since {since}</MetaPill>}
-              {user.role === "doctor" && patients != null && <MetaPill icon={Activity}>{compact(patients)} patients verified</MetaPill>}
+              {user.role === "doctor" && patients != null && <MetaPill icon={Activity}>{compact(patients)} consultations on Orovion</MetaPill>}
               {user.role === "doctor" && yearsExp != null && <MetaPill icon={Stethoscope}>{yearsExp} yrs experience</MetaPill>}
+              {since && <MetaPill icon={CalendarDays}>Member since {since}</MetaPill>}
             </div>
           )}
 

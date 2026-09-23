@@ -2,7 +2,7 @@
 import { NavLink, useNavigate, Link, useLocation, Navigate } from "@/lib/router";
 import {
   Home, Clapperboard, Users, MessageSquare,
-  Bell, Bookmark, Search, Plus, LogOut, Settings, Video, BarChart3,
+  Bookmark, Search, Plus, LogOut, Settings, Video, BarChart3,
 } from "lucide-react";
 import { Avatar, Logo, Verified, Spinner } from "@/components/ui/Primitives";
 import NavArrows from "@/components/ui/NavArrows";
@@ -17,7 +17,9 @@ const NAV = [
   { to: "/app/consults", icon: Video, label: "Consults" },
   { to: "/app/network", icon: Users, label: "Network" },
   { to: "/app/messages", icon: MessageSquare, label: "Messages" },
-  { to: "/app/notifications", icon: Bell, label: "Notifications" },
+  // No Notifications row on purpose: <NotificationBell /> in the topbar owns that
+  // entry point (and the unread badge) and navigates to /app/notifications, so a
+  // sidebar duplicate would be a second, unbadged link to the same page.
   { to: "/app/saved", icon: Bookmark, label: "Saved" },
 ];
 

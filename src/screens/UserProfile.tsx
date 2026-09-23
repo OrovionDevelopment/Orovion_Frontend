@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Navigate } from "@/lib/router";
-import { ArrowLeft, MapPin, Share2, UserX, MoreHorizontal, ShieldOff, UserMinus, Mail, Phone, Languages as LangIcon, Briefcase, GraduationCap, Stethoscope, Activity, CalendarDays, Award, UserPlus, UserCheck, Clock, Link2, Loader2, MessageSquare } from "lucide-react";
+import { ArrowLeft, MapPin, Share2, UserX, MoreHorizontal, ShieldOff, UserMinus, Mail, Phone, Languages as LangIcon, Briefcase, GraduationCap, Activity, CalendarDays, Award, UserPlus, UserCheck, Clock, Link2, Loader2, MessageSquare } from "lucide-react";
 import { Avatar, Verified, RoleBadge, Skeleton } from "@/components/ui/Primitives";
 import PostCard from "@/components/PostCard";
 import ShareSheet from "@/components/ShareSheet";
@@ -144,7 +144,7 @@ export default function UserProfile() {
               <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-400">
                 <span className="flex items-center gap-1.5"><CalendarDays size={13} /> Joined {since}</span>
                 {u.role === "doctor" && patients != null && (
-                  <span className="flex items-center gap-1.5 font-semibold text-brand-700"><Activity size={13} /> {compact(patients)} patients verified</span>
+                  <span className="flex items-center gap-1.5 font-semibold text-brand-700"><Activity size={13} /> {compact(patients)} consultations on Orovion</span>
                 )}
               </p>
             )}
@@ -154,15 +154,9 @@ export default function UserProfile() {
           {/* Follow + Connect — two distinct buttons on the profile (vs. one morphing button on cards) */}
           {!u.isSelf && <ProfileActions user={u} demo={demo} />}
 
-          {/* Request a consultation — ungated entry into the consult booking flow (doctors only) */}
-          {!u.isSelf && u.role === "doctor" && (
-            <button
-              onClick={() => nav(`/app/consults/request/${u._id || u.id}`)}
-              className="btn-primary mt-2.5 w-full justify-center py-2.5 text-sm"
-            >
-              <Stethoscope size={16} /> Request consultation
-            </button>
-          )}
+          {/* No consult CTA here on purpose: booking is entered from the Consults tab
+              (components/consult/parts.tsx -> DoctorCard), so the profile stays a
+              profile rather than a sales surface. */}
 
           {/* interactive metrics — always open, every profile is public */}
           <div className="mt-4 border-t border-ink-900/[.06] pt-4">

@@ -280,18 +280,62 @@ function Privacy() {
 
 /* ───────────────────────── Sessions & devices ───────────────────────── */
 function Devices() {
-  const { demo } = useAuth();
-  const [list, setList] = useState(null);
+  const { demo, logout } = useAuth();
+  const nav = useNavigate();
+  // "loading" | "ok" | "linked" (this device signed in by QR) | "error"
+  const [status, setStatus] = useState("loading");
+  const [list, setList] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
 
-  const load = () => dok.auth.sessions().then((d) => setList(d.sessions || d || [])).catch(() => setList([]));
+  // GET /auth/sessions is primary-only: a device that signed in by scanning a QR
+  // code is a SECONDARY session and gets a 403 ("Secondary devices cannot view
+  // other sessions"). That is deliberate, but it must NOT be swallowed — treating
+  // the 403 as an empty list renders "No other active sessions", which tells the
+  // user they have no other devices when their phone is almost certainly signed in.
+  const load = () =>
+    dok.auth.sessions()
+      .then((d) => { setList(d.sessions || d || []); setStatus("ok"); })
+      .catch((e) => setStatus(e?.response?.status === 403 ? "linked" : "error"));
   useEffect(() => { if (!demo) load(); }, [demo]);
 
   const revoke = async (id) => { setBusy(true); try { await dok.auth.revokeSession(id); await load(); } finally { setBusy(false); } };
   const logoutAll = async () => { setBusy(true); try { await dok.auth.logoutAll(); await load(); } finally { setBusy(false); } };
 
   if (demo) return <DemoNote />;
-  if (!list) return <Card><RowsSkeleton count={2} /></Card>;
+  if (status === "loading") return <Card><RowsSkeleton count={2} /></Card>;
+
+  if (status === "linked") {
+    return (
+      <Card title="This device">
+        <div className="flex gap-3 rounded-xl border border-ink-900/[.06] bg-ink-900/[.02] p-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600"><Smartphone size={18} /></span>
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold text-ink-900">Signed in from a QR scan</p>
+            <p className="text-sm leading-relaxed text-ink-500">
+              You linked this browser by scanning a code with your phone. For your security a linked
+              device can't view or manage your other sessions.
+            </p>
+            <p className="text-sm leading-relaxed text-ink-500">
+              To see every signed-in device, open <span className="font-semibold text-ink-700">Settings → Sessions &amp; devices</span> on the phone you scanned with.
+            </p>
+          </div>
+        </div>
+        <button onClick={async () => { await logout(); nav("/"); }} className="btn-outline w-full py-2.5 text-sm">
+          <LogOut size={16} /> Log out this device
+        </button>
+      </Card>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <Card title="Logged-in devices">
+        <p className="text-sm text-ink-500">We couldn't load your devices just now.</p>
+        <button onClick={() => { setStatus("loading"); load(); }} className="btn-outline w-full py-2.5 text-sm">Try again</button>
+      </Card>
+    );
+  }
+
   return (
     <Card title="Logged-in devices">
       {list.length === 0 && <p className="text-sm text-ink-500">No other active sessions.</p>}
