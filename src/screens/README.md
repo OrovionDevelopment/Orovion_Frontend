@@ -105,3 +105,18 @@ attribute.
 `Onboarding.tsx`, `Login.tsx`, `Landing.tsx`, `Admin.tsx`, `HashtagWorkspace.tsx`,
 `MobileAppPage.tsx`, `TeamPage.tsx`, `TeamMemberPage.tsx`, `CallDebug.tsx`,
 plus `consults/` and `legal/`.
+
+## Feed session handling (`Feed.tsx`, `Explore.tsx`)
+
+Both screens send a feed `sessionId` (see `src/lib/feedSession.ts`) and store the
+one the server returns. `Feed.tsx` rotates its session **only** on a refresh
+gesture — the same `userIntent` that sets `refresh=1` (mount/reload,
+pull-to-refresh, return-to-tab) — never on a chip switch or a cursor page, since
+rotating mid-pagination would re-serve posts the user already scrolled past.
+
+`Explore.tsx` rotates on entry; it has no pagination to preserve. It uses the
+`explore` scope, never `home` — all three feed routes share one media pipeline, so
+a shared session would let the two feeds hide each other's content.
+
+`Feed.tsx` also refuses to overwrite a populated offline cache with an empty
+response (`shouldWriteFeedCache`).

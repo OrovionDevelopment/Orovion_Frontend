@@ -8,8 +8,9 @@ import { Avatar } from "@/components/ui/Primitives";
 import { PostFeedSkeleton } from "@/components/ui/Skeletons";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
-import { readCache, writeCache } from "@/lib/offline-cache";
+import { readCache, writeCache, shouldWriteFeedCache } from "@/lib/offline-cache";
 import { shouldForceFresh } from "@/lib/feedFreshness";
+import { getFeedSessionId, setFeedSessionId, rotateFeedSession } from "@/lib/feedSession";
 import { sendOrQueue } from "@/lib/offline-queue";
 import { cn, roleLabel } from "@/lib/utils";
 import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
@@ -35,6 +36,10 @@ export default function Feed() {
   const [refreshKey, setRefreshKey] = useState(0); // bumped to re-pull the feed from page 1
   const sentinel = useRef(null);
   const reqSeq = useRef(0);
+  // Mirrors `posts` for reads inside async callbacks, where the effect closure
+  // would otherwise see a stale value.
+  const postsRef = useRef(null);
+  useEffect(() => { postsRef.current = posts; }, [posts]);
 
   const pendingRefresh = useRef(null);
   const refresh = useCallback(() => {
@@ -56,6 +61,11 @@ export default function Feed() {
     if (f.kind === "specialty") parts.push(`specialty=${encodeURIComponent(f.key)}`);
     if (f.kind === "type") parts.push(`type=${f.key}`);
     if (cur) parts.push(`cursor=${encodeURIComponent(cur)}`);
+    // Echo this tab's session so media keeps ONE served-set per session instead
+    // of the shared bucket that used to accumulate every post and empty the feed.
+    // Absent on the first load of a tab — the server mints one and returns it.
+    const sess = getFeedSessionId("home");
+    if (sess) parts.push(`sessionId=${encodeURIComponent(sess)}`);
     // Bypass the gateway's SWR cache. Never on cursor pages — those are already
     // served live server-side, so the flag would only add noise.
     if (fresh && !cur) parts.push("refresh=1");
@@ -80,6 +90,13 @@ export default function Feed() {
     const userIntent = posts === null || refreshKey !== lastRefreshKey.current;
     lastRefreshKey.current = refreshKey;
 
+    // A refresh gesture (mount/reload, pull-to-refresh, return-to-tab) discards
+    // the session so the server mints a fresh one and the served-set resets —
+    // this is what makes a refresh actually surface new content. Deliberately
+    // NOT done on a chip switch or a cursor page: rotating per request would
+    // break cross-page dedup and multiply Redis keys.
+    if (userIntent) rotateFeedSession("home");
+
     if (posts === null) {
       // Instant paint from cache — only applied while the network is still in
       // flight, so a fast live response is never overwritten by stale cache.
@@ -92,19 +109,36 @@ export default function Feed() {
 
     dok.feed
       .home(buildQuery(filter, null, shouldForceFresh(key, userIntent)))
-      .then((d) => {
+      .then(async (d) => {
         settled = true;
         if (seq !== reqSeq.current) return; // a newer chip tap superseded this payload
+        setFeedSessionId("home", d.sessionId); // server-minted on an establishing load
         const list = d.feed || d.posts || [];
         if (!list.length) {
           logFeedEmpty("feed", "home feed load", {
             filter: `${filter.kind}:${filter.key}`, hasMore: Boolean(d.hasMore), forcedFresh: userIntent,
           });
         }
+        // Never let an empty response wipe a good cached page — that turned a
+        // transient empty result into a blank feed even on the instant paint.
+        //
+        // The in-memory ref is NOT sufficient to decide this: on a cold mount it
+        // is still null until the IndexedDB read resolves, and a cold
+        // indexedDB.open() can lose the race to a warm HTTP round trip. Checking
+        // only the ref would then see "nothing to lose" and overwrite a page that
+        // is very much still on disk. Only the empty path pays the extra read.
+        if (list.length) {
+          writeCache(uid, key, list);
+        } else {
+          const onDisk = await readCache(uid, key).catch(() => null);
+          if (shouldWriteFeedCache(list, (onDisk?.data as any[]) ?? postsRef.current)) {
+            writeCache(uid, key, list);
+          }
+        }
+        if (seq !== reqSeq.current) return; // the await above yielded — re-check
         setPosts(list);
         setHasMore(Boolean(d.hasMore));
         setCursor(d.nextCursor || null);
-        writeCache(uid, key, list); // refresh the offline cache (first page only)
       })
       .catch(async (err) => {
         settled = true;
@@ -139,6 +173,7 @@ export default function Feed() {
       try {
         const d = await dok.feed.home(buildQuery(filter, cursor));
         if (seq !== reqSeq.current) return;
+        setFeedSessionId("home", d.sessionId);
         setPosts((p) => [...(p || []), ...(d.feed || d.posts || [])]);
         setHasMore(Boolean(d.hasMore));
         setCursor(d.nextCursor || null);

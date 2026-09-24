@@ -36,6 +36,23 @@ export function writeCache<T>(userId: string | null | undefined, key: string, da
   return idbSet(cacheKey(userId, key), { data, cachedAt: Date.now() } satisfies CacheEntry<T>);
 }
 
+/**
+ * Should an incoming list replace what is already cached?
+ *
+ * Guards one specific regression: the feed writes its result to the cache on
+ * every load, so a single empty response would overwrite a good cached page with
+ * `[]` — and the instant offline paint (which exists precisely so a returning
+ * visitor never sees a blank feed) would then render nothing. An empty result is
+ * far more often a transient upstream condition than a real "you have no
+ * content", so it must never destroy known-good data.
+ *
+ * Empty over empty/nothing is fine — there is nothing to lose.
+ */
+export function shouldWriteFeedCache(next: unknown[], prev: unknown[] | null | undefined): boolean {
+  if (next.length > 0) return true;
+  return !(prev && prev.length > 0);
+}
+
 /** Drop all cached data (call on logout). */
 export function clearOfflineCache(): Promise<void> {
   return idbClear();

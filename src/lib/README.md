@@ -93,3 +93,27 @@ than inside a component, so it can be tested without React or a DOM.
 `webrtcService.ts`, `offline-queue.ts`, `consultations/`.
 
 Tests live in `src/lib/__tests__/` and run under vitest (`npm test`).
+
+## `feedSession.ts` — per-tab feed session id
+
+The client half of media's feed-dedup contract. media keys its "already served"
+set on a session id; when the client sends none it mints one and returns it, and
+this module stores it in `sessionStorage` (per-tab, so two tabs get independent
+served-sets) and echoes it on the next request.
+
+**Rotation is the whole design.** `rotateFeedSession(scope)` must be called *only*
+on an explicit refresh gesture — pull-to-refresh, reload, return-to-tab. Rotating
+per request would break cross-page dedup and multiply Redis keys under a
+`noeviction` policy. Keeping it forever is what caused the blank-feed bug.
+
+`home` and `explore` are separate scopes; sharing one would let each feed hide the
+other's content.
+
+Every access is guarded for SSR (no `window`) and Safari private mode (storage
+throws) and degrades to `null` — the server then simply mints a new id.
+
+## `offline-cache.ts` — `shouldWriteFeedCache`
+
+Guards the instant offline paint: an empty feed response must never overwrite a
+non-empty cached page, or a transient empty result turns into a persistently blank
+feed. Empty-over-empty is fine.
