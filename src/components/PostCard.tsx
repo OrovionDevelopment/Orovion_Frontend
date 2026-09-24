@@ -37,7 +37,7 @@ const normalizeMedia = (post) => {
   return items;
 };
 
-export default function PostCard({ post, demo, onRemoved, onSavedChange }) {
+export default function PostCard({ post, demo, onRemoved, onSavedChange, flush = false }) {
   const nav = useNavigate();
   const toast = useToast();
   const { user: me } = useAuth();
@@ -192,7 +192,10 @@ export default function PostCard({ post, demo, onRemoved, onSavedChange }) {
   return (
     <div className={cn("collapse-row", collapsed && "collapsed")}>
       <div>
-        <article className="card overflow-hidden animate-fade-up">
+        {/* `flush`: the home feed renders one continuous divided panel (the parent
+            owns the hairlines via divide-y), so the row drops the card's rounding,
+            border and shadow. Every other surface still gets the standard card. */}
+        <article className={cn("overflow-hidden animate-fade-up", flush ? "bg-surface" : "card")}>
           {/* ---------- attribution header ---------- */}
           <div className="flex items-start gap-3 p-4">
             <button onClick={openProfile} className="press shrink-0" aria-label={`View ${a.fullName}'s profile`}>

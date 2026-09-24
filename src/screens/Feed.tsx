@@ -17,6 +17,15 @@ import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
 import { logFeedError, logFeedEmpty } from "@/lib/diagnostics";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 
+/** Post types the composer can launch. Typed so `label` stays a string. */
+const COMPOSER_SHORTCUTS: { icon: any; label: string }[] = [
+  { icon: PenLine, label: "Post" },
+  { icon: Stethoscope, label: "Case" },
+  { icon: FileText, label: "Research" },
+  { icon: Clapperboard, label: "Pulse" },
+];
+
+
 /**
  * Home feed (docs/feed.md §1) — loads the unified multi-specialty feed.
  */
@@ -202,19 +211,31 @@ export default function Feed() {
         {/* Health-professional stats strip (app parity, mobile only) */}
         {user?.role === "doctor" && <DoctorStatsStrip />}
 
-        {/* Composer */}
-        <div className="card flex items-center gap-3 p-4">
-          <Avatar user={user} size={42} />
-          <button onClick={() => nav("/app/create")} className="flex-1 rounded-full bg-ink-900/[.04] px-4 py-3 text-left text-sm text-ink-400 transition hover:bg-ink-900/[.07]">
-            Share a case, paper or update…
-          </button>
-        </div>
-        <div className="card flex items-center justify-around p-1.5">
-          {[[PenLine, "Post"], [Stethoscope, "Case"], [FileText, "Research"], [Clapperboard, "Pulse"]].map(([Icon, label]) => (
-            <button key={label} onClick={() => nav("/app/create")} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium text-ink-600 transition hover:bg-brand-50 hover:text-brand-700">
-              <Icon size={18} /> <span className="hidden sm:inline">{label}</span>
+        {/* Composer — one block, not two stacked cards. The prompt reads as a line
+            the user is about to type into, and the type shortcuts sit beneath it as
+            icons rather than a second full-width card competing for attention. */}
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <Avatar user={user} size={42} />
+            <button onClick={() => nav("/app/create")} className="flex-1 truncate text-left text-[17px] text-ink-400 transition hover:text-ink-500">
+              Share a case, paper or update…
             </button>
-          ))}
+          </div>
+          <div className="mt-3 flex items-center gap-1 pl-[54px]">
+            {COMPOSER_SHORTCUTS.map(({ icon: Icon, label }) => (
+              <button
+                key={label}
+                onClick={() => nav("/app/create")}
+                title={label}
+                aria-label={`Create ${label}`}
+                className="press grid h-9 w-9 place-items-center rounded-full text-brand-600 transition hover:bg-brand-50"
+              >
+                <Icon size={18} />
+              </button>
+            ))}
+            <div className="flex-1" />
+            <button onClick={() => nav("/app/create")} className="btn-primary px-5 py-2 text-sm">Post</button>
+          </div>
         </div>
 
         {/* Posts */}
@@ -223,13 +244,18 @@ export default function Feed() {
         ) : posts.length === 0 ? (
           <Empty filter={filter} onReset={() => setFilter({ kind: "all", key: "all", label: "All" })} />
         ) : (
-          <div className={cn("space-y-5 transition-opacity duration-200", refreshing && "pointer-events-none opacity-50")}>
-            {posts.map((p, i) => (
-              <Fragment key={p._id || p.id}>
-                <PostCard post={p} demo={demo} onRemoved={removePost} />
-                {i === 1 && <PeopleYouMayKnow />}
-              </Fragment>
-            ))}
+          <div className={cn("transition-opacity duration-200", refreshing && "pointer-events-none opacity-50")}>
+            {/* One surface, hairline-divided rows. `divide-y` owns the separators so
+                the last row never carries a trailing border. */}
+            <div className="card overflow-hidden divide-y divide-ink-900/[.06]">
+              {posts.map((p, i) => (
+                <Fragment key={p._id || p.id}>
+                  <PostCard post={p} demo={demo} onRemoved={removePost} flush />
+                  {i === 1 && <PeopleYouMayKnow />}
+                </Fragment>
+              ))}
+            </div>
+            {/* Sentinel sits outside the panel so it never renders as an empty row. */}
             {hasMore && (
               <div ref={sentinel} className="grid place-items-center py-6">
                 {loadingMore && <Loader2 size={22} className="animate-spin text-brand-600" />}
@@ -313,7 +339,9 @@ function PeopleYouMayKnow() {
   if (!people || people.length === 0) return null;
 
   return (
-    <div className="card p-4 lg:hidden">
+    // Flush, not a card: this renders inside the feed's divided panel, and a card
+    // nested in a card is always wrong. The panel's divide-y supplies the separator.
+    <div className="bg-surface p-4 lg:hidden">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-bold text-ink-900">People you may know</h3>
         <button onClick={() => nav("/app/network")} className="text-xs font-semibold text-brand-700">See all</button>
