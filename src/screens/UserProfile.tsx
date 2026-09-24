@@ -6,6 +6,7 @@ import { Avatar, Verified, Skeleton } from "@/components/ui/Primitives";
 import PostCard from "@/components/PostCard";
 import ShareSheet from "@/components/ShareSheet";
 import MediaViewer from "@/components/profile/MediaViewer";
+import { MetaRow, CountRow } from "@/components/profile/ProfileIdentity";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
@@ -133,21 +134,21 @@ export default function UserProfile() {
             )}
           </div>
 
+          {/* Same order as your own profile: name, handle, bio, meta. */}
           <div className="mt-3">
-            {u.uniqueUsername && <p className="text-sm font-semibold text-brand-700">@{u.uniqueUsername}</p>}
-            <h1 className="mt-0.5 flex items-center gap-1.5 font-display text-2xl font-extrabold tracking-tight text-ink-900 text-balance">
-              {u.fullName} {u.isVerified && <Verified size={18} />}
+            <h1 className="flex items-center gap-1.5 font-display text-[26px] font-extrabold leading-tight tracking-tight text-ink-900 text-balance">
+              {u.fullName} {u.isVerified && <Verified size={20} />}
             </h1>
-            <p className="mt-1 text-[15px] leading-snug text-ink-700">{headline}</p>
-            {place && <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-500"><MapPin size={13} /> {place}</p>}
-            {since && (
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-400">
-                <span className="flex items-center gap-1.5"><CalendarDays size={13} /> Joined {since}</span>
-                {u.role === "doctor" && patients != null && (
-                  <span className="flex items-center gap-1.5 font-semibold text-brand-700"><Activity size={13} /> {compact(patients)} Consultations on Orovion</span>
-                )}
-              </p>
-            )}
+            {u.uniqueUsername && <p className="mt-0.5 text-sm text-ink-500">@{u.uniqueUsername}</p>}
+            {headline && <p className="mt-2.5 text-[15px] font-semibold leading-snug text-brand-700">{headline}</p>}
+            <MetaRow
+              className="mt-2.5"
+              items={[
+                place && { key: "where", icon: MapPin, text: place },
+                u.role === "doctor" && patients != null && { key: "consults", icon: Activity, text: `${compact(patients)} Consultations on Orovion` },
+                since && { key: "since", icon: CalendarDays, text: `Joined ${since}` },
+              ]}
+            />
           </div>
 
           {/* Follow + Connect — two distinct buttons on the profile (vs. one morphing button on cards) */}
@@ -157,24 +158,13 @@ export default function UserProfile() {
               (components/consult/parts.tsx -> DoctorCard), so the profile stays a
               profile rather than a sales surface. */}
 
-          {/* interactive metrics — always open, every profile is public */}
-          <div className="mt-4 border-t border-ink-900/[.06] pt-4">
-            <div className="flex">
-              {metrics.map((m) =>
-                m.to ? (
-                  <button key={m.label} onClick={() => nav(m.to)} className="press flex flex-1 flex-col items-start rounded-xl px-2 py-1.5 text-left transition hover:bg-ink-900/[.03]">
-                    <b className="font-display text-lg font-extrabold tabular-nums text-ink-900">{compact(m.n || 0)}</b>
-                    <span className="text-xs text-ink-500">{m.label}</span>
-                  </button>
-                ) : (
-                  <div key={m.label} className="flex flex-1 flex-col items-start px-2 py-1.5">
-                    <b className="font-display text-lg font-extrabold tabular-nums text-ink-900">{compact(m.n || 0)}</b>
-                    <span className="text-xs text-ink-500">{m.label}</span>
-                  </div>
-                )
-              )}
-            </div>
-          </div>
+          {/* Counts sit directly under the identity block, as on your own profile.
+              A count with no list endpoint renders as plain text rather than a
+              button that would do nothing when pressed. */}
+          <CountRow
+            className="mt-3"
+            counts={metrics.map((m) => ({ label: m.label, n: m.n, onClick: m.to ? () => nav(m.to) : undefined }))}
+          />
         </div>
       </div>
 

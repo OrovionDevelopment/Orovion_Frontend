@@ -9,6 +9,7 @@ import ReelViewer from "@/components/ReelViewer";
 import ShareSheet from "@/components/ShareSheet";
 import PeopleSheet from "@/components/profile/PeopleSheet";
 import MediaViewer from "@/components/profile/MediaViewer";
+import { MetaRow, CountRow } from "@/components/profile/ProfileIdentity";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
 import { readCache, writeCache } from "@/lib/offline-cache";
@@ -145,8 +146,9 @@ export default function Profile() {
             </div>
           </div>
 
-          {user.uniqueUsername && <p className="mt-3 text-[13px] font-semibold tracking-wide text-brand-600">@{user.uniqueUsername}</p>}
-          <h1 className={cn("font-display text-[26px] font-extrabold leading-tight tracking-tight text-ink-900 text-balance", user.uniqueUsername ? "mt-1" : "mt-3")}>
+          {/* Identity: name, then handle. Name is who you are; the handle is how you
+              are addressed, so it reads second. */}
+          <h1 className="mt-3 font-display text-[26px] font-extrabold leading-tight tracking-tight text-ink-900 text-balance">
             {user.titlePrefix ? `${user.titlePrefix} ` : ""}{user.fullName || "Your name"}
             {verified && (
               <span title="Verified professional" className="ml-1.5 inline-block align-middle">
@@ -154,35 +156,24 @@ export default function Profile() {
               </span>
             )}
           </h1>
-          {headline && (
-            <div className="mt-2.5 flex items-center gap-2.5">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow ring-1 ring-inset ring-white/20"><Stethoscope size={16} /></span>
-              <span className="text-[15px] font-bold text-brand-700">{headline}</span>
-            </div>
-          )}
-          {subtitle && <p className="mt-2 flex items-center gap-1.5 text-sm text-ink-500"><Building2 size={14} className="shrink-0 text-ink-400" /> {subtitle}</p>}
+          {user.uniqueUsername && <p className="mt-0.5 text-sm text-ink-500">@{user.uniqueUsername}</p>}
 
-          {/* Credential strip — uniform, refined pills. Clinical credentials lead;
-              "Member since" is the weakest signal, so it trails the row. Keeping it
-              last (not merely second) is what keeps the date on the right even when
-              the experience pill is present. */}
-          {(since || (user.role === "doctor" && (patients != null || yearsExp != null))) && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {user.role === "doctor" && patients != null && <MetaPill icon={Activity}>{compact(patients)} Consultations on Orovion</MetaPill>}
-              {user.role === "doctor" && yearsExp != null && <MetaPill icon={Stethoscope}>{yearsExp} yrs experience</MetaPill>}
-              {since && <MetaPill icon={CalendarDays}>Member since {since}</MetaPill>}
-            </div>
-          )}
+          {/* Specialty reads as the bio line. The gradient icon tile that used to sit
+              here was ornament: DESIGN.md calls for "premium through precision, not
+              ornamentation", and it out-weighted the name directly above it. */}
+          {headline && <p className="mt-2.5 text-[15px] font-semibold leading-snug text-brand-700">{headline}</p>}
 
-          {/* interactive relationship + content metrics */}
-          <div className="mt-4 flex">
-            {metrics.map((m) => (
-              <button key={m.label} onClick={m.onClick} className="press flex flex-1 flex-col items-start rounded-xl px-2 py-1.5 text-left transition hover:bg-ink-900/[.03]">
-                <b className="font-display text-lg font-extrabold tabular-nums text-ink-900">{compact(m.n || 0)}</b>
-                <span className="text-xs text-ink-500">{m.label}</span>
-              </button>
-            ))}
-          </div>
+          <MetaRow
+            className="mt-2.5"
+            items={[
+              subtitle && { key: "where", icon: Building2, text: subtitle },
+              user.role === "doctor" && patients != null && { key: "consults", icon: Activity, text: `${compact(patients)} Consultations on Orovion` },
+              user.role === "doctor" && yearsExp != null && { key: "exp", icon: Stethoscope, text: `${yearsExp} yrs experience` },
+              since && { key: "since", icon: CalendarDays, text: `Joined ${since}` },
+            ]}
+          />
+
+          <CountRow className="mt-3" counts={metrics} />
 
         </div>
       </div>
@@ -434,14 +425,6 @@ function About({ user, doctor, student, general }) {
         </Section>
       )}
     </div>
-  );
-}
-
-function MetaPill({ icon: Icon, children }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/[.07] bg-surface px-3 py-1.5 text-xs font-semibold text-ink-600 shadow-sm">
-      <Icon size={13} className="shrink-0 text-brand-600" /> {children}
-    </span>
   );
 }
 
