@@ -1,7 +1,7 @@
 "use client";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@/lib/router";
-import { FileText, Stethoscope, Clapperboard, PenLine, Loader2, Sparkles, RefreshCw, Search as SearchIcon } from "lucide-react";
+import { FileText, Stethoscope, Clapperboard, PenLine, Loader2, Sparkles, Search as SearchIcon } from "lucide-react";
 import PostCard from "@/components/PostCard";
 import RightRail from "@/components/layout/RightRail";
 import { Avatar } from "@/components/ui/Primitives";
@@ -13,6 +13,7 @@ import { shouldForceFresh } from "@/lib/feedFreshness";
 import { sendOrQueue } from "@/lib/offline-queue";
 import { cn, roleLabel } from "@/lib/utils";
 import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
+import { logFeedError, logFeedEmpty } from "@/lib/diagnostics";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 
 /**
@@ -45,7 +46,8 @@ export default function Feed() {
     });
   }, []);
 
-  // Pull-to-refresh (mobile) + auto-refresh when returning to the tab.
+  // Refresh is gesture-only by design: pull the feed down (touch) or overscroll up
+  // at the top (trackpad/wheel). There is deliberately no refresh button.
   const { pull, refreshing: pulling } = usePullToRefresh(refresh);
   useAutoRefresh(refresh);
 
@@ -94,17 +96,26 @@ export default function Feed() {
         settled = true;
         if (seq !== reqSeq.current) return; // a newer chip tap superseded this payload
         const list = d.feed || d.posts || [];
+        if (!list.length) {
+          logFeedEmpty("feed", "home feed load", {
+            filter: `${filter.kind}:${filter.key}`, hasMore: Boolean(d.hasMore), forcedFresh: userIntent,
+          });
+        }
         setPosts(list);
         setHasMore(Boolean(d.hasMore));
         setCursor(d.nextCursor || null);
         writeCache(uid, key, list); // refresh the offline cache (first page only)
       })
-      .catch(async () => {
+      .catch(async (err) => {
         settled = true;
         if (seq !== reqSeq.current) return;
         // Offline / error: keep what's on screen, else fall back to the cache
         // (covers the case where the network failed before the cache read landed).
+        // The fallback is silent to the user, so the reason has to reach the console
+        // or an empty feed is indistinguishable from a broken one.
+        logFeedError("feed", `home feed load (${filter.kind}:${filter.key})`, err);
         const c = await readCache<any[]>(uid, key);
+        if (!c?.data?.length) logFeedEmpty("feed", "offline cache fallback", { cached: c?.data?.length ?? 0 });
         setPosts((p) => p ?? c?.data ?? []);
         setHasMore(false);
       })
@@ -131,7 +142,8 @@ export default function Feed() {
         setPosts((p) => [...(p || []), ...(d.feed || d.posts || [])]);
         setHasMore(Boolean(d.hasMore));
         setCursor(d.nextCursor || null);
-      } catch {
+      } catch (err) {
+        logFeedError("feed", "home feed next page", err);
         setHasMore(false);
       } finally {
         loadingMoreRef.current = false;
@@ -160,9 +172,6 @@ export default function Feed() {
           <Avatar user={user} size={42} />
           <button onClick={() => nav("/app/create")} className="flex-1 rounded-full bg-ink-900/[.04] px-4 py-3 text-left text-sm text-ink-400 transition hover:bg-ink-900/[.07]">
             Share a case, paper or update…
-          </button>
-          <button onClick={refresh} disabled={refreshing} aria-label="Refresh feed" title="Refresh feed" className="press grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink-500 transition hover:bg-brand-50 hover:text-brand-700 disabled:opacity-50">
-            <RefreshCw size={18} className={cn(refreshing && "animate-spin")} />
           </button>
         </div>
         <div className="card flex items-center justify-around p-1.5">

@@ -28,9 +28,9 @@ no-ops: the flag existed server-side but nothing ever sent it.
 Pagination is cursor-based via an `IntersectionObserver` sentinel; `reqSeq`
 discards superseded payloads when chips are tapped quickly.
 
-Refresh has three triggers that all funnel through `refresh()` (scroll to top →
-bump `refreshKey`): the header button, `useAutoRefresh` on tab return, and
-pull-to-refresh. The gesture works on **trackpad/wheel as well as touch** — see
+Refresh is **gesture-only** — there is deliberately no refresh button. Two
+triggers funnel through `refresh()` (scroll to top → bump `refreshKey`):
+pull-to-refresh and `useAutoRefresh` on tab return. The gesture works on **trackpad/wheel as well as touch** — see
 `src/hooks/README.md`; before that it was touch-only and so did nothing at all in
 a desktop browser. `refresh()` returns a promise resolved in the load effect's
 `.finally()`, on success *and* failure, because the hook awaits it to hold the
@@ -61,15 +61,31 @@ the feed on its first page forever. So continuation pages send
 **not** `exhausted` (that is just `!hasMore`, already true on page 1 of a small
 catalogue; it is surfaced only as a "replaying top Pulses" note).
 
-**Reload:** a refresh button in the header, pull-to-refresh (touch *and*
-trackpad/wheel — see `src/hooks/README.md`), and `useAutoRefresh` on tab return
-all call `reload()`, which clears `sessionId` + `cursor` and starts a fresh
-session at slide 0. Because this screen scrolls an inner element rather than the
+**Reload:** gesture-first — there is no refresh button in the header.
+Pull-to-refresh (touch *and* trackpad/wheel — see `src/hooks/README.md`) and
+`useAutoRefresh` on tab return both call `reload()`, which clears `sessionId` +
+`cursor` and starts a fresh session at slide 0. The one remaining button is the
+end-of-feed CTA, which exists because the pull gesture is armed only on slide 0
+and would otherwise be unreachable from the tail. Because this screen scrolls an inner element rather than the
 window, it must pass `disabled` to the hook itself: the gesture is armed only on
 slide 0 at `scrollTop === 0`, otherwise the hook's `preventDefault` would fight
 the vertical swipe between reels. Auto-refresh is skipped unless the user is
 still on slide 0, so returning to the tab never yanks them out of a deep
 position. Needs no `refresh=1`: this path has no gateway cache.
+
+## Debugging an empty feed
+
+Both feeds fail soft, so an empty screen never tells you why. `src/lib/diagnostics.ts`
+puts the reason in the console instead. Filter DevTools by `[feed]` or `[pulse]`:
+
+- `console.error` → the request failed (status, method, url, server message; or
+  `noResponse: true` when nothing came back, the offline signature).
+- `console.warn` → the request *succeeded* and still produced nothing. For Pulse
+  this carries `sessionId` / `nextCursor` / `exhausted`, which is what separates a
+  genuinely empty catalogue from a broken continuation.
+
+If neither line appears when a feed looks stuck, the request never fired — look at
+the effect's guards rather than the network.
 
 ## `Login.tsx`
 

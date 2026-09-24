@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { MapPin, Briefcase, GraduationCap, Building2, Share2, ArrowLeft, Settings as SettingsIcon, Stethoscope, Activity, CalendarDays, Mail, Phone, Globe, Award, ExternalLink, Play, Heart, Eye, Clapperboard } from "lucide-react";
 import { useNavigate, Link } from "@/lib/router";
-import { Avatar, Verified, RoleBadge } from "@/components/ui/Primitives";
+import { Avatar, Verified } from "@/components/ui/Primitives";
 import { PostFeedSkeleton, TileGridSkeleton, TextBlockSkeleton } from "@/components/ui/Skeletons";
 import PostCard from "@/components/PostCard";
 import ReelViewer from "@/components/ReelViewer";
@@ -168,7 +168,7 @@ export default function Profile() {
               the experience pill is present. */}
           {(since || (user.role === "doctor" && (patients != null || yearsExp != null))) && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {user.role === "doctor" && patients != null && <MetaPill icon={Activity}>{compact(patients)} consultations on Orovion</MetaPill>}
+              {user.role === "doctor" && patients != null && <MetaPill icon={Activity}>{compact(patients)} Consultations on Orovion</MetaPill>}
               {user.role === "doctor" && yearsExp != null && <MetaPill icon={Stethoscope}>{yearsExp} yrs experience</MetaPill>}
               {since && <MetaPill icon={CalendarDays}>Member since {since}</MetaPill>}
             </div>
@@ -184,7 +184,6 @@ export default function Profile() {
             ))}
           </div>
 
-          <div className="mt-3"><RoleBadge role={user.role} /></div>
         </div>
       </div>
 

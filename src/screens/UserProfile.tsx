@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Navigate } from "@/lib/router";
 import { ArrowLeft, MapPin, Share2, UserX, MoreHorizontal, ShieldOff, UserMinus, Mail, Phone, Languages as LangIcon, Briefcase, GraduationCap, Activity, CalendarDays, Award, UserPlus, UserCheck, Clock, Link2, Loader2, MessageSquare } from "lucide-react";
-import { Avatar, Verified, RoleBadge, Skeleton } from "@/components/ui/Primitives";
+import { Avatar, Verified, Skeleton } from "@/components/ui/Primitives";
 import PostCard from "@/components/PostCard";
 import ShareSheet from "@/components/ShareSheet";
 import MediaViewer from "@/components/profile/MediaViewer";
@@ -144,11 +144,10 @@ export default function UserProfile() {
               <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-400">
                 <span className="flex items-center gap-1.5"><CalendarDays size={13} /> Joined {since}</span>
                 {u.role === "doctor" && patients != null && (
-                  <span className="flex items-center gap-1.5 font-semibold text-brand-700"><Activity size={13} /> {compact(patients)} consultations on Orovion</span>
+                  <span className="flex items-center gap-1.5 font-semibold text-brand-700"><Activity size={13} /> {compact(patients)} Consultations on Orovion</span>
                 )}
               </p>
             )}
-            <div className="mt-2"><RoleBadge role={u.role} /></div>
           </div>
 
           {/* Follow + Connect — two distinct buttons on the profile (vs. one morphing button on cards) */}

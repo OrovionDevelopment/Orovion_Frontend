@@ -67,6 +67,24 @@ than inside a component, so it can be tested without React or a DOM.
   `isValidProjectId` exists because the id is interpolated into an **inline
   script tag** — a malformed env value must never become executable code.
 
+## Feed diagnostics
+
+- `diagnostics.ts` — `describeRequestError`, `logFeedError`, `logFeedEmpty`.
+
+  Both feeds degrade quietly by design: a failed request falls back to cache or
+  to an empty list, so the user never sees a stack trace. The cost was that "no
+  posts yet", "the request 404'd", "you're offline" and "the server returned an
+  empty page" all looked identical — on screen *and* in the console, because
+  every path used a bare `catch {}`. These helpers make the difference visible in
+  DevTools without changing what the user sees.
+
+  Filter DevTools by `[feed]` (post feed) or `[pulse]` (Pulse). `console.error` =
+  a request failed; `console.warn` = it succeeded but produced nothing to render.
+  `describeRequestError` flattens an axios error to status / method / url /
+  server message / `noResponse`, because logging the raw error buries exactly
+  those fields; `noResponse: true` with `navigatorOffline: true` is the offline
+  signature, while a real status means the server answered and refused.
+
 ## Other
 
 `utils.ts`, `theme.ts`, `appearance.ts`, `schema.ts`, `seo.ts`, `faq.ts`,

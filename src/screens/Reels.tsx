@@ -6,6 +6,7 @@ import ReelCard from "@/components/ReelCard";
 import { dok } from "@/lib/api";
 import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
+import { logFeedError, logFeedEmpty } from "@/lib/diagnostics";
 
 const rid = (r) => r?._id || r?.id;
 const PAGE = 10;
@@ -66,6 +67,11 @@ export default function Reels() {
     // A refresh that landed while this was in flight owns the session now —
     // never let a superseded page overwrite its cursor or end-of-feed state.
     if (g !== gen.current) return [];
+    if (!(d.reels || []).length) {
+      logFeedEmpty("pulse", fresh ? "fresh session" : "continuation page", {
+        sessionId: d.sessionId, nextCursor: d.nextCursor ?? null, exhausted: Boolean(d.exhausted),
+      });
+    }
     sessionId.current = d.sessionId || sessionId.current;
     cursor.current = d.nextCursor ?? null;
     setAtEnd(!d.nextCursor);
@@ -94,7 +100,7 @@ export default function Reels() {
     resetSession();
     fetchPage(true)
       .then((r) => { if (alive) setReels(take(r)); })
-      .catch(() => { if (alive) setReels([]); });
+      .catch((err) => { logFeedError("pulse", "initial load", err); if (alive) setReels([]); });
     return () => { alive = false; };
   }, [fetchPage, take, resetSession]);
 
@@ -111,11 +117,11 @@ export default function Reels() {
       // rather than letting the tail observer spin on it.
       if (fresh.length) setReels((rs) => [...(rs || []), ...fresh]);
       else setAtEnd(true);
-    } catch { /* keep what we have */ }
+    } catch (err) { logFeedError("pulse", "next page", err); /* keep what we have */ }
     finally { loadingRef.current = false; setLoadingMore(false); }
   }, [fetchPage, atEnd, take]);
 
-  /** Fresh discovery session — refresh button, pull-to-refresh, tab return. */
+  /** Fresh discovery session — pull-to-refresh, tab return, end-of-feed CTA. */
   const reload = useCallback(async () => {
     resetSession();
     setAtEnd(false);
@@ -127,7 +133,7 @@ export default function Reels() {
       setOver({});
       setActive(0);
       scroller.current?.scrollTo({ top: 0, behavior: "smooth" });
-    } catch { setReels((x) => x || []); }
+    } catch (err) { logFeedError("pulse", "refresh", err); setReels((x) => x || []); }
     finally { setRefreshing(false); }
   }, [fetchPage, take, resetSession]);
 
@@ -200,7 +206,8 @@ export default function Reels() {
     <div>
       <PullToRefreshIndicator pull={pull} refreshing={pulling} />
 
-      <header className="mb-3 flex items-end justify-between gap-3">
+      {/* Refresh is gesture-only: pull down on slide 0. No button in the header. */}
+      <header className="mb-3">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-extrabold text-ink-900">Pulse</h1>
           <p className="truncate text-sm text-ink-500">
@@ -209,14 +216,6 @@ export default function Reels() {
               : "Short-form medical teaching from verified clinicians."}
           </p>
         </div>
-        <button
-          onClick={reload}
-          disabled={refreshing}
-          aria-label="Refresh Pulse"
-          className="press grid h-10 w-10 shrink-0 place-items-center rounded-full border border-ink-900/10 bg-surface text-ink-700 transition hover:bg-ink-900/5 disabled:opacity-50"
-        >
-          <RefreshCw size={17} className={refreshing ? "animate-spin" : undefined} />
-        </button>
       </header>
 
       {reels === null ? (
