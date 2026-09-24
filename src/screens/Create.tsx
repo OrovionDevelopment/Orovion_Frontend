@@ -265,12 +265,20 @@ export default function Create() {
 
         {media.length > 0 && (
           <div className="px-4 pb-2">
-            <div className={cn("grid gap-2", isReel ? "grid-cols-2" : "grid-cols-3")}>
+            {/* The preview shows what will actually be posted, so it must not crop:
+                the crop tool is preview-only (the ORIGINAL file is uploaded, see the
+                FormData build above), and the feed renders single media at its natural
+                ratio. One item → natural ratio, full width. Several → a uniform grid,
+                but `object-contain` so each thumbnail still shows the whole frame. */}
+            <div className={cn(media.length === 1 ? "" : cn("grid gap-2", isReel ? "grid-cols-2" : "grid-cols-3"))}>
               {media.map((m, i) => (
-                <div key={i} className={cn("group relative overflow-hidden rounded-xl bg-ink-900/5", isReel ? "aspect-[9/16]" : "aspect-square")}>
+                <div key={i} className={cn(
+                  "group relative overflow-hidden rounded-xl bg-ink-950",
+                  media.length > 1 && (isReel ? "aspect-[9/16]" : "aspect-square")
+                )}>
                   {m.kind === "video"
-                    ? <video src={m.cover != null ? `${m.url}#t=${m.cover}` : m.url} preload="metadata" style={{ filter: presetCss(m), transform: `scale(${m.crop?.zoom || 1})` }} className="h-full w-full object-cover" />
-                    : <img src={m.url} alt="" style={{ filter: presetCss(m), transform: `scale(${m.crop?.zoom || 1})` }} className="h-full w-full object-cover" />}
+                    ? <video src={m.cover != null ? `${m.url}#t=${m.cover}` : m.url} preload="metadata" style={{ filter: presetCss(m), transform: `scale(${m.crop?.zoom || 1})` }} className={cn("w-full object-contain", media.length === 1 ? "max-h-[60vh]" : "h-full")} />
+                    : <img src={m.url} alt="" style={{ filter: presetCss(m), transform: `scale(${m.crop?.zoom || 1})` }} className={cn("w-full object-contain", media.length === 1 ? "max-h-[60vh]" : "h-full")} />}
                   {m.texts?.map((t) => (
                     <span key={t.id} className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 font-bold leading-tight drop-shadow" style={{ left: `${t.x}%`, top: `${t.y}%`, color: t.color, fontSize: (t.size || 28) * 0.4 }}>{t.text}</span>
                   ))}
