@@ -7,6 +7,7 @@ import {
 import { Avatar, Logo, Verified, Spinner } from "@/components/ui/Primitives";
 import NavArrows from "@/components/ui/NavArrows";
 import NotificationBell from "@/components/ui/NotificationBell";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import { cn, compact } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -53,6 +54,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <button onClick={() => nav("/app/create")} className="btn-primary hidden px-4 py-2 text-sm sm:inline-flex">
             <Plus size={17} /> Create
           </button>
+          {/* Same control as the landing navbar, so the switch sits in the same place
+              before and after login. Settings -> Appearance still has the full
+              light/dark/system picker; this is the one-tap version. */}
+          <ThemeToggle />
           <NotificationBell />
           <div className="relative">
             <button onClick={() => setMenu((m) => !m)} className="rounded-full ring-2 ring-transparent transition hover:ring-brand-200">

@@ -60,22 +60,45 @@ describe("avatarColor", () => {
   });
 });
 
+/**
+ * reelPoster used to derive a poster by swapping the video extension to .jpg,
+ * which Cloudinary renders on demand. Storage moved to S3 + CloudFront, which
+ * serves only real objects, so that swap pointed at a file nobody uploaded:
+ * verified in production as a 404 on the .jpg beside a 200 on the .mp4, surfaced
+ * to the browser as CloudFront 403 AccessDenied on every reel on screen.
+ *
+ * It now returns a poster ONLY when one genuinely exists. Callers render a
+ * placeholder for undefined instead of an <img> with no src.
+ */
 describe("reelPoster", () => {
-  const mp4 = "https://res.cloudinary.com/x/video/upload/v1/r/a.mp4";
-  it("derives a Cloudinary .jpg frame from the video url", () => {
-    expect(reelPoster({ videoUrl: mp4 })).toBe("https://res.cloudinary.com/x/video/upload/v1/r/a.jpg");
+  const mp4 = "https://cdn.example.net/orovion/users/u1/reels/a.mp4";
+
+  it("never invents a .jpg from a video url — the object does not exist on S3", () => {
+    expect(reelPoster({ videoUrl: mp4 })).toBeUndefined();
   });
-  it("ignores thumbnailUrl/posterUrl when they point at a video file (the backend's current bug)", () => {
-    // backend sends every media field as the same .mp4 — an <img> can't render that
-    expect(reelPoster({ videoUrl: mp4, thumbnailUrl: mp4, posterUrl: mp4 }))
-      .toBe("https://res.cloudinary.com/x/video/upload/v1/r/a.jpg");
+
+  it("returns undefined when every media field is the same video file", () => {
+    // api's S3 upload returns no thumbnail_url, so media stores null and the
+    // client sees only video URLs. This is the COMMON case for reels today.
+    expect(reelPoster({ videoUrl: mp4, thumbnailUrl: mp4, posterUrl: mp4 })).toBeUndefined();
   });
-  it("prefers a real image thumbnail when the backend provides one", () => {
+
+  it("uses a real image thumbnail when one is provided", () => {
     expect(reelPoster({ videoUrl: mp4, thumbnailUrl: "https://cdn/x/cover.jpg" })).toBe("https://cdn/x/cover.jpg");
   });
-  it("falls back to hlsUrl and strips query strings", () => {
-    expect(reelPoster({ hlsUrl: "https://cdn/x/a.m3u8?token=1" })).toBe("https://cdn/x/a.jpg");
+
+  it("accepts posterUrl as the fallback image source", () => {
+    expect(reelPoster({ videoUrl: mp4, posterUrl: "https://cdn/x/poster.webp" })).toBe("https://cdn/x/poster.webp");
   });
+
+  it("does not treat an hls playlist as an image", () => {
+    expect(reelPoster({ hlsUrl: "https://cdn/x/a.m3u8?token=1" })).toBeUndefined();
+  });
+
+  it("still recognises an image carrying a query string", () => {
+    expect(reelPoster({ thumbnailUrl: "https://cdn/x/cover.jpg?v=2" })).toBe("https://cdn/x/cover.jpg?v=2");
+  });
+
   it("returns undefined when there is no media at all", () => {
     expect(reelPoster({})).toBeUndefined();
     expect(reelPoster(null)).toBeUndefined();

@@ -189,13 +189,18 @@ export default function ReelCard({
         />
       ) : (
         // Off-screen slides stay as a poster: no <video>, no hls.js, no autoplay.
-        <img
-          src={reelPoster(reel)}
-          alt=""
-          onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
-          className="h-full w-full object-cover opacity-90"
-          loading="lazy"
-        />
+        // Only when a REAL poster exists — reels uploaded via POST /api/reels have
+        // none, and an <img> with no src renders as a broken tile. The container's
+        // bg-ink-950 is the placeholder.
+        reelPoster(reel) ? (
+          <img
+            src={reelPoster(reel)}
+            alt=""
+            onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+            className="h-full w-full object-contain opacity-90"
+            loading="lazy"
+          />
+        ) : null
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30" />
 

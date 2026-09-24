@@ -238,7 +238,12 @@ export default function PostCard({ post, demo, onRemoved, onSavedChange }) {
           {media.length > 0 && media[0]?.url && (
             <div className="relative mx-1 mb-1 select-none overflow-hidden rounded-2xl">
               {media.length === 1 ? (
-                <MediaTile m={media[0]} onOpen={() => setViewer(0)} onLike={dblTap} wrap="" media="max-h-[460px] w-full object-cover" />
+                // Single media is the primary view of the post, so it renders at the
+                // ratio it was uploaded in. `object-cover` used to crop the top and
+                // bottom off anything taller than 460px — portrait photos and phone
+                // video lost their subject. `object-contain` + a tall cap keeps the
+                // whole frame; only an extreme portrait gets (deliberate) side bars.
+                <MediaTile m={media[0]} onOpen={() => setViewer(0)} onLike={dblTap} wrap="bg-ink-950" media="max-h-[75vh] w-full object-contain" />
               ) : (
                 <div className="grid grid-cols-2 gap-0.5">
                   {media.slice(0, 4).map((m, i) => (

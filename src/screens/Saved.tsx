@@ -90,7 +90,7 @@ export default function Saved() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {reels.map((r) => (
                 <button key={r._id || r.id} onClick={() => nav("/app/reels")} className="press group relative aspect-[3/4] overflow-hidden rounded-2xl bg-ink-950">
-                  <img src={reelPoster(r)} alt="" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
+                  {reelPoster(r) && <img src={reelPoster(r)} alt="" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />}
                   <span className="absolute inset-0 bg-gradient-to-t from-ink-950/60 via-transparent" />
                   <span className="absolute bottom-2 left-2 right-2 truncate text-left text-xs font-semibold text-white">{r.caption}</span>
                   <span className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-ink-950/40 text-white backdrop-blur"><Play size={13} /></span>

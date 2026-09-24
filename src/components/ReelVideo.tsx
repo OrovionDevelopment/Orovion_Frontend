@@ -55,7 +55,7 @@ export default function ReelVideo({ src, poster, muted = true, status, onDoubleC
     const failed = state === "FAILED";
     return (
       <div className="relative h-full w-full" onDoubleClick={onDoubleClick}>
-        {poster && <img src={poster} alt="" className="h-full w-full object-cover opacity-60" />}
+        {poster && <img src={poster} alt="" className="h-full w-full object-contain opacity-60" />}
         <div className="absolute inset-0 grid place-items-center text-white/90">
           <div className="flex flex-col items-center gap-2">
             {failed ? <VideoOff size={26} /> : <Loader2 size={24} className="animate-spin" />}
@@ -66,11 +66,14 @@ export default function ReelVideo({ src, poster, muted = true, status, onDoubleC
     );
   }
 
+  // object-contain, not cover: the frame is 9:16 but an upload may be landscape or
+  // square, and cover would slice its sides off. Letterboxing against the card's
+  // ink-950 shows the video at the ratio it was shot in.
   return (
     <video
       ref={ref}
       poster={poster}
-      className="h-full w-full object-cover"
+      className="h-full w-full object-contain"
       autoPlay
       loop={loop}
       playsInline

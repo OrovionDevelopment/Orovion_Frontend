@@ -117,3 +117,23 @@ throws) and degrades to `null` — the server then simply mints a new id.
 Guards the instant offline paint: an empty feed response must never overwrite a
 non-empty cached page, or a transient empty result turns into a persistently blank
 feed. Empty-over-empty is fine.
+
+## `utils.ts` — `reelPoster`
+
+Returns a reel's poster **only when a real image exists**, otherwise `undefined`.
+
+It used to synthesise one by swapping the video's extension to `.jpg`. That worked
+on Cloudinary, which renders a JPEG frame on demand; it does not work on S3 +
+CloudFront, which serve only objects that were actually uploaded. The derived URL
+pointed at a file nobody ever wrote — confirmed in production as a `404` on the
+`.jpg` next to a `200` on the `.mp4` at the identical key. CloudFront reports that
+as `403 AccessDenied` (the reader has no `s3:ListBucket` to distinguish missing
+from forbidden), and Firefox logs it as `NS_ERROR_DOM_NETWORK_ERR`, once per reel
+on screen.
+
+**Callers must handle `undefined` by rendering a placeholder, never an `<img>`
+with no `src`.** Undefined is the common case: reels created through
+`POST /api/reels` have no thumbnail at all, because api's S3 upload returns no
+`thumbnail_url` and media stores the resulting null verbatim. Giving them real
+posters requires generating one at upload or routing reels through the video
+pipeline — neither is done yet.

@@ -54,18 +54,23 @@ export const roleLabel = (r) =>
 const isImageUrl = (u) => /\.(jpe?g|png|webp|gif|avif)(\?|#|$)/i.test(u || "");
 
 /**
- * Poster frame for a reel/Pulse. The backend currently points `thumbnailUrl`/
- * `posterUrl` at the raw Cloudinary .mp4 (not an image), so an <img> with those
- * fails to load. Cloudinary serves a real JPEG frame when the video extension is
- * swapped to .jpg, so derive that — and only trust the thumbnail fields when they
- * actually are an image (e.g. if the backend starts returning real posters).
+ * Poster frame for a reel/Pulse, or `undefined` when there is no real image.
+ *
+ * This used to derive a poster by swapping the video's extension to `.jpg`,
+ * which worked on Cloudinary because it renders a JPEG frame on demand. Storage
+ * moved to S3 + CloudFront, which serves only objects that actually exist, so
+ * that swap produced a URL for a file nobody ever uploaded: S3 404s, CloudFront
+ * reports it as 403 AccessDenied (the reader has no s3:ListBucket to reveal the
+ * difference), and the browser logs a failed image load for every reel on screen.
+ *
+ * Callers must handle `undefined` by rendering a placeholder rather than an <img>
+ * with no src. Reels created through POST /api/reels carry no thumbnail at all
+ * today — api's S3 upload returns no thumbnail_url, so media stores null — so
+ * `undefined` is the common case, not the exception.
  */
 export function reelPoster(r) {
   if (!r) return undefined;
-  const real = [r.thumbnailUrl, r.posterUrl].find(isImageUrl);
-  if (real) return real;
-  const video = r.videoUrl || r.hlsUrl || r.thumbnailUrl || r.posterUrl;
-  return video ? video.replace(/\.(mp4|mov|webm|m3u8)(\?.*)?$/i, ".jpg") : undefined;
+  return [r.thumbnailUrl, r.posterUrl].find(isImageUrl);
 }
 
 /** Animate elements with .reveal into view as they scroll. */

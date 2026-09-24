@@ -39,3 +39,18 @@ Two contracts matter when touching these:
 `ReelVideo` is the player underneath: native HLS on Safari/iOS, lazy-loaded
 `hls.js` elsewhere, and a poster + status overlay while `processingStatus` is
 still `PENDING`/`PROCESSING` (or `FAILED`).
+
+## Reel posters
+
+`reelPoster()` (`src/lib/utils.ts`) returns `undefined` whenever a reel has no
+genuine thumbnail, which is the normal case for reels uploaded via
+`POST /api/reels`. Every call site therefore guards the image:
+
+```jsx
+{reelPoster(r) && <img src={reelPoster(r)} … />}
+```
+
+The surrounding tile is already `bg-ink-950` with a play-icon overlay, so the
+guard degrades to a dark placeholder rather than a broken image. Do not
+reintroduce a derived `.jpg` URL — S3 has no on-the-fly frame generation, so it
+only produces failed requests.

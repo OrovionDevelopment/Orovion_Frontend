@@ -282,13 +282,15 @@ function ProfileContent({ userId, demo }) {
                 onClick={() => setOpenReel(idx)}
                 className="lift group relative block aspect-[9/16] overflow-hidden rounded-2xl bg-ink-950 text-left shadow-card"
               >
-                <img
-                  src={reelPoster(r)}
-                  alt=""
-                  onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
-                  className="h-full w-full object-cover opacity-90 transition duration-500 group-hover:scale-110 group-hover:opacity-100"
-                  loading="lazy"
-                />
+                {reelPoster(r) && (
+                  <img
+                    src={reelPoster(r)}
+                    alt=""
+                    onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+                    className="h-full w-full object-cover opacity-90 transition duration-500 group-hover:scale-110 group-hover:opacity-100"
+                    loading="lazy"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10" />
                 <div className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/15 backdrop-blur"><Play size={14} className="fill-white text-white" /></div>
                 <div className="absolute inset-x-0 bottom-0 p-3 text-white">

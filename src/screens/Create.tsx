@@ -3,8 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@/lib/router";
 import {
-  Image as ImageIcon, FileText, Stethoscope, Clapperboard, X, Globe, Smile,
-  Paperclip, Video, Hash, AtSign, Users, Lock, ChevronDown, Wand2, Music2, Type, Scissors, Loader2,
+  Image as ImageIcon, FileText, Stethoscope, Clapperboard, X, Smile,
+  Paperclip, Video, Hash, AtSign, Wand2, Music2, Type, Scissors, Loader2,
 } from "lucide-react";
 import { Avatar, Verified } from "@/components/ui/Primitives";
 import { EmojiPicker } from "@/components/ui/Overlays";
@@ -37,13 +37,7 @@ const TYPES = [
   { key: "post", icon: ImageIcon, label: "Post" },
   { key: "research", icon: FileText, label: "Research" },
   { key: "case_study", icon: Stethoscope, label: "Case" },
-  { key: "thesis", icon: FileText, label: "Thesis" },
   { key: "reel", icon: Clapperboard, label: "Pulse" },
-];
-const VIS = [
-  { key: "public", icon: Globe, label: "Public" },
-  { key: "followers", icon: Users, label: "Followers" },
-  { key: "only_me", icon: Lock, label: "Only me" },
 ];
 
 const presetCss = (m) => {
@@ -66,8 +60,10 @@ export default function Create() {
   const [emoji, setEmoji] = useState(false);
   const [media, setMedia] = useState([]);
   const [editing, setEditing] = useState(null);
-  const [vis, setVis] = useState("public");
-  const [visOpen, setVisOpen] = useState(false);
+  // Everything posted from the web composer is public. The picker was removed from
+  // the UI, but POST /posts still requires `visibility`, so the value is pinned
+  // here rather than dropped from the request.
+  const vis = "public";
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -155,7 +151,6 @@ export default function Create() {
     if (next.length) setEditing(media.length);
   };
 
-  const curVis = VIS.find((v) => v.key === vis);
   const isReel = type === "reel";
 
   const publish = async () => {
@@ -219,16 +214,6 @@ export default function Create() {
           <Avatar user={user} size={40} />
           <div className="flex-1">
             <p className="text-sm font-semibold">{user?.fullName}</p>
-            <div className="relative">
-              <button onClick={() => setVisOpen((v) => !v)} className="press mt-0.5 flex items-center gap-1 rounded-full bg-ink-900/[.05] px-2.5 py-1 text-xs font-medium text-ink-600">
-                <curVis.icon size={12} /> {curVis.label} <ChevronDown size={12} />
-              </button>
-              {visOpen && (
-                <div className="absolute z-10 mt-1 w-40 overflow-hidden rounded-xl border border-ink-900/[.08] bg-surface shadow-card anim-pop">
-                  {VIS.map((v) => <button key={v.key} onClick={() => { setVis(v.key); setVisOpen(false); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-brand-50"><v.icon size={14} /> {v.label}</button>)}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 

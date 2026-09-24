@@ -120,3 +120,18 @@ a shared session would let the two feeds hide each other's content.
 
 `Feed.tsx` also refuses to overwrite a populated offline cache with an empty
 response (`shouldWriteFeedCache`).
+
+## Reel posters
+
+`reelPoster()` (`src/lib/utils.ts`) returns `undefined` whenever a reel has no
+genuine thumbnail, which is the normal case for reels uploaded via
+`POST /api/reels`. Every call site therefore guards the image:
+
+```jsx
+{reelPoster(r) && <img src={reelPoster(r)} … />}
+```
+
+The surrounding tile is already `bg-ink-950` with a play-icon overlay, so the
+guard degrades to a dark placeholder rather than a broken image. Do not
+reintroduce a derived `.jpg` URL — S3 has no on-the-fly frame generation, so it
+only produces failed requests.
