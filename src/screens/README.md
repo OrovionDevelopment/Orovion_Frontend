@@ -109,14 +109,20 @@ plus `consults/` and `legal/`.
 ## Feed session handling (`Feed.tsx`, `Explore.tsx`)
 
 Both screens send a feed `sessionId` (see `src/lib/feedSession.ts`) and store the
-one the server returns. `Feed.tsx` rotates its session **only** on a refresh
-gesture — the same `userIntent` that sets `refresh=1` (mount/reload,
-pull-to-refresh, return-to-tab) — never on a chip switch or a cursor page, since
-rotating mid-pagination would re-serve posts the user already scrolled past.
+one the server returns, and **neither rotates it on refresh or reload**. The
+server excludes what it already served in that session, so keeping it is what
+makes a refresh surface new posts; rotating (as these screens once did) re-served
+the identical top posts, because the ranking is deterministic. A refresh still
+sets `refresh=1` to bypass the gateway's page cache — that is independent of the
+session.
 
-`Explore.tsx` rotates on entry; it has no pagination to preserve. It uses the
-`explore` scope, never `home` — all three feed routes share one media pipeline, so
-a shared session would let the two feeds hide each other's content.
+`Explore.tsx` uses the `explore` scope, never `home` — all three feed routes
+share one media pipeline, so a shared session would let the two feeds hide each
+other's content.
+
+When a feed load fails and cached posts are shown instead, `Feed.tsx` says so with
+a toast ("Couldn't refresh — showing saved posts"). It used to fall back silently,
+which made a backend outage indistinguishable from "refresh does nothing".
 
 `Feed.tsx` also refuses to overwrite a populated offline cache with an empty
 response (`shouldWriteFeedCache`).

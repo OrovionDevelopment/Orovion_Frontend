@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { dok, TOKENS } from "@/lib/api";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { clearOfflineCache, readCache, writeCache } from "@/lib/offline-cache";
+import { rotateFeedSession } from "@/lib/feedSession";
 
 const AuthCtx = createContext<any>(null);
 export const useAuth = () => useContext(AuthCtx);
@@ -121,6 +122,11 @@ export function AuthProvider({ children }) {
     disconnectSocket();
     setUser(null);
     clearOfflineCache(); // privacy: clear cached data so the next user starts clean
+    // Logout is the one correct place to drop the feed sessions: the next person
+    // in this tab starts their own. (Server keys are viewer-scoped, so this is
+    // hygiene rather than a correctness requirement.)
+    rotateFeedSession("home");
+    rotateFeedSession("explore");
   };
 
   return (

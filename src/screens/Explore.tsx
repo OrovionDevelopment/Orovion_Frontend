@@ -5,11 +5,7 @@ import RightRail from "@/components/layout/RightRail";
 import { PostFeedSkeleton } from "@/components/ui/Skeletons";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
-import { getFeedSessionId, setFeedSessionId, rotateFeedSession } from "@/lib/feedSession";
-
-// Module scope on purpose — discarded by a hard reload, kept across client-side
-// navigation. See the rotation note in the effect below.
-let rotatedThisLoad = false;
+import { getFeedSessionId, setFeedSessionId } from "@/lib/feedSession";
 
 export default function Explore() {
   const { demo } = useAuth();
@@ -20,13 +16,9 @@ export default function Explore() {
     // served-set starvation that emptied the home feed. Its own scope, never
     // home's: two feeds sharing a served-set would hide each other's content.
     //
-    // Rotate ONCE PER PAGE LOAD, not per mount: `rotatedThisLoad` lives in module
-    // scope, which a hard reload discards but client-side navigation keeps — the
-    // same mechanism feedFreshness.ts uses. Rotating on every mount would clear
-    // the id and then read it back in the same tick, so no session would ever be
-    // echoed, every request would be session-establishing and therefore uncached,
-    // and each visit would mint another Redis key.
-    if (!rotatedThisLoad) { rotateFeedSession("explore"); rotatedThisLoad = true; }
+    // The session is kept across visits and reloads (never rotated here): the
+    // server excludes what it already served in it, so each visit shows posts not
+    // yet seen. Rotating reset that set and re-served the identical posts.
     const sess = getFeedSessionId("explore");
     dok.feed
       .explore(sess ? `?sessionId=${encodeURIComponent(sess)}` : "")

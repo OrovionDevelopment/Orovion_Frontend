@@ -101,10 +101,19 @@ set on a session id; when the client sends none it mints one and returns it, and
 this module stores it in `sessionStorage` (per-tab, so two tabs get independent
 served-sets) and echoes it on the next request.
 
-**Rotation is the whole design.** `rotateFeedSession(scope)` must be called *only*
-on an explicit refresh gesture — pull-to-refresh, reload, return-to-tab. Rotating
-per request would break cross-page dedup and multiply Redis keys under a
-`noeviction` policy. Keeping it forever is what caused the blank-feed bug.
+**Keep the session; do not rotate it on refresh.** The server excludes everything
+already served in the session, so keeping the id is what makes a refresh or a
+reload return posts not yet seen. This module originally rotated on every refresh
+gesture, and that made refresh visibly do nothing: the ranking is deterministic,
+so an empty served-set re-serves the identical top posts in the same order. When
+the whole pool has been served, the server resets the set itself and serves a
+fresh page, so a kept session cannot strand the feed empty.
+
+`rotateFeedSession(scope)` is called on **logout only** (`AuthContext`).
+
+(The original blank-feed bug was a different thing: one literal `'default'` key
+shared by every request, tab and guest, with no rescue. Per-client minted ids plus
+the server's empty-pool rescue removed that.)
 
 `home` and `explore` are separate scopes; sharing one would let each feed hide the
 other's content.

@@ -9,12 +9,17 @@
 // the feed went blank. media now MINTS an id and returns it; this module is the
 // client half of that contract: store what the server minted and send it back.
 //
-// ROTATION IS THE WHOLE DESIGN. A session must be discarded on an explicit
-// refresh gesture (that is what makes "pull to refresh shows new things" work)
-// and kept otherwise. Rotating per request would defeat cross-page dedup AND
-// multiply Redis keys — Redis runs `maxmemory-policy noeviction`, so once full
-// it REJECTS writes rather than evicting, which would take out far more than
-// the feed. Never call rotateFeedSession outside a real refresh gesture.
+// KEEP THE SESSION — DO NOT ROTATE IT ON REFRESH. This module originally rotated
+// the id on every refresh gesture, reasoning that a fresh served-set would
+// surface new content. The opposite happens: the ranking is deterministic, so
+// an empty served-set re-serves the IDENTICAL top posts in the same order, and
+// "refresh" visibly did nothing. Keeping the id is what makes a refresh (or a
+// reload) return posts not yet served. When the whole pool has been served the
+// server resets the set itself and serves a fresh page, so the feed cannot be
+// stranded empty. Rotation is for logout only.
+//
+// Never omit the id on page 2+ either: without it the server mints a new
+// session per request, and page 2 comes back identical to page 1.
 //
 // sessionStorage, not localStorage: it is per-tab, so two tabs get independent
 // served-sets instead of corrupting each other's pagination. It is also cleared
@@ -61,8 +66,8 @@ export function setFeedSessionId(scope: FeedScope, id: string | null | undefined
 
 /**
  * Drop this tab's session so the next request omits the id and the server mints
- * a fresh one, clearing the served-set. Call ONLY on an explicit refresh
- * gesture — pull-to-refresh, reload, or return-to-tab.
+ * a fresh one. Call on LOGOUT only. Calling it on refresh re-serves the same
+ * posts — see the header.
  */
 export function rotateFeedSession(scope: FeedScope): void {
   try {

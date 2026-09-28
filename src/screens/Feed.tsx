@@ -10,7 +10,8 @@ import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
 import { readCache, writeCache, shouldWriteFeedCache } from "@/lib/offline-cache";
 import { shouldForceFresh } from "@/lib/feedFreshness";
-import { getFeedSessionId, setFeedSessionId, rotateFeedSession } from "@/lib/feedSession";
+import { getFeedSessionId, setFeedSessionId } from "@/lib/feedSession";
+import { useToast } from "@/components/ui/Toast";
 import { sendOrQueue } from "@/lib/offline-queue";
 import { cn, roleLabel } from "@/lib/utils";
 import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
@@ -35,6 +36,7 @@ const PAGE = "limit=12";
 export default function Feed() {
   const { user, demo } = useAuth();
   const nav = useNavigate();
+  const toast = useToast();
 
   const [filter, setFilter] = useState({ kind: "all", key: "all", label: "All" });
   const [posts, setPosts] = useState(null);
@@ -99,12 +101,13 @@ export default function Feed() {
     const userIntent = posts === null || refreshKey !== lastRefreshKey.current;
     lastRefreshKey.current = refreshKey;
 
-    // A refresh gesture (mount/reload, pull-to-refresh, return-to-tab) discards
-    // the session so the server mints a fresh one and the served-set resets —
-    // this is what makes a refresh actually surface new content. Deliberately
-    // NOT done on a chip switch or a cursor page: rotating per request would
-    // break cross-page dedup and multiply Redis keys.
-    if (userIntent) rotateFeedSession("home");
+    // The session is deliberately KEPT across refresh. The server excludes
+    // everything already served in it, so a refresh returns posts not yet seen.
+    // Rotating it here (as this used to) reset that exclusion set, and because
+    // the ranking is deterministic every refresh re-served the IDENTICAL posts in
+    // the same order — which is exactly "refresh does nothing". When the whole
+    // pool has been served, the server resets the set itself and serves a fresh
+    // page, so keeping the session cannot strand the feed empty.
 
     if (posts === null) {
       // Instant paint from cache — only applied while the network is still in
@@ -159,6 +162,11 @@ export default function Feed() {
         logFeedError("feed", `home feed load (${filter.kind}:${filter.key})`, err);
         const c = await readCache<any[]>(uid, key);
         if (!c?.data?.length) logFeedEmpty("feed", "offline cache fallback", { cached: c?.data?.length ?? 0 });
+        // Say so when we fall back. Silently keeping the old list made a backend
+        // outage look exactly like "refresh does nothing".
+        if ((postsRef.current as unknown[] | null)?.length || c?.data?.length) {
+          toast?.show("Couldn't refresh — showing saved posts", { type: "info" });
+        }
         setPosts((p) => p ?? c?.data ?? []);
         setHasMore(false);
       })
