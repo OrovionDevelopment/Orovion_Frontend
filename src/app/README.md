@@ -11,6 +11,12 @@ and lives outside the router. See the root `CLAUDE.md`.
 | `/`, `/login`, `/onboarding`, `/help`, `/privacy`, `/terms`, `/team`, `/mobile-app` | static |
 | `/app/*` | auth-gated + `force-dynamic` (set once in `app/layout.tsx`, which wraps children in `AppLayout`) |
 | `/admin` | reachable only via the secret `ADMIN_PANEL_SLUG`; the literal `/admin` path 404s (see `src/middleware.ts`) |
+| `/<username>`, `/p/<id>`, `/pulse/<id>`, `/profile/<ref>` | public share-link previews in the `(public)` route group — server-rendered on demand, `noindex` (see `(public)/README.md`) |
+
+**Every new root route must be added to api-service's reserved usernames**
+(`Api_service/src/modules/profile/username.helper.js`). `(public)/[username]` is
+a dynamic root segment: static routes win over it, so an unreserved name could
+leave a user whose profile link opens the wrong page.
 
 ## `layout.tsx` — the root document
 

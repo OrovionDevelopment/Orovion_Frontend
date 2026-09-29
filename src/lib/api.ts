@@ -311,7 +311,6 @@ export const dok = {
     likeComment: (id, commentId) => unwrap(api.post(`/posts/${id}/comments/${commentId}/like`)),
     deleteComment: (id, commentId) => unwrap(api.delete(`/posts/${id}/comments/${commentId}`)),
     shareInApp: (id, recipientIds) => unwrap(api.post(`/posts/${id}/share/inapp`, { recipientIds })),
-    shareLink: (id) => unwrap(api.get(`/posts/${id}/share/link`)), // { deepLink, webFallback }
     byUser: (userId, q = "") => unwrap(api.get(`/posts/user/${userId}${q}`)),
     trendingTags, // cached + in-flight-deduped (see definition above)
     create: (form) => postForm("/posts", form), // multipart: media (×10) + JSON fields

@@ -10,6 +10,7 @@ import { MetaRow, CountRow } from "@/components/profile/ProfileIdentity";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
+import { profileUrl } from "@/lib/shareLinks";
 import { compact, roleLabel } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { reconcileFollowState } from "@/lib/relationships";
@@ -193,7 +194,7 @@ export default function UserProfile() {
         onClose={() => setShare(false)}
         kind="profile"
         demo={demo}
-        shareUrl={u.uniqueUsername ? `${typeof window !== "undefined" ? window.location.origin : "https://orovion.app"}/u/${u.uniqueUsername}` : undefined}
+        shareUrl={profileUrl(u.uniqueUsername, u.id || u._id) || undefined}
       />
     </div>
   );

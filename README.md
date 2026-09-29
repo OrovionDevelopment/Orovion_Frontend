@@ -76,11 +76,52 @@ setup and an honest account of what code can and cannot do for ranking.
 - Indexable: `/`, `/team`, `/team/<slug>`, `/help`, `/mobile-app`, `/privacy`,
   `/terms`. Excluded via robots.txt **and** a `noindex` meta: `/app/*`,
   `/login`, `/onboarding`, `/admin`, `/api/*`.
-- **Set `NEXT_PUBLIC_SITE_URL`** (defaults to `https://www.orovion.com`; the
-  apex 301s to `www`, so `www` is the canonical host). It is
+- **Set `NEXT_PUBLIC_SITE_URL`** (defaults to `https://orovion.com`; the apex is
+  canonical and `www` 301s to it — share links and app-link verification need
+  the apex, see [docs/SEO.md](docs/SEO.md)). It is
   inlined at build time — set it before `npm run build`, and set it explicitly
   on preview deployments so they don't emit production canonicals.
   `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` is optional (HTML-tag verification).
+
+## Public share links
+
+Shared links are `https://orovion.com/<username>`, `/p/<postId>` and
+`/pulse/<reelId>` — built only by `src/lib/shareLinks.ts` (the app and
+api-service emit the same shapes). The pages live in `src/app/(public)/`: a
+signed-out visitor sees a read-only preview with **Open in the app**, **Get the
+app** and **Sign up**, and link-preview cards (WhatsApp, Telegram, LinkedIn)
+come from their metadata. Everything shown comes from api-service
+`/api/public/*`, which decides what is public. Signed-in visitors are moved to
+the full view under `/app`.
+
+Older shapes keep working via `next.config.mjs` redirects: `/u/<name>`,
+`/post|case|research|thesis/<id>` → `/p/<id>`, `/reel/<id>` → `/pulse/<id>`;
+`/profile/<id or slug>` resolves to the username.
+
+**Opening links in the app** needs two files that must answer 200 as
+`application/json` with **no redirect**, on the canonical host:
+
+- `public/.well-known/assetlinks.json` (Android) — every SHA-256 fingerprint the
+  app is signed with: the release keystore's (the APK is also downloadable
+  directly) **and** the Play App Signing key's from Play Console → App integrity.
+  One malformed fingerprint can invalidate the whole file.
+- `public/.well-known/apple-app-site-association` (iOS, no extension) — replace
+  `__APPLE_TEAM_ID__` with the Apple Team ID.
+
+Both fail silently (links just open in the browser), so after any deploy that
+touches them, the domain or `next.config.mjs`, run
+`node scripts/verify-deeplinks.mjs [origin] [p/<id>]`.
+
+Env: `PUBLIC_SSR_KEY` (server-only, same value as api-service's — lets these
+pages' server-side fetches skip the api's per-IP rate limit),
+`NEXT_PUBLIC_PLAY_STORE_URL` / `NEXT_PUBLIC_APP_STORE_URL` (optional; "Get the
+app" uses `/mobile-app` until set).
+
+**Deploy order:** api-service with `/api/public` first. Until it is live every
+preview page shows "This isn't available". **Every new root route** (anything
+at `/<name>`) must also be added to api-service's reserved usernames
+(`Api_service/src/modules/profile/username.helper.js`), or it could shadow — or
+be shadowed by — a profile.
 
 ## Analytics — Microsoft Clarity
 

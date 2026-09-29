@@ -20,6 +20,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import { cn, timeAgo, timeAgoLong, compact, roleLabel } from "@/lib/utils";
 import { dok } from "@/lib/api";
+import { postUrl } from "@/lib/shareLinks";
 
 /**
  * Feed card with the immutable attribution hierarchy:
@@ -127,8 +128,7 @@ export default function PostCard({ post, demo, onRemoved, onSavedChange, flush =
   const copyLink = async () => {
     setMoreOpen(false);
     try {
-      const d = demo ? { webFallback: `https://orovion.app/post/${post._id}` } : await dok.posts.shareLink(post._id || post.id);
-      await navigator.clipboard.writeText(d.webFallback || d.deepLink);
+      await navigator.clipboard.writeText(postUrl(post._id || post.id));
       toast?.success("Link copied — safe to share publicly");
     } catch {
       toast?.error("Couldn't copy the link");

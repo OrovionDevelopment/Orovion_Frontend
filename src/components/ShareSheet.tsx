@@ -6,12 +6,15 @@ import { Avatar, Verified, Skeleton } from "@/components/ui/Primitives";
 import { dok } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
+import { postUrl, pulseUrl } from "@/lib/shareLinks";
 
 /**
  * Multi-channel share tray (docs/feed.md §7):
  *  1. In-app DM share — search contacts + recent-thread suggestion grid,
  *     POST /posts/:id/share/inapp { recipientIds }
- *  2. Copy link — GET /posts/:id/share/link → secured read-only public preview
+ *  2. Copy link — the public orovion.com URL from src/lib/shareLinks.ts
+ *     (/p/<id>, /pulse/<id>, or the caller's `shareUrl` for profiles), built
+ *     locally with no request.
  *  3. External deep links — WhatsApp / Telegram / native share, built client-side
  *     from the copy-link URL.
  */
@@ -22,7 +25,6 @@ export default function ShareSheet({ open, onClose, post, demo, kind = "post", s
   const [contacts, setContacts] = useState(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null); // live search hits
-  const [link, setLink] = useState(null);
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -57,17 +59,8 @@ export default function ShareSheet({ open, onClose, post, demo, kind = "post", s
         setContacts([]);
       }
     })();
-    // Secured public link (read-only preview endpoint; no tokens leak).
-    // A caller-supplied URL (e.g. a profile's /u/username link) wins.
-    if (shareUrl) {
-      setLink({ webFallback: shareUrl });
-    } else if (kind === "reel") {
-      setLink({ webFallback: `${typeof window !== "undefined" ? window.location.origin : "https://orovion.app"}/reel/${postId || ""}` });
-    } else if (postId) {
-      dok.posts.shareLink(postId).then(setLink).catch(() => setLink(null));
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, demo, postId, kind, shareUrl]);
+  }, [open, demo]);
 
   // low-latency contact search
   useEffect(() => {
@@ -85,7 +78,13 @@ export default function ShareSheet({ open, onClose, post, demo, kind = "post", s
   const shown = results ?? contacts;
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
-  const url = link?.webFallback || link?.deepLink || "";
+  // A caller-supplied URL (a profile's /<username> link) wins; otherwise the
+  // public page for this post or pulse.
+  const url = useMemo(() => {
+    if (shareUrl) return shareUrl;
+    if (!postId) return "";
+    return kind === "reel" ? pulseUrl(postId) : postUrl(postId);
+  }, [shareUrl, kind, postId]);
   const shareText = post?.content ? `${post.content.slice(0, 120)}${post.content.length > 120 ? "…" : ""}` : "Worth a read on Orovion";
 
   const copy = async () => {

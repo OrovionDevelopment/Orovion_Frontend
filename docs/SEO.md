@@ -40,18 +40,27 @@ the page, and blocking those assets hurts ranking.
 ```bash
 # The public origin this app is served from. NOT api.orovion.com — that is the
 # backend. Inlined at BUILD time, so set it before `npm run build`.
-NEXT_PUBLIC_SITE_URL=https://www.orovion.com
+NEXT_PUBLIC_SITE_URL=https://orovion.com
 
 # Optional: only if you verify Search Console with the HTML-tag method.
 NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=<token from Search Console>
 ```
 
-`NEXT_PUBLIC_SITE_URL` defaults to `https://www.orovion.com` — the apex
-`orovion.com` 301-redirects to `www`, so `www` is the canonical host and every
-canonical tag must use it. **Set it explicitly on
-preview deployments** — otherwise a preview emits canonical tags pointing at
-production, which asks Google to drop the preview's own URLs (usually harmless,
-occasionally not).
+`NEXT_PUBLIC_SITE_URL` defaults to `https://orovion.com`. The canonical host is
+the **apex**, because share links (`https://orovion.com/<username>`, `/p/<id>`,
+`/pulse/<id>`) must match the host Android App Links and iOS Universal Links
+verify, and that verification fails if the host answers with a redirect. So in
+Vercel the apex is the primary domain and `www` 301-redirects to it — the
+reverse of the original setup.
+
+**Switching an existing www-canonical site:** make `orovion.com` primary in
+Vercel (www → apex, 308/301), set `NEXT_PUBLIC_SITE_URL=https://orovion.com`,
+rebuild, add the apex as a Search Console property and submit its sitemap. The
+301s carry ranking over; expect the switch to settle over a few weeks.
+
+**Set it explicitly on preview deployments** — otherwise a preview emits
+canonical tags pointing at production, which asks Google to drop the preview's
+own URLs (usually harmless, occasionally not).
 
 ---
 

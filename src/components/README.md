@@ -8,6 +8,11 @@ the primitives (`Primitives`, `Overlays`, `Skeletons`, `Toast`, `FollowButton`, 
 
 `analytics/` holds **third-party** tags (Microsoft Clarity) and has its own
 README — note it is scoped to public routes and must never load inside `/app/*`.
+
+`public/` is the exception to "everything is client": server-rendered cards for
+the public share-link pages (its own README). `ShareSheet`, `PostCard` and
+`ReelCard` take every share URL from `src/lib/shareLinks.ts` — no request, no
+`window.location.origin`, no hardcoded domain.
 Orovion's own admin dashboard is `src/features/analytics/`, a different thing.
 
 Follow the theming rules in the root `CLAUDE.md`: `bg-surface` for cards and

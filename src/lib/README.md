@@ -14,6 +14,22 @@ than inside a component, so it can be tested without React or a DOM.
 - `firebaseAuth.ts`, `qrLogin.ts`, `socketReauth.ts`, `socket.ts` — auth and
   realtime transport helpers.
 
+## Public share links
+
+- `shareLinks.ts` — the **only** place the web builds a share URL
+  (`profileUrl` → `/<username>` or `/profile/<id>`, `postUrl` → `/p/<id>`,
+  `pulseUrl` → `/pulse/<id>`, all on `SITE_URL`), plus handle parsing
+  (`parseHandle`: lowercase, strip `@`, flag non-canonical for a redirect) and
+  opening the app (`appSchemeUrl` — id-based `orovion://` links every app build
+  routes — `androidIntentUrl`, `platformFromUserAgent`, `storeUrl`).
+- `publicPreview.ts` — the `/api/public/*` response types and the text the
+  preview pages derive from them (`displayName`, `profileDescription`,
+  `postHeadline`, …), which ends up in link-preview cards.
+- `publicContent.ts` — **server only**: fetches `/api/public/*` for the
+  `(public)` pages with a 2.5 s timeout, sending `PUBLIC_SSR_KEY`. Never throws;
+  returns `ok | notFound | error`. In `proxy` mode it calls
+  `BACKEND_PROXY_TARGET`, since a server fetch can't be same-origin.
+
 ## Offline
 
 - `offline.ts` — `swStrategyFor`, the pure mirror of `public/sw.js` routing.

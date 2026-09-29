@@ -12,6 +12,7 @@ import MediaViewer from "@/components/profile/MediaViewer";
 import { MetaRow, CountRow } from "@/components/profile/ProfileIdentity";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
+import { profileUrl } from "@/lib/shareLinks";
 import { readCache, writeCache } from "@/lib/offline-cache";
 import { cn, compact, reelPoster } from "@/lib/utils";
 
@@ -197,7 +198,12 @@ export default function Profile() {
       </div>
 
       {viewer && <MediaViewer src={viewer} kind="image" onClose={() => setViewer(null)} />}
-      <ShareSheet open={share} onClose={() => setShare(false)} kind="profile" />
+      <ShareSheet
+        open={share}
+        onClose={() => setShare(false)}
+        kind="profile"
+        shareUrl={profileUrl(user.uniqueUsername, user.id || user._id) || undefined}
+      />
       <PeopleSheet
         open={!!peopleTab}
         tab={peopleTab || "followers"}

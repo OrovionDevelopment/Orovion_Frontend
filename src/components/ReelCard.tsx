@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import { cn, compact, timeAgoLong, reelPoster } from "@/lib/utils";
 import { dok } from "@/lib/api";
+import { pulseUrl } from "@/lib/shareLinks";
 
 const rid = (r) => r?._id || r?.id;
 
@@ -139,8 +140,7 @@ export default function ReelCard({
   const copyLink = async () => {
     setMore(false);
     try {
-      const url = `${typeof window !== "undefined" ? window.location.origin : "https://orovion.app"}/reel/${id}`;
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(pulseUrl(id));
       toast?.success("Link copied — safe to share publicly");
     } catch { toast?.error("Couldn't copy the link"); }
   };

@@ -36,5 +36,7 @@ export function middleware(req: NextRequest) {
 export const config = {
   // Run on page routes only — never on the API proxy, sockets, Next internals, or
   // static assets (so the /api/admin backend calls and everything else are untouched).
-  matcher: ["/((?!api|socket.io|_next/static|_next/image|favicon.ico).*)"],
+  // /.well-known/* is excluded so nothing can ever sit between the app-link
+  // verification files and the OS fetching them.
+  matcher: ["/((?!api|socket.io|_next/static|_next/image|favicon.ico|\\.well-known).*)"],
 };

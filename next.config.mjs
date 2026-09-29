@@ -26,6 +26,28 @@ const nextConfig = {
       { source: "/socket.io/:path*", destination: `${CHAT}/socket.io/:path*` },
     ];
   },
+  // Share links that were handed out before the Instagram-style shapes. They
+  // keep working forever: links already sit in chats and posts. /profile/<ref>
+  // is a page, not a redirect, because a user id needs a lookup.
+  async redirects() {
+    return [
+      { source: "/u/:username", destination: "/:username", permanent: true },
+      { source: "/:type(post|case|research|thesis)/:id", destination: "/p/:id", permanent: true },
+      { source: "/reel/:id", destination: "/pulse/:id", permanent: true },
+    ];
+  },
+  // Android App Links / iOS Universal Links verification. Both files must come
+  // back 200 as application/json with no redirect, or the OS silently opens
+  // shared links in the browser instead of the app. The AASA file has no
+  // extension, so its type has to be set explicitly.
+  async headers() {
+    const cache = { key: "Cache-Control", value: "public, max-age=3600" };
+    const json = { key: "Content-Type", value: "application/json" };
+    return [
+      { source: "/.well-known/apple-app-site-association", headers: [json, cache] },
+      { source: "/.well-known/assetlinks.json", headers: [json, cache] },
+    ];
+  },
 };
 
 export default nextConfig;
