@@ -6,7 +6,7 @@ import { clip, displayName, pulseHeadline } from "@/lib/publicPreview";
 import { pageMetadata } from "@/lib/seo";
 import { CONTENT_ID_RE } from "@/lib/shareLinks";
 
-// https://orovion.com/pulse/<reelId> — poster only; signed-out visitors never get
+// https://www.orovion.com/pulse/<reelId> — poster only; signed-out visitors never get
 // a playable stream.
 export const revalidate = 120;
 

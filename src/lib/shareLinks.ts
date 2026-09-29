@@ -4,9 +4,9 @@ import { absoluteUrl } from "@/lib/seo";
  * The one place the web builds share links. Same shapes as the Flutter app's
  * ShareService and api-service's share-link endpoints:
  *
- *   profile  https://orovion.com/<username>     (no username yet: /profile/<userId>)
- *   post     https://orovion.com/p/<postId>     (case studies, research, theses too)
- *   pulse    https://orovion.com/pulse/<reelId>
+ *   profile  https://www.orovion.com/<username>     (no username yet: /profile/<userId>)
+ *   post     https://www.orovion.com/p/<postId>     (case studies, research, theses too)
+ *   pulse    https://www.orovion.com/pulse/<reelId>
  *
  * The public pages behind them live in `src/app/(public)/`. The origin is
  * `SITE_URL`, so a share link always points at the canonical site.

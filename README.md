@@ -76,16 +76,16 @@ setup and an honest account of what code can and cannot do for ranking.
 - Indexable: `/`, `/team`, `/team/<slug>`, `/help`, `/mobile-app`, `/privacy`,
   `/terms`. Excluded via robots.txt **and** a `noindex` meta: `/app/*`,
   `/login`, `/onboarding`, `/admin`, `/api/*`.
-- **Set `NEXT_PUBLIC_SITE_URL`** (defaults to `https://orovion.com`; the apex is
-  canonical and `www` 301s to it — share links and app-link verification need
-  the apex, see [docs/SEO.md](docs/SEO.md)). It is
+- **Set `NEXT_PUBLIC_SITE_URL`** (defaults to `https://www.orovion.com`; `www` is
+  canonical and the apex 308s to it — share links and app-link verification need
+  the canonical host, see [docs/SEO.md](docs/SEO.md)). It is
   inlined at build time — set it before `npm run build`, and set it explicitly
   on preview deployments so they don't emit production canonicals.
   `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` is optional (HTML-tag verification).
 
 ## Public share links
 
-Shared links are `https://orovion.com/<username>`, `/p/<postId>` and
+Shared links are `https://www.orovion.com/<username>`, `/p/<postId>` and
 `/pulse/<reelId>` — built only by `src/lib/shareLinks.ts` (the app and
 api-service emit the same shapes). The pages live in `src/app/(public)/`: a
 signed-out visitor sees a read-only preview with **Open in the app**, **Get the

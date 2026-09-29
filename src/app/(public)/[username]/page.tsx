@@ -6,7 +6,7 @@ import { displayName, profileDescription } from "@/lib/publicPreview";
 import { pageMetadata } from "@/lib/seo";
 import { parseHandle, safeHandleTarget } from "@/lib/shareLinks";
 
-// https://orovion.com/<username>. Every static root route (/app, /login, /help,
+// https://www.orovion.com/<username>. Every static root route (/app, /login, /help,
 // …) and every file in public/ wins over this dynamic segment, which is why
 // api-service reserves all of those names.
 //

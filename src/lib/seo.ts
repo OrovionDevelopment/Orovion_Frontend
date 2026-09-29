@@ -13,9 +13,11 @@ import type { Metadata } from "next";
  * `api.orovion.com` / `chat.orovion.com` — those are backend origins and are
  * configured separately in `src/lib/backend.ts`.
  */
-// Apex, not www: share links and the Android/iOS app-link verification files
-// are served from exactly this host, and app-link matching is host-exact.
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://orovion.com").replace(/\/+$/, "");
+// www is canonical (the apex 308s to it). Share links and the Android/iOS
+// app-link verification files are served from exactly this host, and app-link
+// matching is host-exact — the app's AppConfig.appDomain and its App Links host
+// must be this same value.
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.orovion.com").replace(/\/+$/, "");
 
 export const SITE_NAME = "Orovion";
 

@@ -3,7 +3,7 @@
 Full-page components. The thin files under `src/app/**/page.tsx` do nothing but
 render one of these, so routing stays declarative and the screens stay testable.
 Profile share links (`Profile.tsx` for your own, `UserProfile.tsx` for others)
-come from `profileUrl()` in `src/lib/shareLinks.ts`: `https://orovion.com/<username>`.
+come from `profileUrl()` in `src/lib/shareLinks.ts`: `https://www.orovion.com/<username>`.
 `src/app/app/layout.tsx` is `force-dynamic`, and `AppLayout` renders
 `<AppLoading />` until `AuthContext` finishes bootstrapping — so no screen mounts
 before the access token has been re-minted from the refresh cookie.

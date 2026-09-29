@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { resolveProfileRef } from "@/lib/publicContent";
 import { decodeSegment, PROFILE_REF_RE, safeHandleTarget } from "@/lib/shareLinks";
 
-// https://orovion.com/profile/<ref> — older profile links carried a user id or a
+// https://www.orovion.com/profile/<ref> — older profile links carried a user id or a
 // publicProfileSlug, and a profile share with no username yet still does. Sends
 // them to the canonical /<username>. Temporary redirect: a rename changes it.
 export const revalidate = 120;

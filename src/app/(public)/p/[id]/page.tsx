@@ -6,7 +6,7 @@ import { clip, displayName, postHeadline } from "@/lib/publicPreview";
 import { pageMetadata } from "@/lib/seo";
 import { CONTENT_ID_RE } from "@/lib/shareLinks";
 
-// https://orovion.com/p/<postId> — public posts only; case studies, research and
+// https://www.orovion.com/p/<postId> — public posts only; case studies, research and
 // theses are never public (api-service answers 404).
 export const revalidate = 120;
 

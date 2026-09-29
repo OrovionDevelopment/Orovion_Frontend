@@ -5,12 +5,15 @@
  * so run this after any deploy that touches the domain, public/.well-known/ or
  * next.config.mjs.
  *
- *   node scripts/verify-deeplinks.mjs                              # https://orovion.com
- *   node scripts/verify-deeplinks.mjs https://orovion.com p/<id>   # also check a live page's card
+ *   node scripts/verify-deeplinks.mjs                                  # https://www.orovion.com
+ *   node scripts/verify-deeplinks.mjs https://www.orovion.com p/<id>   # also check a live page's card
+ *
+ * Pass the CANONICAL host — the one in the app's App Links filter and
+ * NEXT_PUBLIC_SITE_URL. The other form (apex ↔ www) must redirect to it.
  *
  * Exit code 1 when anything fails.
  */
-const origin = (process.argv[2] || "https://orovion.com").replace(/\/+$/, "");
+const origin = (process.argv[2] || "https://www.orovion.com").replace(/\/+$/, "");
 const samplePath = process.argv[3];
 const PACKAGE = "com.orovion.app";
 const SHA256_RE = /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/;
@@ -59,16 +62,17 @@ await checkJsonFile("/.well-known/apple-app-site-association", (body) => {
     "apple-app-site-association has a real Team ID", ids.join(", ") || "no appIDs");
 });
 
+// The non-canonical form (apex ↔ www) must permanently redirect to the canonical
+// one, so every link ends up on the host the app verified.
 const host = new URL(origin).host;
-if (!host.startsWith("www.")) {
-  try {
-    const res = await get(`https://www.${host}/`);
-    const location = res.headers.get("location") || "";
-    report([301, 308].includes(res.status) && location.startsWith(origin),
-      `www.${host} permanently redirects to ${origin}`, `${res.status} → ${location || "no Location"}`);
-  } catch (err) {
-    report(false, `www.${host} is reachable`, err.message);
-  }
+const otherHost = host.startsWith("www.") ? host.slice(4) : `www.${host}`;
+try {
+  const res = await get(`https://${otherHost}/`);
+  const location = res.headers.get("location") || "";
+  report([301, 308].includes(res.status) && location.startsWith(origin),
+    `${otherHost} permanently redirects to ${origin}`, `${res.status} → ${location || "no Location"}`);
+} catch (err) {
+  report(false, `${otherHost} is reachable`, err.message);
 }
 
 if (samplePath) {

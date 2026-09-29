@@ -21,8 +21,8 @@ describe("share URLs", () => {
     expect(pulseUrl("r/1")).toBe(`${SITE_URL}/pulse/r%2F1`);
   });
 
-  it("defaults the site to the apex host, which app-link verification requires", () => {
-    expect(SITE_URL).toBe(process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || "https://orovion.com");
+  it("defaults the site to the canonical www host, which app-link verification requires", () => {
+    expect(SITE_URL).toBe(process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || "https://www.orovion.com");
   });
 });
 
