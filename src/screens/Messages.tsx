@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 import { dok } from "@/lib/api";
 import { readCache, writeCache } from "@/lib/offline-cache";
 import { getSocket } from "@/lib/socket";
-import { cn, timeAgo } from "@/lib/utils";
+import { cn, timeAgo, newClientId } from "@/lib/utils";
 import ChatMessage from "@/components/ChatMessage";
 import { readDeletedConversationIds, writeDeletedConversationIds, filterOutDeleted } from "@/lib/chatDeletedConversations";
 
@@ -365,6 +365,10 @@ export default function Messages() {
     if (!content || !active || sending) return;
     const reply = replyTo;
     const meta = replyMeta(reply);
+    // One key per message. A transport-level replay (the 401-refresh retry, or
+    // the backend failover in lib/api.ts) is then deduplicated server-side
+    // instead of posting the message twice.
+    const clientId = newClientId();
     const temp = { _id: `tmp-${Date.now()}`, senderId: myId, content, status: "sent", createdAt: new Date().toISOString(), meta };
     setMsgs((m) => [...(m || []), temp]);
     setText("");
@@ -373,7 +377,7 @@ export default function Messages() {
     clearTimeout(selfTyping.current.timer);
     getSocket().emit("typing_stop", { conversationId: String(cidOf(active)) });
     try {
-      const d = await dok.chat.send(cidOf(active), { content, type: "text", messageType: "text", ...(meta ? { meta } : {}) });
+      const d = await dok.chat.send(cidOf(active), { content, type: "text", messageType: "text", clientId, ...(meta ? { meta } : {}) });
       const real = d.message || d;
       if (midOf(real)) {
         setMsgs((m) => {
@@ -397,7 +401,7 @@ export default function Messages() {
     if (!file || !active || uploading) return;
     setUploading(true);
     try {
-      const d = await dok.chat.upload(cidOf(active), file);
+      const d = await dok.chat.upload(cidOf(active), file, newClientId());
       const real = d.message || d;
       if (midOf(real)) setMsgs((m) => ((m || []).some((x) => String(midOf(x)) === String(midOf(real))) ? m : [...(m || []), real]));
     } catch {

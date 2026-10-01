@@ -390,11 +390,20 @@ export const dok = {
     conversations: () => unwrap(api.get("/chat/conversations")),
     messages: (cid, q = "") => unwrap(api.get(`/chat/${cid}/messages${q}`)), // ?cursor=&limit=
     start: (b) => unwrap(api.post("/chat/start", b)),
-    send: (cid, b) => unwrap(api.post(`/chat/${cid}/messages`, b)), // { content, type, meta? }
+    // { content, type, clientId?, meta?, replyTo?, forwardCount? }. `clientId`
+    // (see newClientId in lib/utils) makes a replay return the stored message
+    // instead of creating a duplicate.
+    send: (cid, b) => unwrap(api.post(`/chat/${cid}/messages`, b)),
     unreadCount: () => unwrap(api.get("/chat/unread-count")),
     seen: (cid) => unwrap(api.post(`/chat/${cid}/seen`, {})),
-    // Multipart media/document upload (field "file") → { message }.
-    upload: (cid, file) => { const f = new FormData(); f.append("file", file); return postForm(`/chat/${cid}/upload`, f); },
+    // Multipart media/document upload (field "file") → { message }. `clientId`
+    // dedupes a replayed upload the same way a text send does.
+    upload: (cid, file, clientId) => {
+      const f = new FormData();
+      f.append("file", file);
+      if (clientId) f.append("clientId", clientId);
+      return postForm(`/chat/${cid}/upload`, f);
+    },
     // React (toggle) with an emoji → updated reactions. Empty emoji removes.
     react: (messageId, emoji) => unwrap(api.post(`/chat/messages/${messageId}/react`, { emoji })),
     // Delete a message. deleteFor: 'me' | 'for_everyone' (≤60 min, sender only).

@@ -14,6 +14,11 @@ than inside a component, so it can be tested without React or a DOM.
 - `firebaseAuth.ts`, `qrLogin.ts`, `socketReauth.ts`, `socket.ts` — auth and
   realtime transport helpers.
 
+`utils.ts` — `newClientId()` mints the per-message idempotency key sent as
+`clientId` on a chat send or upload. `api.ts` retries once after a 401 refresh
+and fails over between backends on a 5xx, so without a key one send can arrive
+twice and be stored twice. One key per message; reuse it on a resend.
+
 ## Public share links
 
 - `shareLinks.ts` — the **only** place the web builds a share URL

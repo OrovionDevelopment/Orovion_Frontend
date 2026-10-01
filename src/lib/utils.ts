@@ -2,6 +2,25 @@ import { useEffect, useRef, useState } from "react";
 
 export const cn = (...c) => c.filter(Boolean).join(" ");
 
+/**
+ * A fresh idempotency key for one outgoing chat message.
+ *
+ * Sent as `clientId`, it lets chat-service recognise a replay of the SAME
+ * message instead of storing a second copy: `api.ts` retries a request once
+ * after a 401 refresh and fails over to the other backend on a 5xx, so without
+ * this a single send can legitimately arrive twice. Generate it once per message
+ * and reuse it on a manual resend — a new key means a new message.
+ *
+ * `crypto.randomUUID` needs a secure context (https or localhost), hence the
+ * fallback; the same pattern as `getDeviceId` in lib/firebaseAuth.ts.
+ */
+export function newClientId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ||
+    `web-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
+}
+
 export function timeAgo(date) {
   if (!date) return "";
   const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000);

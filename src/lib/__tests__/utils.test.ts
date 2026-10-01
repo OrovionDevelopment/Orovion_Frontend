@@ -1,5 +1,23 @@
-import { describe, it, expect } from "vitest";
-import { cn, compact, roleLabel, initials, timeAgo, timeAgoLong, avatarColor, reelPoster } from "@/lib/utils";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import { cn, compact, roleLabel, initials, timeAgo, timeAgoLong, avatarColor, reelPoster, newClientId } from "@/lib/utils";
+
+describe("newClientId", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("returns a distinct key per call", () => {
+    const keys = new Set([newClientId(), newClientId(), newClientId()]);
+    expect(keys.size).toBe(3);
+    keys.forEach((k) => expect(k.length).toBeGreaterThan(8));
+  });
+
+  it("falls back when crypto.randomUUID is unavailable (non-secure context)", () => {
+    // randomUUID needs https or localhost; without the fallback a send would
+    // throw here and the message would never leave the browser.
+    vi.stubGlobal("crypto", {});
+    const id = newClientId();
+    expect(id).toMatch(/^web-\d+-[0-9a-z]+$/);
+  });
+});
 
 describe("cn", () => {
   it("joins truthy class names and drops falsy ones", () => {
