@@ -9,6 +9,31 @@ than inside a component, so it can be tested without React or a DOM.
   The access token is held **in memory only**; the refresh token is an httpOnly
   cookie. A 401 triggers a single silent refresh-and-retry, and a hard failure
   fires `dl:auth-expired` for `AuthContext` to act on.
+
+### Refreshing is single-flight, and the CSRF value comes from the cookie
+
+Two rules in `api.ts` that exist because breaking either logs users out of a
+healthy session:
+
+- **`refreshOnce()` is the only way to refresh.** The server *rotates* the refresh
+  token on every use and retires the old session row, so two concurrent refreshes
+  mean the second is answered `401 Session not found`. Four callers can trigger one
+  — `AuthContext`'s session restore, `socket.ts`, `callClient.ts` and the 401
+  interceptor — so they share one in-flight promise, and `navigator.locks` serialises
+  across **tabs** as well (a browser restart that reopens several tabs is the real
+  case). Never call `/auth/refresh-token` directly.
+- **`TOKENS.csrf` reads the `csrfToken` cookie first**, falling back to
+  `localStorage.dl_csrf`. The server compares our header against that cookie, so
+  taking the value from the cookie makes the double-submit match by construction.
+  The cookie is domain-scoped and rotates with the refresh cookie; localStorage is
+  scoped to one exact origin and can be cleared on its own, which produced 403s for
+  anyone whose storage was wiped, who landed on the apex instead of `www`, or whose
+  other tab had rotated the pair. Security is unchanged: CSRF protection comes from a
+  cross-origin attacker being unable to **read** the cookie.
+
+Every `localStorage` access here is wrapped in try/catch — it *throws* in some
+privacy modes, and this code runs inside the request interceptor, so an exception
+would break every request rather than just the refresh.
 - `backend.ts` — picks the deployment (AWS via same-origin `proxy` rewrite, or
   Render directly) and caches the choice.
 - `firebaseAuth.ts`, `qrLogin.ts`, `socketReauth.ts`, `socket.ts` — auth and

@@ -143,3 +143,33 @@ The surrounding tile is already `bg-ink-950` with a play-icon overlay, so the
 guard degrades to a dark placeholder rather than a broken image. Do not
 reintroduce a derived `.jpg` URL — S3 has no on-the-fly frame generation, so it
 only produces failed requests.
+
+## Chat thread ordering (`Messages.tsx`)
+
+**chat-service returns a page of messages newest-first.** `GET /api/chat/:id/messages`
+sorts by `_id` descending, pages backwards in time (`_id: { $lt: cursor }`), and
+returns `nextCursor` = the oldest item on the page. api-service's proxy
+(`getMessagesDecorated`) decorates each message but preserves that order.
+
+The thread renders top-to-bottom (`msgs.map`), and every path that inserts into
+`msgs` assumes the opposite — **oldest-first**:
+
+| Path | Insert |
+|---|---|
+| socket `new_message` / `message_sent` (`appendToThread`) | `[...prev, m]` |
+| optimistic send | `[...(m \|\| []), temp]` |
+| `loadMore` (older page) | `[...older, ...prev]` |
+| auto-scroll | scrolls to `endRef`, i.e. the bottom, to reach the newest |
+
+So **every fetched page is flipped through `toAscending()`** before it reaches
+state. This is not cosmetic: without it the entire thread rendered upside down,
+and because the view auto-scrolls to the bottom (which was then the *oldest* end)
+a just-sent message appeared to vanish on reopening the conversation — it had
+moved to the top, far above the viewport.
+
+`hasMore` and `nextCursor` are read from the raw response, never derived from the
+local array, so reversing locally cannot affect pagination.
+
+> The same endpoint has a second mode, `?sinceSeq=<n>`, which returns messages
+> **ascending** with `nextSinceSeq`. This screen never sends it. Anyone adding
+> delta sync must not pass that response through `toAscending()`.

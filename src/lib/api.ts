@@ -7,21 +7,42 @@ import { apiBase } from "./backend";
 // csrfToken: readable value echoed in the X-CSRF-Token header on refresh/logout
 let accessToken = null;
 
+// The `csrfToken` cookie is deliberately NOT httpOnly so it can be read here, and
+// it is the authoritative half of the double-submit pair: the server compares our
+// header against that very cookie. It is also scoped to COOKIE_DOMAIN and rotates
+// together with the refresh cookie, whereas localStorage is scoped to one exact
+// origin and can be wiped on its own. Reading the cookie first therefore removes
+// three real causes of being logged out: localStorage cleared by the browser, the
+// visitor arriving on the apex while `dl_csrf` was written on `www`, and a stale
+// `dl_csrf` after another tab rotated the pair. Security is unchanged — the
+// protection comes from a cross-origin attacker being unable to READ the cookie,
+// not from where we keep our copy.
+const csrfFromCookie = () => {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(/(?:^|;\s*)csrfToken=([^;]*)/);
+  return m ? decodeURIComponent(m[1]) : null;
+};
+
+// localStorage throws (not just returns null) in some privacy modes, and this
+// getter runs inside the request interceptor — an exception here would break every
+// request, so every access is guarded.
+const readLocal = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+
 export const TOKENS = {
   get access() {
     return accessToken;
   },
   get csrf() {
-    return localStorage.getItem("dl_csrf");
+    return csrfFromCookie() ?? readLocal("dl_csrf");
   },
   // Accepts the auth payload: { accessToken, csrfToken } (+ user, ignored here).
   set({ accessToken: a, csrfToken: c } = {}) {
     if (a !== undefined) accessToken = a || null;
-    if (c) localStorage.setItem("dl_csrf", c);
+    if (c) { try { localStorage.setItem("dl_csrf", c); } catch { /* cookie still carries it */ } }
   },
   clear() {
     accessToken = null;
-    localStorage.removeItem("dl_csrf");
+    try { localStorage.removeItem("dl_csrf"); } catch { /* ignore */ }
   },
 };
 
@@ -90,8 +111,30 @@ async function doRefresh() {
   return payload.accessToken;
 }
 
-// Auto-refresh on 401 (single retry). On hard failure, clear tokens and signal the app.
-let refreshing = null;
+// Serialise refreshes ACROSS TABS. The server rotates the refresh token on every
+// use and retires the old session row, so two tabs refreshing with the same cookie
+// means the second is answered 401 "Session not found" — and logs the user out of a
+// session that is perfectly healthy. A browser restart that reopens several tabs is
+// exactly that scenario. Holding the lock is enough: the cookie jar is shared, so a
+// tab that waits picks up the rotated cookie and succeeds. Web Locks is per-origin
+// and released automatically if a tab dies; where it is unavailable we just proceed,
+// which is the previous behaviour.
+const withRefreshLock = <T,>(fn: () => Promise<T>): Promise<T> => {
+  const locks = typeof navigator !== "undefined" ? (navigator as any).locks : undefined;
+  return locks?.request ? locks.request("dl_refresh", fn) : fn();
+};
+
+// Single-flight WITHIN this tab, shared by all three callers: the 401 interceptor
+// below, `dok.auth.refresh` and AuthContext's session restore. They used to refresh
+// independently, so a mount racing the `online` event rotated the token out from
+// under itself.
+let refreshing: Promise<string> | null = null;
+export const refreshOnce = (): Promise<string> => {
+  if (!refreshing) {
+    refreshing = withRefreshLock(doRefresh).finally(() => { refreshing = null; });
+  }
+  return refreshing;
+};
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -133,13 +176,10 @@ api.interceptors.response.use(
     if (response?.status === 401 && config && !config._retry && !skipRefresh) {
       config._retry = true;
       try {
-        refreshing = refreshing || doRefresh();
-        const fresh = await refreshing;
-        refreshing = null;
+        const fresh = await refreshOnce();
         config.headers.Authorization = `Bearer ${fresh}`;
         return api(config);
       } catch (e) {
-        refreshing = null;
         TOKENS.clear();
         if (typeof window !== "undefined")
           window.dispatchEvent(new CustomEvent("dl:auth-expired"));
@@ -204,11 +244,12 @@ export const dok = {
     apple: (b) => unwrap(api.post("/auth/apple", b)),
     sendOtp: (b) => unwrap(api.post("/auth/send-otp", b)),
     verifyOtp: (b) => unwrap(api.post("/auth/verify-otp", b)),
-    // Web: no body — refresh token comes from the httpOnly cookie; CSRF header added by interceptor.
-    refresh: () => unwrap(api.post("/auth/refresh-token")).then((payload) => {
-      TOKENS.set(payload);
-      return payload;
-    }),
+    // Web: no body — refresh token comes from the httpOnly cookie; CSRF header added
+    // by the interceptor. Goes through `refreshOnce` so the session restore, the
+    // socket reauth, the call client and the 401 interceptor share ONE in-flight
+    // refresh; each rotation invalidates the previous token, so racing them logs the
+    // user out. Resolves with the access token — every caller only awaits it.
+    refresh: () => refreshOnce(),
     logout: () => unwrap(api.post("/auth/logout")),
     logoutAll: () => unwrap(api.post("/auth/logout-all")),
     sessions: () => unwrap(api.get("/auth/sessions")),

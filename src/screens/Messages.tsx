@@ -18,6 +18,16 @@ import { readDeletedConversationIds, writeDeletedConversationIds, filterOutDelet
 
 const cidOf = (c) => c?.conversationId || c?.id || c?._id;
 const midOf = (m) => m?._id || m?.id;
+// chat-service returns a page NEWEST-first (it sorts by `_id` descending, and
+// the cursor pages backwards in time). The thread renders top-to-bottom, and
+// every insert path below — socket append, optimistic send, load-more prepend —
+// plus the scroll-to-bottom all assume OLDEST-first, so each fetched page is
+// flipped here. Do not drop this: without it the thread renders upside down and
+// a just-sent message jumps to the top as soon as the conversation is reopened.
+// Cursor pages only — the same endpoint's `?sinceSeq` mode already returns
+// ascending, so a delta response must NOT be passed through this.
+const toAscending = (page) => (Array.isArray(page) ? [...page].reverse() : []);
+
 const STATUS_RANK = { sent: 0, delivered: 1, seen: 2 };
 
 export default function Messages() {
@@ -147,7 +157,7 @@ export default function Messages() {
     dok.chat.messages(cidOf(active))
       .then((d) => {
         if (!alive) return;
-        setMsgs(d.messages || d || []);
+        setMsgs(toAscending(d.messages || d));
         setHasMore(!!d.hasMore);
         nextCursorRef.current = d.nextCursor || null;
         markSeen(active);
@@ -169,7 +179,7 @@ export default function Messages() {
     const prevH = el?.scrollHeight || 0;
     try {
       const d = await dok.chat.messages(cidOf(active), `?cursor=${nextCursorRef.current}&limit=30`);
-      const older = d.messages || d || [];
+      const older = toAscending(d.messages || d); // oldest-first, like the initial page
       setMsgs((prev) => [...older, ...(prev || [])]);
       setHasMore(!!d.hasMore);
       nextCursorRef.current = d.nextCursor || null;

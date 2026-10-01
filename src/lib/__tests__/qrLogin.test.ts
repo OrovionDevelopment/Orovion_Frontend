@@ -2,12 +2,13 @@ import { describe, it, expect } from "vitest";
 import { qrDeepLink, nextPhase, normaliseTtl, QR_DEFAULT_TTL_SEC } from "../qrLogin";
 
 describe("qrDeepLink", () => {
+  // `platform=web` tells the approving app which client raised the challenge.
   it("encodes the challengeId into the app deep link", () => {
-    expect(qrDeepLink("9f3c1a2b")).toBe("orovion://qr-login?challengeId=9f3c1a2b");
+    expect(qrDeepLink("9f3c1a2b")).toBe("orovion://qr-login?challengeId=9f3c1a2b&platform=web");
   });
 
   it("url-encodes an unusual challengeId so the link never breaks", () => {
-    expect(qrDeepLink("a b/c")).toBe("orovion://qr-login?challengeId=a%20b%2Fc");
+    expect(qrDeepLink("a b/c")).toBe("orovion://qr-login?challengeId=a%20b%2Fc&platform=web");
   });
 });
 

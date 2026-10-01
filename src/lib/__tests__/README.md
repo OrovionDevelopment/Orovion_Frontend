@@ -3,6 +3,16 @@
 Vitest unit tests for the framework-free logic in `src/lib/` (`npm test`).
 Node environment, no DOM; `@` resolves to `src/`.
 
+Session:
+
+- `api.session.test.ts` — where the CSRF value is read from (the `csrfToken` cookie
+  first, `localStorage.dl_csrf` as a fallback) and that `refreshOnce()` coalesces
+  concurrent refreshes. Both guard real logout bugs: the server rotates the refresh
+  token on every use, so racing refreshes kill a healthy session, and a localStorage-
+  only CSRF read 403s whenever storage and cookie disagree. The `node` environment
+  has no `document`/`localStorage`, which is also the condition the guards in
+  `api.ts` must survive — the tests stub both globals per case.
+
 Share links:
 
 - `shareLinks.test.ts` — URL shapes, handle parsing and canonical redirects,

@@ -31,9 +31,42 @@ export function AuthProvider({ children }) {
   // transient server error, DON'T log out — restore the last-known cached user so a
   // signed-in visitor still opens their homepage instead of the landing page. Only a
   // genuine auth rejection (401/403 = no/expired session) actually logs out.
+  // Offline / DNS / 5xx / rate-limited — the session may well be valid, we just
+  // couldn't complete the call. Keep the tokens and show the cached user (if any).
+  const showCachedUser = async (): Promise<boolean> => {
+    const cached = await readCache<any>(SELF, "user").catch(() => null);
+    if (cached?.data) {
+      setUser(cached.data);
+      setHint(true);
+      return true;
+    }
+    return false; // no cached user → stay on landing/login until reachable
+  };
+
+  // Genuine logout: no/expired session. Destructive (it drops this session's
+  // cached data), so it must only ever run on a verdict from the refresh call.
+  const hardLogout = (): boolean => {
+    TOKENS.clear();
+    setHint(false);
+    setUser(null);
+    disconnectSocket();
+    clearOfflineCache().catch(() => {});
+    return false;
+  };
+
   const loadSession = async (): Promise<boolean> => {
+    // ONLY the refresh call's verdict decides whether the session is gone.
+    // Previously one try/catch covered the profile fetch too, so a 401/403 from
+    // anywhere — a per-route permission check, a WAF, an edge rule — wiped the
+    // tokens and the offline cache on a session that was perfectly valid.
     try {
       await dok.auth.refresh();
+    } catch (e: any) {
+      const status = e?.response?.status;
+      return status === 401 || status === 403 ? hardLogout() : showCachedUser();
+    }
+
+    try {
       const data = await dok.profile.me();
       const u = data.user || data;
       setUser(u);
@@ -41,29 +74,10 @@ export function AuthProvider({ children }) {
       writeCache(SELF, "user", u).catch(() => {});
       connectSocket(u?._id || u?.id);
       return true;
-    } catch (e: any) {
-      const status = e?.response?.status;
-      const authFailure = status === 401 || status === 403;
-
-      if (!authFailure) {
-        // Offline / DNS / 5xx — the session may well be valid, we just couldn't
-        // reach the server. Keep tokens and show the cached user (if any).
-        const cached = await readCache<any>(SELF, "user").catch(() => null);
-        if (cached?.data) {
-          setUser(cached.data);
-          setHint(true);
-          return true;
-        }
-        return false; // no cached user → stay on landing/login until reachable
-      }
-
-      // Genuine logout: no/expired session.
-      TOKENS.clear();
-      setHint(false);
-      setUser(null);
-      disconnectSocket();
-      clearOfflineCache().catch(() => {});
-      return false;
+    } catch {
+      // The refresh succeeded, so the session IS valid — only this one call
+      // failed. Never log out here.
+      return showCachedUser();
     }
   };
 
