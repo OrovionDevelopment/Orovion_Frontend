@@ -5,7 +5,7 @@ import { useNavigate, Link } from "@/lib/router";
 import { Avatar, Verified } from "@/components/ui/Primitives";
 import { PostFeedSkeleton, TileGridSkeleton, TextBlockSkeleton } from "@/components/ui/Skeletons";
 import PostCard from "@/components/PostCard";
-import ReelViewer from "@/components/ReelViewer";
+import PulseViewer from "@/components/PulseViewer";
 import ShareSheet from "@/components/ShareSheet";
 import PeopleSheet from "@/components/profile/PeopleSheet";
 import MediaViewer from "@/components/profile/MediaViewer";
@@ -14,7 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
 import { profileUrl } from "@/lib/shareLinks";
 import { readCache, writeCache } from "@/lib/offline-cache";
-import { cn, compact, reelPoster } from "@/lib/utils";
+import { cn, compact, pulsePoster } from "@/lib/utils";
 
 const TABS = ["Posts", "About"];
 // Profile content grid categories (docs/API.md: GET /posts/user/:id?postType=, GET /reels/user/:id)
@@ -221,7 +221,7 @@ export default function Profile() {
 function ProfileContent({ userId, demo }) {
   const [cat, setCat] = useState("all");
   const [cache, setCache] = useState({}); // key -> items[] | null (loading) | undefined (untouched)
-  const [openReel, setOpenReel] = useState(null); // index into the reel list
+  const [openPulse, setOpenPulse] = useState(null); // index into the reel list
 
   const def = CONTENT_CATS.find((c) => c.key === cat);
   const items = cache[cat];
@@ -231,7 +231,7 @@ function ProfileContent({ userId, demo }) {
     let alive = true;
     setCache((c) => ({ ...c, [cat]: null }));
     const run = def.kind === "reel"
-      ? dok.reels.byUser(userId, "?limit=30").then((d) => d.reels || d.items || d.feed || [])
+      ? dok.pulses.byUser(userId, "?limit=30").then((d) => d.reels || d.items || d.feed || [])
       : dok.posts.byUser(userId, `?limit=30${def.type ? `&postType=${def.type}` : ""}`).then((d) => d.posts || d.feed || []);
     run
       .then((list) => alive && setCache((c) => ({ ...c, [cat]: Array.isArray(list) ? list : [] })))
@@ -242,7 +242,7 @@ function ProfileContent({ userId, demo }) {
 
   const removePost = (pid) =>
     setCache((c) => ({ ...c, [cat]: (c[cat] || []).filter((p) => (p._id || p.id) !== pid) }));
-  const removeReel = (rid) =>
+  const removePulse = (rid) =>
     setCache((c) => ({ ...c, reel: (c.reel || []).filter((r) => (r._id || r.id) !== rid) }));
 
   return (
@@ -276,12 +276,12 @@ function ProfileContent({ userId, demo }) {
             {items.map((r, idx) => (
               <button
                 key={r._id || r.id}
-                onClick={() => setOpenReel(idx)}
+                onClick={() => setOpenPulse(idx)}
                 className="lift group relative block aspect-[9/16] overflow-hidden rounded-2xl bg-ink-950 text-left shadow-card"
               >
-                {reelPoster(r) && (
+                {pulsePoster(r) && (
                   <img
-                    src={reelPoster(r)}
+                    src={pulsePoster(r)}
                     alt=""
                     onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
                     className="h-full w-full object-cover opacity-90 transition duration-500 group-hover:scale-110 group-hover:opacity-100"
@@ -300,8 +300,8 @@ function ProfileContent({ userId, demo }) {
               </button>
             ))}
           </div>
-          {openReel != null && (
-            <ReelViewer reels={items} index={openReel} onClose={() => setOpenReel(null)} onRemoved={removeReel} />
+          {openPulse != null && (
+            <PulseViewer reels={items} index={openPulse} onClose={() => setOpenPulse(null)} onRemoved={removePulse} />
           )}
         </>
       ) : (

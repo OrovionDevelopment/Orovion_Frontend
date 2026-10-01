@@ -17,7 +17,7 @@ import {
  *
  * A visitor who is already signed in is moved to the full view under /app
  * (`appPath`), using the session AuthProvider restores on every page — no extra
- * request. Without an `appPath` (pulses: /app/reels can't open one reel) they
+ * request. Without an `appPath` (pulses: /app/pulse can't open one reel) they
  * stay here.
  */
 export default function PublicPreviewActions({ target, appPath }: { target: AppTarget; appPath?: string | null }) {

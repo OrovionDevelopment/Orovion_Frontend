@@ -21,7 +21,15 @@ healthy session:
   — `AuthContext`'s session restore, `socket.ts`, `callClient.ts` and the 401
   interceptor — so they share one in-flight promise, and `navigator.locks` serialises
   across **tabs** as well (a browser restart that reopens several tabs is the real
-  case). Never call `/auth/refresh-token` directly.
+  case). Never call `/auth/refresh-token` directly. The request carries an explicit
+  `timeout`, because the lock is held for its whole duration: without one, a single
+  half-open connection stalls session restore in every other tab.
+- **Only a 401/403 from the refresh itself ends the session.** The 401 interceptor
+  fires `dl:auth-expired` (which makes `AuthContext` log out and drop the offline
+  cache) *only* on that verdict. A 500 — including a rolled-back session rotation,
+  where the old refresh token is still valid — a 429, or an offline blip rejects the
+  original call and leaves the session intact. `AuthContext` applies the same rule;
+  they must stay in step, or the stricter one there is bypassed.
 - **`TOKENS.csrf` reads the `csrfToken` cookie first**, falling back to
   `localStorage.dl_csrf`. The server compares our header against that cookie, so
   taking the value from the cookie makes the double-submit match by construction.
@@ -52,6 +60,15 @@ twice and be stored twice. One key per message; reuse it on a resend.
   (`parseHandle`: lowercase, strip `@`, flag non-canonical for a redirect) and
   opening the app (`appSchemeUrl` — id-based `orovion://` links every app build
   routes — `androidIntentUrl`, `platformFromUserAgent`, `storeUrl`).
+- `shareDetect.ts` — the reverse direction: `detectShare(message)` decides
+  whether a chat message is a share, and of what, so `ShareCard` renders a card
+  instead of a bare link. It must recognise **every** path a share link can carry
+  — `/p/<id>` (canonical post), `/pulse/<id>`, the legacy `/reel/<id>` (still in
+  sent messages and in the `orovion://reel/<id>` scheme every app build emits),
+  and the legacy `/post|case|research|thesis/<id>`. Missing one is silent: the
+  share just shows as plain text, which is exactly how `/pulse/` and `/p/` links
+  were broken before. A typed `shared_*` message whose content is a URL yields the
+  id from the URL. Add a new share path here AND in `shareLinks.ts` together.
 - `publicPreview.ts` — the `/api/public/*` response types and the text the
   preview pages derive from them (`displayName`, `profileDescription`,
   `postHeadline`, …), which ends up in link-preview cards.
@@ -173,7 +190,7 @@ Guards the instant offline paint: an empty feed response must never overwrite a
 non-empty cached page, or a transient empty result turns into a persistently blank
 feed. Empty-over-empty is fine.
 
-## `utils.ts` — `reelPoster`
+## `utils.ts` — `pulsePoster`
 
 Returns a reel's poster **only when a real image exists**, otherwise `undefined`.
 

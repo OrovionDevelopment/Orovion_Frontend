@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Check, CheckCheck, Reply, Forward, Trash2, Copy, SmilePlus, FileText, Download, Info } from "lucide-react";
 import { cn, timeAgo } from "@/lib/utils";
-import ShareCard, { detectShare } from "@/components/ShareCard";
+import ShareCard from "@/components/ShareCard";
+import { detectShare } from "@/lib/shareDetect";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 const IMG_EXT = /\.(jpe?g|png|gif|webp|heic|avif)$/i;

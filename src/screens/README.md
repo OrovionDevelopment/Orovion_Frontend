@@ -38,7 +38,7 @@ a desktop browser. `refresh()` returns a promise resolved in the load effect's
 `.finally()`, on success *and* failure, because the hook awaits it to hold the
 spinner.
 
-## `Reels.tsx` — Pulse
+## `Pulses.tsx` — Pulse
 
 A vertical, **one-reel-at-a-time** discovery feed (not a tile grid). Slides are a
 native CSS scroll-snap column (`snap-y snap-mandatory`) where each slide fills the
@@ -48,7 +48,7 @@ keys all step one reel without a custom gesture lock. An `IntersectionObserver`
 player** — every other slide stays a poster, so a long feed never accumulates
 `<video>`/hls.js instances or fires phantom view pings.
 
-Each slide renders `ReelCard`, shared with `ReelViewer` (the overlay opened from
+Each slide renders `PulseCard`, shared with `PulseViewer` (the overlay opened from
 the profile reels grid) so the two surfaces cannot drift apart. Engagement
 overrides (`liked`/`likesCount`/`saved`/`commentsCount`) are held **here**, keyed
 by reel id, so state survives scrolling away and back.
@@ -129,14 +129,14 @@ which made a backend outage indistinguishable from "refresh does nothing".
 `Feed.tsx` also refuses to overwrite a populated offline cache with an empty
 response (`shouldWriteFeedCache`).
 
-## Reel posters
+## Pulse posters
 
-`reelPoster()` (`src/lib/utils.ts`) returns `undefined` whenever a reel has no
+`pulsePoster()` (`src/lib/utils.ts`) returns `undefined` whenever a reel has no
 genuine thumbnail, which is the normal case for reels uploaded via
 `POST /api/reels`. Every call site therefore guards the image:
 
 ```jsx
-{reelPoster(r) && <img src={reelPoster(r)} … />}
+{pulsePoster(r) && <img src={pulsePoster(r)} … />}
 ```
 
 The surrounding tile is already `bg-ink-950` with a play-icon overlay, so the

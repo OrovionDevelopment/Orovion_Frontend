@@ -216,7 +216,7 @@ Upload `media` (up to 10 files) as `multipart/form-data`.
 | GET | `/saved` | 🔒 | Saved reels |
 | GET | `/user/:userId` | 🔓 | User reels |
 | POST | `/` | 🔒 | Create reel `multipart: video` → HLS transcoding async |
-| GET | `/:id` | 🔓 | Reel detail (author carries `isFollowing`) |
+| GET | `/:id` | 🔓 | Pulse detail (author carries `isFollowing`) |
 | PUT | `/:id` | 🔒 | Edit caption/tags/visibility (blocked after 24 h) |
 | DELETE | `/:id` | 🔒 | Delete reel |
 | POST | `/:id/view` | 🔓 | Increment view (debounced) |
@@ -232,7 +232,7 @@ Upload `media` (up to 10 files) as `multipart/form-data`.
 | POST | `/:id/comments/:commentId/like` | 🔒 | Toggle comment like |
 | PUT | `/:id/cover` | 🔒 | Replace thumbnail `multipart: cover` |
 
-**Reel `processingStatus`:** `PENDING` → `PROCESSING` → `COMPLETED` | `FAILED`  
+**Pulse `processingStatus`:** `PENDING` → `PROCESSING` → `COMPLETED` | `FAILED`  
 Use `hlsUrl` (master.m3u8) for playback once status is `COMPLETED`.
 
 > **`GET /feed` is a discovery engine** (`?sessionId=&specialty=&limit=`): true-random
@@ -568,6 +568,6 @@ Pass `nextCursor` as `cursor` in the next request. Never use `skip`-based pagina
 
 | Routing Key | Action |
 |-------------|--------|
-| `media.processing.completed` | Update Reel.hlsUrl, set status COMPLETED |
-| `media.processing.failed` | Set Reel.processingStatus = FAILED |
+| `media.processing.completed` | Update Pulse.hlsUrl, set status COMPLETED |
+| `media.processing.failed` | Set Pulse.processingStatus = FAILED |
 | `message.sent` | Send FCM push notification to recipient |

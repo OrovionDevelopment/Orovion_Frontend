@@ -30,7 +30,7 @@ export default function Explore() {
       <div className="mx-auto w-full max-w-xl pb-24">
         <header className="mb-5">
           <h1 className="font-display text-2xl font-extrabold text-ink-900">Explore</h1>
-          <p className="text-sm text-ink-500">Trending posts & reels from across Orovion.</p>
+          <p className="text-sm text-ink-500">Trending posts & pulses from across Orovion.</p>
         </header>
         {posts === null ? (
           <PostFeedSkeleton />

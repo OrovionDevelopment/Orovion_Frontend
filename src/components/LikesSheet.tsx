@@ -15,7 +15,7 @@ import { compact } from "@/lib/utils";
  */
 export default function LikesSheet({ open, onClose, postId, count, demo, kind = "post" }) {
   const nav = useNavigate();
-  const source = kind === "reel" ? dok.reels : dok.posts;
+  const source = kind === "reel" ? dok.pulses : dok.posts;
   const [users, setUsers] = useState(null);
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);

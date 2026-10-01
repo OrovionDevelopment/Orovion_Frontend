@@ -34,6 +34,9 @@ const nextConfig = {
       { source: "/u/:username", destination: "/:username", permanent: true },
       { source: "/:type(post|case|research|thesis)/:id", destination: "/p/:id", permanent: true },
       { source: "/reel/:id", destination: "/pulse/:id", permanent: true },
+      // The in-app route was renamed to match the product name. Bookmarks, old
+      // notification deep links and links sitting in chats still point at /app/reels.
+      { source: "/app/reels", destination: "/app/pulse", permanent: true },
     ];
   },
   // Android App Links / iOS Universal Links verification. Both files must come

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronUp, ChevronDown } from "lucide-react";
-import ReelCard from "@/components/ReelCard";
+import PulseCard from "@/components/PulseCard";
 
 const rid = (r) => r?._id || r?.id;
 
@@ -11,28 +11,28 @@ const rid = (r) => r?._id || r?.id;
  *
  * This component owns only the shell — portal, backdrop, close/up/down chrome and
  * the current index. Everything about a single reel (player, rail, caption,
- * sheets, pings) lives in `ReelCard`, shared with the Pulse tab's vertical feed.
+ * sheets, pings) lives in `PulseCard`, shared with the Pulse tab's vertical feed.
  *
  * Per-reel engagement lives in a keyed override map held HERE so state survives
  * up/down navigation within the session.
  */
-export default function ReelViewer({ reels, index, onClose, onRemoved, onReachEnd }) {
+export default function PulseViewer({ reels: pulses, index, onClose, onRemoved, onReachEnd }) {
   const [i, setI] = useState(index);
   const [muted, setMuted] = useState(true);
   const [over, setOver] = useState({});
 
-  const reel = reels[i];
-  const id = rid(reel);
+  const pulse = pulses[i];
+  const id = rid(pulse);
 
-  const patch = useCallback((reelId, p) => {
-    setOver((o) => ({ ...o, [reelId]: { ...o[reelId], ...p } }));
+  const patch = useCallback((pulseId, p) => {
+    setOver((o) => ({ ...o, [pulseId]: { ...o[pulseId], ...p } }));
   }, []);
 
   const go = useCallback((d) => {
-    setI((v) => Math.max(0, Math.min(reels.length - 1, v + d)));
-  }, [reels.length]);
+    setI((v) => Math.max(0, Math.min(pulses.length - 1, v + d)));
+  }, [pulses.length]);
 
-  const isLast = i >= reels.length - 1;
+  const isLast = i >= pulses.length - 1;
 
   // Scroll (wheel) + swipe navigation between reels, throttled so one gesture = one reel.
   const navLock = useRef(false);
@@ -66,18 +66,18 @@ export default function ReelViewer({ reels, index, onClose, onRemoved, onReachEn
 
   // prefetch the next page of the discovery feed as the viewer nears the end
   useEffect(() => {
-    if (i >= reels.length - 2) onReachEnd?.();
-  }, [i, reels.length, onReachEnd]);
+    if (i >= pulses.length - 2) onReachEnd?.();
+  }, [i, pulses.length, onReachEnd]);
 
   // A removed reel (deleted / not-interested) drops out of the list; step onto a
   // neighbour, or close when it was the only one.
   const handleRemoved = (removedId) => {
     onRemoved?.(removedId);
-    if (reels.length > 1) go(i === reels.length - 1 ? -1 : 1);
+    if (pulses.length > 1) go(i === pulses.length - 1 ? -1 : 1);
     else onClose?.();
   };
 
-  if (!reel) return null;
+  if (!pulse) return null;
 
   return createPortal(
     // z-[60]: above app chrome (z-40) but BELOW the sheets it opens (z-[70]) so the
@@ -97,9 +97,9 @@ export default function ReelViewer({ reels, index, onClose, onRemoved, onReachEn
       </div>
 
       {/* phone frame */}
-      <ReelCard
+      <PulseCard
         key={id}
-        reel={reel}
+        reel={pulse}
         active
         over={over[id] || {}}
         onPatch={patch}

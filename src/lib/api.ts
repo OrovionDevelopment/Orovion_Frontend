@@ -20,7 +20,12 @@ let accessToken = null;
 const csrfFromCookie = () => {
   if (typeof document === "undefined") return null;
   const m = document.cookie.match(/(?:^|;\s*)csrfToken=([^;]*)/);
-  return m ? decodeURIComponent(m[1]) : null;
+  if (!m) return null;
+  // A malformed value makes decodeURIComponent THROW, and this runs inside the
+  // request interceptor — so fall back to the raw value, which is also what
+  // cookie-parser hands the server when it cannot decode. An empty value yields
+  // null so the caller falls through to localStorage rather than sending no header.
+  try { return decodeURIComponent(m[1]) || null; } catch { return m[1] || null; }
 };
 
 // localStorage throws (not just returns null) in some privacy modes, and this
@@ -33,7 +38,9 @@ export const TOKENS = {
     return accessToken;
   },
   get csrf() {
-    return csrfFromCookie() ?? readLocal("dl_csrf");
+    // `||`, not `??`: an empty cookie value must fall through to localStorage, or
+    // we send no header at all and the server answers 403.
+    return csrfFromCookie() || readLocal("dl_csrf");
   },
   // Accepts the auth payload: { accessToken, csrfToken } (+ user, ignored here).
   set({ accessToken: a, csrfToken: c } = {}) {
@@ -105,7 +112,10 @@ api.interceptors.request.use((cfg) => {
 
 // Cookie-based silent refresh (no body — the refresh token rides in the httpOnly cookie).
 async function doRefresh() {
-  const { data } = await api.post("/auth/refresh-token");
+  // The timeout matters because of the cross-tab lock below: a half-open
+  // connection would otherwise hold `dl_refresh` for minutes, stalling session
+  // restore in every other tab behind it.
+  const { data } = await api.post("/auth/refresh-token", undefined, { timeout: 15000 });
   const payload = data?.data ?? data;
   TOKENS.set(payload); // { accessToken, csrfToken }
   return payload.accessToken;
@@ -179,10 +189,18 @@ api.interceptors.response.use(
         const fresh = await refreshOnce();
         config.headers.Authorization = `Bearer ${fresh}`;
         return api(config);
-      } catch (e) {
-        TOKENS.clear();
-        if (typeof window !== "undefined")
-          window.dispatchEvent(new CustomEvent("dl:auth-expired"));
+      } catch (e: any) {
+        // Only the refresh's OWN verdict may end the session, matching
+        // AuthContext's rule. A 500 (including a rolled-back rotation), a 429 or
+        // an offline blip means "retry later" — clearing here would log out a user
+        // whose refresh cookie is perfectly valid, and `dl:auth-expired` also makes
+        // AuthContext drop the whole offline cache.
+        const s = e?.response?.status;
+        if (s === 401 || s === 403) {
+          TOKENS.clear();
+          if (typeof window !== "undefined")
+            window.dispatchEvent(new CustomEvent("dl:auth-expired"));
+        }
       }
     }
     return Promise.reject(error);
@@ -356,7 +374,7 @@ export const dok = {
     trendingTags, // cached + in-flight-deduped (see definition above)
     create: (form) => postForm("/posts", form), // multipart: media (×10) + JSON fields
   },
-  reels: {
+  pulses: {
     feed: (q = "") => unwrap(api.get(`/reels/feed${q}`)),
     byUser: (userId, q = "") => unwrap(api.get(`/reels/user/${userId}${q}`)), // a user's reels (profile content grid)
     create: (form) => postForm("/reels", form), // multipart: video + caption/visibility/specialties/hashtags/mentions

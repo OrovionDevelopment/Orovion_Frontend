@@ -6,7 +6,7 @@ import { mobileAppSchema, breadcrumbSchema } from "@/lib/schema";
 export const metadata = pageMetadata({
   title: "Get the app",
   description:
-    "Orovion for iOS and Android: the verified clinical network with cases, Pulse reels, real-time chat and video consults, on the App Store and Google Play.",
+    "Orovion for iOS and Android: the verified clinical network with cases, Pulse, real-time chat and video consults, on the App Store and Google Play.",
   path: "/mobile-app",
 });
 

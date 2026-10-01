@@ -303,7 +303,7 @@ function Overview() {
           <Row label="Research" value={c.posts.research} icon={BookOpen} />
           <Row label="Thesis" value={c.posts.thesis} icon={BookOpen} />
           <Row label="Case studies (posts)" value={c.posts.case_study} icon={BookOpen} />
-          <Row label="Reels" value={c.reels} icon={Film} />
+          <Row label="Pulses" value={c.reels} icon={Film} />
           <Row label="Clinical cases" value={c.clinicalCases} icon={FileStack} />
         </Panel>
         <Panel title="Consultations">
@@ -1276,7 +1276,7 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
 
       {s && (
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          {[["Posts", s.content?.posts], ["Reels", s.content?.reels], ["Cases", s.content?.cases],
+          {[["Posts", s.content?.posts], ["Pulses", s.content?.reels], ["Cases", s.content?.cases],
             ["As patient", s.consultations?.asPatient], ["As doctor", s.consultations?.asDoctor], ["Reports", s.pendingReportsAgainst]].map(([l, v]) => (
             <div key={l as string} className="rounded-xl bg-ink-900/[.03] p-2">
               <p className="text-lg font-extrabold text-ink-900">{compact((v as number) ?? 0)}</p>
@@ -1340,7 +1340,7 @@ const CONTENT_TABS = [
   { key: "research", label: "Research", icon: BookOpen },
   { key: "thesis", label: "Thesis", icon: BookOpen },
   { key: "case_study", label: "Case studies", icon: BookOpen },
-  { key: "reel", label: "Reels", icon: Film },
+  { key: "reel", label: "Pulses", icon: Film },
   { key: "clinical_case", label: "Clinical cases", icon: FileStack },
 ];
 
@@ -1373,7 +1373,7 @@ function ContentSection() {
 
   return (
     <div>
-      <SectionHead title="Content" subtitle="Remove any post, reel, thesis, case study, or clinical case." />
+      <SectionHead title="Content" subtitle="Remove any post, pulse, thesis, case study, or clinical case." />
       <div className="mb-4 flex gap-2 overflow-x-auto">
         {CONTENT_TABS.map((t) => (
           <button key={t.key} onClick={() => setType(t.key)} className={cn("flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold transition", type === t.key ? "bg-brand-600 text-white shadow-glow" : "bg-surface text-ink-600 hover:bg-brand-50")}>

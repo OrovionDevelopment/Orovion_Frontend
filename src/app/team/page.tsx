@@ -7,7 +7,7 @@ import { TEAM } from "@/lib/team";
 export const metadata = pageMetadata({
   title: "Meet the team",
   description:
-    "The clinicians and engineers building Orovion: a license-verified network for cases, research, reels and real-time consults.",
+    "The clinicians and engineers building Orovion: a license-verified network for cases, research, pulses and real-time consults.",
   path: "/team",
 });
 

@@ -24,36 +24,36 @@ import { dok } from "@/lib/api";
 const last = () => h.calls[h.calls.length - 1];
 beforeEach(() => { h.calls.length = 0; });
 
-describe("dok.reels — endpoints added for the Pulse viewer", () => {
+describe("dok.pulses — endpoints added for the Pulse viewer", () => {
   it("builds comment + like + lifecycle URLs", async () => {
-    await dok.reels.comments("r1", "?limit=20");
+    await dok.pulses.comments("r1", "?limit=20");
     expect(last()).toMatchObject({ method: "get", url: "/reels/r1/comments?limit=20" });
 
-    await dok.reels.comment("r1", { content: "hi" });
+    await dok.pulses.comment("r1", { content: "hi" });
     expect(last()).toMatchObject({ method: "post", url: "/reels/r1/comments", body: { content: "hi" } });
 
-    await dok.reels.replies("r1", "c1", "?limit=20");
+    await dok.pulses.replies("r1", "c1", "?limit=20");
     expect(last()).toMatchObject({ method: "get", url: "/reels/r1/comments/c1/replies?limit=20" });
 
-    await dok.reels.likeComment("r1", "c1");
+    await dok.pulses.likeComment("r1", "c1");
     expect(last()).toMatchObject({ method: "post", url: "/reels/r1/comments/c1/like" });
 
-    await dok.reels.deleteComment("r1", "c1");
+    await dok.pulses.deleteComment("r1", "c1");
     expect(last()).toMatchObject({ method: "delete", url: "/reels/r1/comments/c1" });
 
-    await dok.reels.likes("r1");
+    await dok.pulses.likes("r1");
     expect(last()).toMatchObject({ method: "get", url: "/reels/r1/likes" });
 
-    await dok.reels.notInterested("r1");
+    await dok.pulses.notInterested("r1");
     expect(last()).toMatchObject({ method: "post", url: "/reels/r1/not-interested" });
 
-    await dok.reels.watched("r1");
+    await dok.pulses.watched("r1");
     expect(last()).toMatchObject({ method: "post", url: "/reels/r1/watched" });
 
-    await dok.reels.update("r1", { caption: "x" });
+    await dok.pulses.update("r1", { caption: "x" });
     expect(last()).toMatchObject({ method: "put", url: "/reels/r1", body: { caption: "x" } });
 
-    await dok.reels.remove("r1");
+    await dok.pulses.remove("r1");
     expect(last()).toMatchObject({ method: "delete", url: "/reels/r1" });
   });
 });
@@ -102,7 +102,7 @@ describe("dok — existing post + network contracts still hold", () => {
 describe("create endpoints (multipart)", () => {
   it("reels.create and posts.create post to the collection roots", async () => {
     const fd = new FormData();
-    await dok.reels.create(fd);
+    await dok.pulses.create(fd);
     expect(last()).toMatchObject({ method: "post", url: "/reels" });
 
     await dok.posts.create(fd);
@@ -112,7 +112,7 @@ describe("create endpoints (multipart)", () => {
 
 describe("envelope unwrap", () => {
   it("returns data.data from the { data: { data } } envelope", async () => {
-    const res = await dok.reels.remove("r1");
+    const res = await dok.pulses.remove("r1");
     expect(res).toEqual({ ok: true });
   });
 });

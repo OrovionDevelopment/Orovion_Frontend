@@ -155,7 +155,7 @@ function HeroVisual() {
 
 const FEATURES = [
   { icon: Stethoscope, title: "Clinical cases", text: "Share de-identified clinical cases, add relevant case details and discuss perspectives with the professional community." },
-  { icon: Clapperboard, title: "Medical Pulse reels", text: "Discover short-form healthcare content, clinical insights and educational videos shared by the community." },
+  { icon: Clapperboard, title: "Medical Pulses", text: "Discover short-form healthcare content, clinical insights and educational videos shared by the community." },
   { icon: FileText, title: "Research & thesis", text: "Share research, papers and thesis work, collaborate with peers and attach supporting documents." },
   { icon: Users, title: "Professional network", text: "Connect with healthcare professionals, follow relevant people and build your professional presence." },
   { icon: MessageSquare, title: "Real-time consults", text: "Message privately and send consultation requests to available healthcare professionals." },
@@ -191,7 +191,7 @@ function Features() {
 }
 
 const ROLES = [
-  { tag: "Health Professionals", title: "Build your clinical presence", points: ["Verified professional profile", "Accept consultation requests, when enabled", "Grow followers with reels & cases"], color: "from-brand-600 to-brand-800" },
+  { tag: "Health Professionals", title: "Build your clinical presence", points: ["Verified professional profile", "Accept consultation requests, when enabled", "Grow followers with pulses & cases"], color: "from-brand-600 to-brand-800" },
   { tag: "Medical Students", title: "Learn from the best", points: ["Follow mentors & specialties", "Share thesis & research", "Connect with professionals and peers"], color: "from-amber-500 to-amber-700" },
   { tag: "General Users", title: "Trusted healthcare connections", points: ["Discover verified professionals", "Follow, save & message", "Access healthcare content"], color: "from-teal-600 to-emerald-700" },
 ];

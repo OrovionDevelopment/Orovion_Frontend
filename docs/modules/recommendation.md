@@ -1,4 +1,4 @@
-# Recommendation Engine — Home Feed & Reel Discovery
+# Recommendation Engine — Home Feed & Pulse Discovery
 
 How the **home post feed** and **reel feed** select, order, de-duplicate, and recycle
 content. Run `npm run migrate` (adds `reel_watch_history`) before using the reel
@@ -79,7 +79,7 @@ api.post('/feed/seen', { sessionId, postIds: seenBatch });
 
 ---
 
-## 2. Reel Discovery — `GET /api/reels/feed` 🔓
+## 2. Pulse Discovery — `GET /api/reels/feed` 🔓
 
 Discovery-first vertical feed: **true-random** global selection, **48-hour** watched
 suppression, per-session de-dup, and an exhaustion loop that recycles watched reels.
@@ -87,7 +87,7 @@ suppression, per-session de-dup, and an exhaustion loop that recycles watched re
 ```
 GET /api/reels/feed?sessionId=&cursor=&specialty=&limit=10
 ```
-- Omit `sessionId` (e.g. every time the user enters the Reel tab) → a **fresh**
+- Omit `sessionId` (e.g. every time the user enters the Pulse tab) → a **fresh**
   session, returned in the response.
 - ⚠️ **Pass back `sessionId` AND `cursor` together** on every continuation.
   `cursor` is the numeric OFFSET into the frozen ranked list, echoed as
@@ -137,10 +137,10 @@ function enterReelTab() { reelSession = reelCursor = undefined; return loadReels
 
 ## Comparison
 
-| Mechanism | Home Post Feed | Reel Section |
+| Mechanism | Home Post Feed | Pulse Section |
 |---|---|---|
 | Ordering | Specialty-filtered + weighted pseudo-random (session-stable) | True-random global |
-| Refresh trigger | pull-to-refresh / specialty chip / boot (omit `sessionId`) | every Reel-tab entry (omit `sessionId`) |
+| Refresh trigger | pull-to-refresh / specialty chip / boot (omit `sessionId`) | every Pulse-tab entry (omit `sessionId`) |
 | View threshold (client) | card visible >1.5s → `POST /feed/seen` | watched >50% or >10s → `POST /reels/:id/watched` |
 | Exclusion window | current session (Redis seen set) | hard 48h watched lockout |
 | Exhaustion fallback | shuffle previously-seen posts of the active specialty | unlock 48h; prioritize new-comments / saved / high-retention |

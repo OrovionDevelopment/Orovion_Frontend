@@ -99,8 +99,8 @@ function Screens() {
           <ScreenDemo caption="Real-time chat" text="Private conversations with presence, read states, files and real-time communication.">
             <ChatScreen />
           </ScreenDemo>
-          <ScreenDemo caption="Pulse reels" text="Short-form healthcare and professional content, designed for quick discovery on the go." className="sm:col-span-2 lg:col-span-1">
-            <ReelScreen />
+          <ScreenDemo caption="Pulses" text="Short-form healthcare and professional content, designed for quick discovery on the go." className="sm:col-span-2 lg:col-span-1">
+            <PulseScreen />
           </ScreenDemo>
         </div>
       </div>
@@ -264,7 +264,7 @@ function ChatScreen() {
   );
 }
 
-function ReelScreen() {
+function PulseScreen() {
   return (
     <div className="relative h-full bg-ink-950">
       <div className="absolute inset-0 bg-gradient-to-br from-brand-800/70 via-ink-950 to-ink-950" />

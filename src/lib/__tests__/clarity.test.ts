@@ -37,7 +37,7 @@ describe("isTrackablePath — public routes are recorded", () => {
 
 describe("isTrackablePath — sensitive routes are never recorded", () => {
   it("blocks every /app/* route (chat, cases, prescriptions, consults)", () => {
-    for (const p of ["/app", "/app/", "/app/messages", "/app/reels", "/app/cases", "/app/profile/abc"]) {
+    for (const p of ["/app", "/app/", "/app/messages", "/app/pulse", "/app/cases", "/app/profile/abc"]) {
       expect(isTrackablePath(p)).toBe(false);
     }
   });

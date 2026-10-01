@@ -17,7 +17,7 @@ export function routeFor(n) {
       if (m.postId) return `/app/post/${m.postId}`;
       break;
     case "reel_like": case "reel_comment": case "mention_reel":
-      return "/app/reels";
+      return "/app/pulse";
     case "follow": case "follow_request_accepted": case "connection_accepted":
       if (senderId) return `/app/profile/${senderId}`;
       break;

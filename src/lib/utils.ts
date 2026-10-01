@@ -87,7 +87,7 @@ const isImageUrl = (u) => /\.(jpe?g|png|webp|gif|avif)(\?|#|$)/i.test(u || "");
  * today — api's S3 upload returns no thumbnail_url, so media stores null — so
  * `undefined` is the common case, not the exception.
  */
-export function reelPoster(r) {
+export function pulsePoster(r) {
   if (!r) return undefined;
   return [r.thumbnailUrl, r.posterUrl].find(isImageUrl);
 }

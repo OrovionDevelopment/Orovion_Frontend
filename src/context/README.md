@@ -25,6 +25,13 @@ rules are the load-bearing part:
 - **Any failure of `/profile/me` → keep the session.** The refresh already
   succeeded, so the session is valid and only that one call failed.
 
+The 401 interceptor in `src/lib/api.ts` follows the **same** rule, and it has to:
+a 401 on any authenticated call makes it refresh, and it fires `dl:auth-expired`
+— handled here as a logout — if that refresh fails. It therefore only fires on a
+401/403 from the refresh itself; a 500, a 429 or an offline blip rejects the
+original call and leaves the session alone. The two rules must stay in step, or
+the stricter one here is simply bypassed.
+
 This used to be a single `try/catch` around both calls, so a 401/403 from
 *anywhere* — a per-route permission check, a WAF, an edge rule — ran the logout
 branch. That branch is destructive: it clears the tokens, the `dl_has_session`

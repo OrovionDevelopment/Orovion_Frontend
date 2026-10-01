@@ -15,6 +15,11 @@ Session:
 
 Share links:
 
+- `shareDetect.test.ts` — which chat messages render as share cards. Guards three
+  real bugs: `/pulse/<id>` links (and the canonical `/p/<id>` post link) were not
+  recognised and showed as plain text, and a typed share carrying a URL was looked
+  up by the whole URL. Also pins that `/pulses/…` is not mistaken for `/pulse/…`.
+
 - `shareLinks.test.ts` — URL shapes, handle parsing and canonical redirects,
   Android intent / scheme links, platform detection.
 - `publicPreview.test.ts` — the titles and descriptions that end up in

@@ -12,10 +12,10 @@ import ShareSheet from "@/components/ShareSheet";
 import LikesSheet from "@/components/LikesSheet";
 import CommentsSheet from "@/components/CommentsSheet";
 import EditPostModal, { canEditPost } from "@/components/EditPostModal";
-import ReelVideo from "@/components/ReelVideo";
+import PulseVideo from "@/components/PulseVideo";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
-import { cn, compact, timeAgoLong, reelPoster } from "@/lib/utils";
+import { cn, compact, timeAgoLong, pulsePoster } from "@/lib/utils";
 import { dok } from "@/lib/api";
 import { pulseUrl } from "@/lib/shareLinks";
 
@@ -23,11 +23,11 @@ const rid = (r) => r?._id || r?.id;
 
 type Overrides = { liked?: boolean; likesCount?: number; saved?: boolean; commentsCount?: number };
 
-type ReelCardProps = {
+type PulseCardProps = {
   reel: any;
   active?: boolean;
   over?: Overrides;
-  onPatch?: (reelId: any, patch: Overrides) => void;
+  onPatch?: (pulseId: any, patch: Overrides) => void;
   muted?: boolean;
   onToggleMute?: () => void;
   onRemoved?: (id: any) => void;
@@ -46,7 +46,7 @@ type ReelCardProps = {
  * owner / third-party 3-dot menu.
  *
  * Used by both surfaces so they cannot drift apart:
- *   - `ReelViewer` — full-screen overlay opened from a grid (profile reels).
+ *   - `PulseViewer` — full-screen overlay opened from a grid (profile reels).
  *   - `Reels` — the Pulse tab's one-reel-at-a-time vertical feed.
  *
  * `active` means "this is the reel the user is looking at". Only an active card
@@ -56,8 +56,8 @@ type ReelCardProps = {
  * Engagement overrides are owned by the PARENT (`over` + `onPatch`) so like/save
  * counts survive scrolling away and back within a session.
  */
-export default function ReelCard({
-  reel,
+export default function PulseCard({
+  reel: pulse,
   active = true,
   over = {},
   onPatch,
@@ -69,20 +69,20 @@ export default function ReelCard({
   loop = true,
   chromeInset = false,
   className = "",
-}: ReelCardProps) {
+}: PulseCardProps) {
   const { user: me, demo } = useAuth();
   const toast = useToast();
   const nav = useNavigate();
 
-  const id = rid(reel);
-  const author = reel?.author || {};
+  const id = rid(pulse);
+  const author = pulse?.author || {};
   const authorId = author.id || author._id;
   const isOwn = Boolean(authorId && (me?._id === authorId || me?.id === authorId));
 
-  const liked = over.liked ?? Boolean(reel?.isLiked);
-  const likesCount = over.likesCount ?? (reel?.likesCount || 0);
-  const saved = over.saved ?? Boolean(reel?.isSaved);
-  const commentsCount = over.commentsCount ?? (reel?.commentsCount || 0);
+  const liked = over.liked ?? Boolean(pulse?.isLiked);
+  const likesCount = over.likesCount ?? (pulse?.likesCount || 0);
+  const saved = over.saved ?? Boolean(pulse?.isSaved);
+  const commentsCount = over.commentsCount ?? (pulse?.commentsCount || 0);
   const patch = (p) => onPatch?.(id, p);
 
   const [fly, setFly] = useState(false);
@@ -93,16 +93,16 @@ export default function ReelCard({
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [caption, setCaption] = useState(reel?.caption);
+  const [caption, setCaption] = useState(pulse?.caption);
 
   // keep the caption in sync when the card is recycled onto another reel
-  useEffect(() => { setCaption(reel?.caption); }, [reel?.caption]);
+  useEffect(() => { setCaption(pulse?.caption); }, [pulse?.caption]);
 
   // view + watched pings — only for the reel actually on screen
   useEffect(() => {
     if (!active || demo || !id) return;
-    dok.reels.view(id).catch(() => {});
-    const t = setTimeout(() => dok.reels.watched(id).catch(() => {}), 8000);
+    dok.pulses.view(id).catch(() => {});
+    const t = setTimeout(() => dok.pulses.watched(id).catch(() => {}), 8000);
     return () => clearTimeout(t);
   }, [id, active, demo]);
 
@@ -117,7 +117,7 @@ export default function ReelCard({
     const next = !liked;
     patch({ liked: next, likesCount: Math.max(0, likesCount + (next ? 1 : -1)) });
     if (demo) return;
-    dok.reels.like(id)
+    dok.pulses.like(id)
       .then((d) => { if (typeof d?.likesCount === "number") patch({ likesCount: d.likesCount, liked: d.isLiked ?? next }); })
       .catch(() => { patch({ liked, likesCount }); toast?.error("Couldn't update your reaction"); });
   };
@@ -133,7 +133,7 @@ export default function ReelCard({
     const next = !saved;
     patch({ saved: next });
     if (demo) return;
-    dok.reels.save(id).catch(() => { patch({ saved }); toast?.error("Couldn't update saved items"); });
+    dok.pulses.save(id).catch(() => { patch({ saved }); toast?.error("Couldn't update saved items"); });
   };
 
   /* ---- 3-dot actions ---- */
@@ -147,7 +147,7 @@ export default function ReelCard({
 
   const notInterested = () => {
     setMore(false);
-    if (!demo) dok.reels.notInterested(id).catch(() => {});
+    if (!demo) dok.pulses.notInterested(id).catch(() => {});
     toast?.success("We'll show you fewer like this");
     onRemoved?.(id);
   };
@@ -158,10 +158,10 @@ export default function ReelCard({
     toast?.success(`You won't see suggestions from ${author.fullName} anymore`);
   };
 
-  const deleteReel = async () => {
+  const deletePulse = async () => {
     setDeleting(true);
     try {
-      if (!demo) await dok.reels.remove(id);
+      if (!demo) await dok.pulses.remove(id);
       setConfirmDelete(false);
       toast?.success("Pulse deleted");
       onRemoved?.(id);
@@ -172,17 +172,17 @@ export default function ReelCard({
     }
   };
 
-  if (!reel) return null;
-  const editable = canEditPost(reel);
+  if (!pulse) return null;
+  const editable = canEditPost(pulse);
 
   return (
     <div className={cn("relative overflow-hidden bg-ink-950", className)}>
       {active ? (
-        <ReelVideo
-          src={reel.hlsUrl || reel.videoUrl}
-          poster={reelPoster(reel)}
+        <PulseVideo
+          src={pulse.hlsUrl || pulse.videoUrl}
+          poster={pulsePoster(pulse)}
           muted={muted}
-          status={reel.processingStatus}
+          status={pulse.processingStatus}
           loop={loop}
           onEnded={onEnded}
           onDoubleClick={dblTap}
@@ -192,9 +192,9 @@ export default function ReelCard({
         // Only when a REAL poster exists — reels uploaded via POST /api/reels have
         // none, and an <img> with no src renders as a broken tile. The container's
         // bg-ink-950 is the placeholder.
-        reelPoster(reel) ? (
+        pulsePoster(pulse) ? (
           <img
-            src={reelPoster(reel)}
+            src={pulsePoster(pulse)}
             alt=""
             onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
             className="h-full w-full object-contain opacity-90"
@@ -219,7 +219,7 @@ export default function ReelCard({
       <div className="absolute bottom-24 right-3 z-10 flex flex-col items-center gap-5 text-white">
         <Rail icon={Heart} label={compact(likesCount)} active={liked} fill={liked} onIcon={toggleLike} onLabel={() => setLikesOpen(true)} />
         <Rail icon={MessageCircle} label={compact(commentsCount)} onIcon={() => setCommentsOpen(true)} onLabel={() => setCommentsOpen(true)} />
-        <Rail icon={Share2} label={compact(reel.sharesCount || 0)} onIcon={() => setShare(true)} onLabel={() => setShare(true)} />
+        <Rail icon={Share2} label={compact(pulse.sharesCount || 0)} onIcon={() => setShare(true)} onLabel={() => setShare(true)} />
         <Rail icon={Bookmark} label="Save" active={saved} fill={saved} onIcon={toggleSave} onLabel={toggleSave} />
         <button onClick={() => setMore(true)} aria-label="More options" className="press grid h-11 w-11 place-items-center rounded-full bg-white/10 backdrop-blur hover:bg-white/20"><MoreHorizontal size={20} /></button>
       </div>
@@ -245,7 +245,7 @@ export default function ReelCard({
       {fly && <div className="pointer-events-none absolute inset-0 grid place-items-center"><Heart size={96} className="anim-heart-fly fill-white text-white drop-shadow-lg" /></div>}
 
       {/* 3-dot context menu */}
-      <BottomSheet open={more} onClose={() => setMore(false)} title={isOwn ? "Your Pulse" : `Pulse by ${author.fullName}`} subtitle={reel.createdAt ? timeAgoLong(reel.createdAt) : undefined}>
+      <BottomSheet open={more} onClose={() => setMore(false)} title={isOwn ? "Your Pulse" : `Pulse by ${author.fullName}`} subtitle={pulse.createdAt ? timeAgoLong(pulse.createdAt) : undefined}>
         {isOwn ? (
           <>
             <SheetRow icon={PenLine} title="Edit caption" desc={editable ? "Update the caption and tags" : "Editing closes 24 hours after posting"} onClick={editable ? () => { setMore(false); setEditOpen(true); } : undefined} disabled={!editable} />
@@ -274,7 +274,7 @@ export default function ReelCard({
           <p className="text-sm text-ink-500">It will be permanently removed for everyone, along with its reactions and replies. This can't be undone.</p>
           <div className="mt-2 flex w-full gap-2">
             <button onClick={() => setConfirmDelete(false)} className="btn-outline flex-1 py-2.5 text-sm">Keep Pulse</button>
-            <button onClick={deleteReel} disabled={deleting} className="btn flex-1 bg-danger-500 py-2.5 text-sm text-white hover:bg-danger-700">
+            <button onClick={deletePulse} disabled={deleting} className="btn flex-1 bg-danger-500 py-2.5 text-sm text-white hover:bg-danger-700">
               {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />} Delete forever
             </button>
           </div>
@@ -282,10 +282,10 @@ export default function ReelCard({
       </Modal>
 
       {/* overlays — reel-aware */}
-      <ShareSheet open={share} onClose={() => setShare(false)} post={{ ...reel, content: caption }} demo={demo} kind="reel" />
+      <ShareSheet open={share} onClose={() => setShare(false)} post={{ ...pulse, content: caption }} demo={demo} kind="reel" />
       <LikesSheet open={likesOpen} onClose={() => setLikesOpen(false)} postId={id} count={likesCount} demo={demo} kind="reel" />
-      <CommentsSheet open={commentsOpen} onClose={() => setCommentsOpen(false)} post={{ ...reel, commentsCount }} demo={demo} kind="reel" onCountChange={(d) => patch({ commentsCount: Math.max(0, commentsCount + d) })} />
-      <EditPostModal open={editOpen} onClose={() => setEditOpen(false)} post={reel} demo={demo} kind="reel" onSaved={(text) => setCaption(text)} />
+      <CommentsSheet open={commentsOpen} onClose={() => setCommentsOpen(false)} post={{ ...pulse, commentsCount }} demo={demo} kind="reel" onCountChange={(d) => patch({ commentsCount: Math.max(0, commentsCount + d) })} />
+      <EditPostModal open={editOpen} onClose={() => setEditOpen(false)} post={pulse} demo={demo} kind="reel" onSaved={(text) => setCaption(text)} />
     </div>
   );
 }

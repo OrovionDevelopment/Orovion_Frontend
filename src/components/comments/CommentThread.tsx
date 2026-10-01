@@ -39,7 +39,7 @@ const normalize = (c) => ({
 export default function CommentThread({ postId, postOwnerId, demo, highlightId, onCountChange, autoFocus, className, kind = "post" }) {
   const { user } = useAuth();
   const toast = useToast();
-  const source = kind === "reel" ? dok.reels : dok.posts;
+  const source = kind === "reel" ? dok.pulses : dok.posts;
   const [comments, setComments] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState(null);

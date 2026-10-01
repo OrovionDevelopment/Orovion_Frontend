@@ -6,7 +6,7 @@ import PostCard from "@/components/PostCard";
 import { Skeleton } from "@/components/ui/Primitives";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
-import { cn, compact, reelPoster } from "@/lib/utils";
+import { cn, compact, pulsePoster } from "@/lib/utils";
 
 /**
  * Private Saved repository (docs/feed.md §6) — visible only to the owner,
@@ -37,9 +37,9 @@ export default function Saved() {
     return () => { alive = false; };
   }, [tab]);
 
-  const isReel = (x) => x.type === "reel" || x._feedType === "reel" || Boolean(x.videoUrl || x.thumbnailUrl);
-  const reels = (items || []).filter(isReel);
-  const posts = (items || []).filter((x) => !isReel(x));
+  const isPulse = (x) => x.type === "reel" || x._feedType === "reel" || Boolean(x.videoUrl || x.thumbnailUrl);
+  const pulses = (items || []).filter(isPulse);
+  const posts = (items || []).filter((x) => !isPulse(x));
 
   // Tapping the (already-saved) bookmark un-saves → drop the card; restore it if the call fails.
   const onSavedChange = (post, isSaved) => {
@@ -86,11 +86,11 @@ export default function Saved() {
         </div>
       ) : (
         <div className="mt-5 space-y-5">
-          {reels.length > 0 && (
+          {pulses.length > 0 && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {reels.map((r) => (
-                <button key={r._id || r.id} onClick={() => nav("/app/reels")} className="press group relative aspect-[3/4] overflow-hidden rounded-2xl bg-ink-950">
-                  {reelPoster(r) && <img src={reelPoster(r)} alt="" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />}
+              {pulses.map((r) => (
+                <button key={r._id || r.id} onClick={() => nav("/app/pulse")} className="press group relative aspect-[3/4] overflow-hidden rounded-2xl bg-ink-950">
+                  {pulsePoster(r) && <img src={pulsePoster(r)} alt="" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />}
                   <span className="absolute inset-0 bg-gradient-to-t from-ink-950/60 via-transparent" />
                   <span className="absolute bottom-2 left-2 right-2 truncate text-left text-xs font-semibold text-white">{r.caption}</span>
                   <span className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-ink-950/40 text-white backdrop-blur"><Play size={13} /></span>

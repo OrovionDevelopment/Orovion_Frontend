@@ -11,7 +11,7 @@ mirror posts. See [index.md](index.md).
 | POST | `/:id/watched` | 🔒 | Mark watched (>50% / >10s) → 48h lockout + exhaustion priority |
 | GET | `/saved` · `/user/:userId` | mixed | Lists |
 | POST | `/` | 🔒 | Upload `multipart: video` → transcoding |
-| GET | `/:id` | 🔓 | Reel detail (author has `isFollowing`) |
+| GET | `/:id` | 🔓 | Pulse detail (author has `isFollowing`) |
 | PUT | `/:id` | 🔒 | Edit caption/tags/visibility (403 after 24 h) |
 | DELETE | `/:id` | 🔒 | Delete |
 | POST | `/:id/view` | 🔓 | Increment view (debounced) |

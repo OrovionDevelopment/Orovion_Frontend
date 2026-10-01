@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 
 const NAV = [
   { to: "/app", icon: Home, label: "Home", end: true },
-  { to: "/app/reels", icon: Clapperboard, label: "Pulse" },
+  { to: "/app/pulse", icon: Clapperboard, label: "Pulse" },
   { to: "/app/consults", icon: Video, label: "Consults" },
   { to: "/app/network", icon: Users, label: "Network" },
   { to: "/app/messages", icon: MessageSquare, label: "Messages" },

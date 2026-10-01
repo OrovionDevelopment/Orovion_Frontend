@@ -6,7 +6,7 @@ import { Avatar, Skeleton } from "@/components/ui/Primitives";
 import PostCard from "@/components/PostCard";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
-import { cn, compact, reelPoster } from "@/lib/utils";
+import { cn, compact, pulsePoster } from "@/lib/utils";
 
 /**
  * Dedicated hashtag workspace (PRD §4B) — deep-linked from any #tag chip.
@@ -20,7 +20,7 @@ const TABS = [
   { key: "reel", label: "Reels" },
 ];
 const rid = (x) => x?._id || x?.id;
-const isReel = (x) => x?.kind === "reel" || x?.postType === "REEL" || x?.type === "reel" || Boolean(x?.videoUrl);
+const isPulse = (x) => x?.kind === "reel" || x?.postType === "REEL" || x?.type === "reel" || Boolean(x?.videoUrl);
 
 export default function HashtagWorkspace() {
   const { demo } = useAuth();
@@ -88,8 +88,8 @@ export default function HashtagWorkspace() {
           </div>
         ) : (
           <div className="space-y-5">
-            {list.map((x) => isReel(x)
-              ? <ReelRow key={rid(x)} reel={{ ...x, caption: x.caption ?? x.text }} onOpen={() => nav("/app/reels")} />
+            {list.map((x) => isPulse(x)
+              ? <PulseRow key={rid(x)} reel={{ ...x, caption: x.caption ?? x.text }} onOpen={() => nav("/app/pulse")} />
               : <PostCard key={rid(x)} post={{ ...x, content: x.content ?? x.text }} demo={demo} />
             )}
           </div>
@@ -99,8 +99,8 @@ export default function HashtagWorkspace() {
   );
 }
 
-function ReelRow({ reel, onOpen }) {
-  const poster = reelPoster(reel);
+function PulseRow({ reel: pulse, onOpen }) {
+  const poster = pulsePoster(pulse);
   return (
     <button onClick={onOpen} className="card lift flex w-full items-center gap-3 p-3 text-left">
       <span className="relative h-20 w-14 shrink-0 overflow-hidden rounded-xl bg-ink-950">
@@ -108,8 +108,8 @@ function ReelRow({ reel, onOpen }) {
         <span className="absolute inset-0 grid place-items-center text-white"><Play size={18} className="fill-white" /></span>
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5"><Avatar user={reel.author} size={20} /><span className="truncate text-xs font-semibold text-ink-700">{reel.author?.fullName}</span></span>
-        <span className="mt-1 block line-clamp-2 text-sm text-ink-700">{reel.caption}</span>
+        <span className="flex items-center gap-1.5"><Avatar user={pulse.author} size={20} /><span className="truncate text-xs font-semibold text-ink-700">{pulse.author?.fullName}</span></span>
+        <span className="mt-1 block line-clamp-2 text-sm text-ink-700">{pulse.caption}</span>
       </span>
     </button>
   );

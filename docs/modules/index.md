@@ -19,7 +19,7 @@ module call depends on (base URL, auth, the response envelope, pagination, error
 | Network | [network.md](network.md) | Connections (accept/reject), discover |
 | Notifications | [notifications.md](notifications.md) | Activity feed, unread count, preferences |
 | Search | [search.md](search.md) | **Discovery engine**: fuzzy profiles + unified content, typeahead, trending, hashtag workspace |
-| Reels | [reels.md](reels.md) | Reel feed, upload (HLS), like/comment/analytics |
+| Reels | [reels.md](reels.md) | Pulse feed, upload (HLS), like/comment/analytics |
 | Cases | [cases.md](cases.md) | Case-study CRUD, helpful, follow |
 | Consultations | [consultations.md](consultations.md) | Booking, pay, approve/decline, refund |
 | Account | [account.md](account.md) | Settings, privacy, deactivate/delete/restore |

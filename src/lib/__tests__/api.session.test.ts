@@ -20,6 +20,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 const h = vi.hoisted(() => {
   const posts: string[] = [];
+  // Captured so the response interceptor's error branch can be driven directly —
+  // that branch decides whether a failed refresh ends the session.
+  let onRejected: ((e: any) => any) | null = null;
   const instance = {
     get: vi.fn(() => Promise.resolve({ data: { data: {} } })),
     post: vi.fn((url: string) => {
@@ -30,9 +33,12 @@ const h = vi.hoisted(() => {
     }),
     put: vi.fn(),
     delete: vi.fn(),
-    interceptors: { request: { use: () => {} }, response: { use: () => {} } },
+    interceptors: {
+      request: { use: () => {} },
+      response: { use: (_ok: any, rej: any) => { onRejected = rej; } },
+    },
   };
-  return { posts, instance };
+  return { posts, instance, rejected: () => onRejected! };
 });
 
 vi.mock("axios", () => ({ default: { create: () => h.instance } }));
@@ -76,6 +82,23 @@ describe("TOKENS.csrf — the cookie is authoritative", () => {
   it("does not match a cookie whose name merely ends in csrfToken", () => {
     setDocumentCookie("notcsrfToken=WRONG");
     expect(TOKENS.csrf).toBeNull();
+  });
+
+  it("falls back to localStorage when the cookie is present but EMPTY", () => {
+    // `??` would return "" here, so no header would be sent at all and the server
+    // would answer 403 — the very failure this fallback exists to prevent.
+    setDocumentCookie("csrfToken=");
+    setLocalStorage({ getItem: () => "FROM_STORAGE" });
+    expect(TOKENS.csrf).toBe("FROM_STORAGE");
+  });
+
+  it("does not throw on a malformed percent-encoding", () => {
+    // decodeURIComponent throws URIError on a value like "%", and this getter runs
+    // inside the request interceptor — an exception would break every request.
+    // The raw value is used instead, which is what cookie-parser gives the server.
+    setDocumentCookie("csrfToken=%E0%A4%A");
+    expect(() => TOKENS.csrf).not.toThrow();
+    expect(TOKENS.csrf).toBe("%E0%A4%A");
   });
 
   it("survives localStorage throwing, and a missing document", () => {
@@ -130,5 +153,57 @@ describe("refreshOnce — one in-flight refresh per tab", () => {
     h.instance.post.mockImplementationOnce(() => Promise.reject(new Error("boom")));
     await expect(refreshOnce()).rejects.toThrow("boom");
     await expect(refreshOnce()).resolves.toMatch(/^AT/);
+  });
+
+  it("sends the refresh with a timeout, so the cross-tab lock cannot hang", async () => {
+    // Web Locks is held for the whole request; without a timeout one half-open
+    // connection stalls session restore in every other tab for minutes.
+    await refreshOnce();
+    expect(h.instance.post).toHaveBeenCalledWith(
+      "/auth/refresh-token", undefined, expect.objectContaining({ timeout: expect.any(Number) }),
+    );
+  });
+});
+
+describe("the 401 interceptor ends the session only on the refresh's own verdict", () => {
+  // Drives the captured response-error handler. A 401 on some other call triggers a
+  // refresh; what matters is what happens when THAT refresh fails.
+  const drive = async (refreshRejection: any) => {
+    const events: string[] = [];
+    (globalThis as any).window = { dispatchEvent: (e: any) => events.push(e.type) };
+    setLocalStorage({ getItem: () => null, setItem: () => {}, removeItem: () => {} });
+    TOKENS.set({ accessToken: "LIVE", csrfToken: "c" });
+    h.instance.post.mockImplementationOnce(() => Promise.reject(refreshRejection));
+    const err = { config: { url: "/profile/me", headers: {} }, response: { status: 401 } };
+    await h.rejected()(err).catch(() => {});
+    delete (globalThis as any).window;
+    return events;
+  };
+
+  it("keeps the session when the refresh fails with a 500", async () => {
+    // A rolled-back rotation leaves the old refresh token valid, so logging out
+    // here would destroy a recoverable session — and the offline cache with it.
+    expect(await drive({ response: { status: 500 } })).toEqual([]);
+    expect(TOKENS.access).toBe("LIVE");
+  });
+
+  it("keeps the session when the refresh fails with no response at all (offline)", async () => {
+    expect(await drive(new Error("Network Error"))).toEqual([]);
+    expect(TOKENS.access).toBe("LIVE");
+  });
+
+  it("keeps the session when the refresh is rate-limited", async () => {
+    expect(await drive({ response: { status: 429 } })).toEqual([]);
+    expect(TOKENS.access).toBe("LIVE");
+  });
+
+  it("ends the session when the refresh itself returns 401", async () => {
+    expect(await drive({ response: { status: 401 } })).toEqual(["dl:auth-expired"]);
+    expect(TOKENS.access).toBeNull();
+  });
+
+  it("ends the session when the refresh itself returns 403", async () => {
+    expect(await drive({ response: { status: 403 } })).toEqual(["dl:auth-expired"]);
+    expect(TOKENS.access).toBeNull();
   });
 });

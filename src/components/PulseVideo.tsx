@@ -9,7 +9,7 @@ import { Loader2, VideoOff } from "lucide-react";
  * (processingStatus !== "COMPLETED") or has no stream yet, it shows the
  * thumbnail with a status overlay instead.
  */
-export default function ReelVideo({ src, poster, muted = true, status, onDoubleClick, loop = true, onEnded }) {
+export default function PulseVideo({ src, poster, muted = true, status, onDoubleClick, loop = true, onEnded }) {
   const ref = useRef(null);
 
   // Keep muted in sync without re-loading the stream (React's `muted` prop is unreliable).

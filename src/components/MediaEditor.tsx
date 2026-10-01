@@ -38,12 +38,12 @@ const TEXT_COLORS = ["#ffffff", "#0e1213", "#1e7b74", "#e8957a", "#d8b25a", "#7a
 
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
-export default function MediaEditor({ item, isReel = false, onSave, onClose }) {
+export default function MediaEditor({ item, isReel: isPulse = false, onSave, onClose }) {
   const isVideo = item.kind === "video";
   const [tool, setTool] = useState("filter");
   const [filter, setFilter] = useState(item.filter || "Original");
   const [adjust, setAdjust] = useState(item.adjust || { brightness: 100, contrast: 100, saturate: 100, warmth: 0, vignette: 0 });
-  const [ratio, setRatio] = useState(item.crop?.ratio || (isReel ? "9:16" : "1:1"));
+  const [ratio, setRatio] = useState(item.crop?.ratio || (isPulse ? "9:16" : "1:1"));
   const [zoom, setZoom] = useState(item.crop?.zoom || 1);
   const [texts, setTexts] = useState(item.texts || []);
   const [activeText, setActiveText] = useState(null);
@@ -115,11 +115,11 @@ export default function MediaEditor({ item, isReel = false, onSave, onClose }) {
   const TOOLS = [
     { key: "crop", icon: Crop, label: "Crop" },
     ...(isVideo ? [{ key: "trim", icon: Scissors, label: "Trim" }] : []),
-    ...(isReel && isVideo ? [{ key: "cover", icon: Camera, label: "Cover" }] : []),
+    ...(isPulse && isVideo ? [{ key: "cover", icon: Camera, label: "Cover" }] : []),
     { key: "filter", icon: Sparkles, label: "Filters" },
     { key: "adjust", icon: SlidersHorizontal, label: "Adjust" },
     { key: "text", icon: Type, label: "Text" },
-    ...(isReel || isVideo ? [{ key: "music", icon: Music2, label: "Music" }] : []),
+    ...(isPulse || isVideo ? [{ key: "music", icon: Music2, label: "Music" }] : []),
   ];
 
   const apply = () => onSave({ ...item, filter, adjust, crop: { ratio, zoom }, texts, music, trim, cover, _editedCss: filterCss });

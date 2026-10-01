@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Play, Loader2, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
 import { TileGridSkeleton } from "@/components/ui/Skeletons";
-import ReelCard from "@/components/ReelCard";
+import PulseCard from "@/components/PulseCard";
 import { dok } from "@/lib/api";
 import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
@@ -28,8 +28,8 @@ const PAGE = 10;
  * `exhausted` (which is just `!hasMore` and is already true on page 1 of a small
  * catalogue).
  */
-export default function Reels() {
-  const [reels, setReels] = useState<any[] | null>(null);
+export default function Pulses() {
+  const [pulses, setPulses] = useState<any[] | null>(null);
   const [active, setActive] = useState(0);
   const [atEnd, setAtEnd] = useState(false);
   const [exhausted, setExhausted] = useState(false);
@@ -48,7 +48,7 @@ export default function Reels() {
   const activeRef = useRef(0);
   activeRef.current = active;
 
-  const list = reels || [];
+  const list = pulses || [];
   // the tail (spinner / end-of-feed) is a slide too, so arrows can reach it
   const totalSlides = list.length + (loadingMore || atEnd ? 1 : 0);
 
@@ -63,7 +63,7 @@ export default function Reels() {
       params.set("sessionId", sessionId.current);
       params.set("cursor", cursor.current);
     }
-    const d = await dok.reels.feed(`?${params.toString()}`);
+    const d = await dok.pulses.feed(`?${params.toString()}`);
     // A refresh that landed while this was in flight owns the session now —
     // never let a superseded page overwrite its cursor or end-of-feed state.
     if (g !== gen.current) return [];
@@ -99,8 +99,8 @@ export default function Reels() {
     let alive = true;
     resetSession();
     fetchPage(true)
-      .then((r) => { if (alive) setReels(take(r)); })
-      .catch((err) => { logFeedError("pulse", "initial load", err); if (alive) setReels([]); });
+      .then((r) => { if (alive) setPulses(take(r)); })
+      .catch((err) => { logFeedError("pulse", "initial load", err); if (alive) setPulses([]); });
     return () => { alive = false; };
   }, [fetchPage, take, resetSession]);
 
@@ -115,7 +115,7 @@ export default function Reels() {
       const fresh = take(rows);
       // A page that adds nothing new means we are genuinely at the end — stop,
       // rather than letting the tail observer spin on it.
-      if (fresh.length) setReels((rs) => [...(rs || []), ...fresh]);
+      if (fresh.length) setPulses((rs) => [...(rs || []), ...fresh]);
       else setAtEnd(true);
     } catch (err) { logFeedError("pulse", "next page", err); /* keep what we have */ }
     finally { loadingRef.current = false; setLoadingMore(false); }
@@ -129,11 +129,11 @@ export default function Reels() {
     setRefreshing(true);
     try {
       const r = take(await fetchPage(true));
-      setReels(r);
+      setPulses(r);
       setOver({});
       setActive(0);
       scroller.current?.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) { logFeedError("pulse", "refresh", err); setReels((x) => x || []); }
+    } catch (err) { logFeedError("pulse", "refresh", err); setPulses((x) => x || []); }
     finally { setRefreshing(false); }
   }, [fetchPage, take, resetSession]);
 
@@ -192,13 +192,13 @@ export default function Reels() {
 
   /* ---------------------------------------------------------------- render --- */
 
-  const patch = useCallback((reelId: string, p: Record<string, any>) => {
-    setOver((o) => ({ ...o, [reelId]: { ...o[reelId], ...p } }));
+  const patch = useCallback((pulseId: string, p: Record<string, any>) => {
+    setOver((o) => ({ ...o, [pulseId]: { ...o[pulseId], ...p } }));
   }, []);
 
   // The id stays in `seenIds` on purpose: a deleted / "not interested" reel must
   // not reappear if a later page still carries it.
-  const removeReel = (id: string) => setReels((rs) => (rs || []).filter((r) => rid(r) !== id));
+  const removePulse = (id: string) => setPulses((rs) => (rs || []).filter((r) => rid(r) !== id));
 
   const slide = "h-[calc(100dvh-13rem)] min-h-[420px] lg:h-[calc(100dvh-10.5rem)]";
 
@@ -218,7 +218,7 @@ export default function Reels() {
         </div>
       </header>
 
-      {reels === null ? (
+      {pulses === null ? (
         <TileGridSkeleton count={1} className={slide} tile="h-full w-full rounded-3xl" />
       ) : list.length === 0 ? (
         <div className={`card grid ${slide} place-items-center gap-2 text-center`}>
@@ -241,14 +241,14 @@ export default function Reels() {
                 data-slide={idx}
                 className={`flex ${slide} w-full snap-start snap-always items-center justify-center`}
               >
-                <ReelCard
+                <PulseCard
                   reel={r}
                   active={idx === active}
                   over={over[rid(r)] || {}}
                   onPatch={patch}
                   muted={muted}
                   onToggleMute={() => setMuted((m) => !m)}
-                  onRemoved={removeReel}
+                  onRemoved={removePulse}
                   onEnded={() => goTo(Math.min(idx + 1, list.length - 1))}
                   loop={atEnd && idx === list.length - 1}
                   className="h-full w-full max-w-full rounded-2xl sm:aspect-[9/16] sm:w-auto sm:rounded-3xl"

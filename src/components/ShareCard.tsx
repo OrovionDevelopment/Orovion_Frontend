@@ -7,36 +7,16 @@ import { dok } from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
 
 /**
- * Rich preview card for content shared into a chat (post / reel / profile),
+ * Rich preview card for content shared into a chat (post / pulse / profile),
  * mirroring the Flutter app's ShareContentCard. Replaces the plain-text raw-id
  * bubble with an X/Twitter-style embed: thumbnail, author + verified + time, and
  * the post text with #hashtag / @mention links.
  */
 
-const SHARED_TYPE = {
-  shared_post: "post",
-  shared_reel: "reel",
-  shared_profile: "profile",
-};
-
-// Detect a share from a message: an explicit `shared_*` type, or a deep-link
-// embedded in the content. Returns { shareType, entityId } or null.
-export function detectShare(message) {
-  const t = message?.type || message?.messageType;
-  const content = String(message?.content ?? "").trim();
-  if (SHARED_TYPE[t] && content) return { shareType: SHARED_TYPE[t], entityId: content };
-  const m = content.match(
-    /(?:https?:\/\/[^\s/]+|orovion:\/\/)\/?(post|reel|profile|case|research|thesis)\/([\w-]+)/i
-  );
-  if (m) {
-    const seg = m[1].toLowerCase();
-    return { shareType: seg === "case" || seg === "research" || seg === "thesis" ? "post" : seg, entityId: m[2] };
-  }
-  return null;
-}
-
+// Which messages are shares, and of what, is decided by `detectShare` in
+// src/lib/shareDetect.ts (pure + unit-tested); this file only renders the card.
 const hrefFor = (shareType, id) =>
-  shareType === "profile" ? `/app/profile/${id}` : shareType === "reel" ? `/app/reels?reel=${id}` : `/app/post/${id}`;
+  shareType === "profile" ? `/app/profile/${id}` : shareType === "pulse" ? `/app/pulse?pulse=${id}` : `/app/post/${id}`;
 
 // Render post text with #hashtag / @mention as accent-colored spans.
 function LinkifiedText({ text }) {
@@ -65,7 +45,7 @@ export default function ShareCard({ shareType, entityId, mine }) {
     (async () => {
       try {
         let res;
-        if (shareType === "reel") res = await dok.reels.get(entityId);
+        if (shareType === "pulse") res = await dok.pulses.get(entityId);
         else if (shareType === "profile") res = await dok.profile.byId(entityId);
         else res = await dok.posts.get(entityId);
         if (!alive) return;

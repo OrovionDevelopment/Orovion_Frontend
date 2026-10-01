@@ -151,7 +151,7 @@ export default function Create() {
     if (next.length) setEditing(media.length);
   };
 
-  const isReel = type === "reel";
+  const isPulse = type === "reel";
 
   const publish = async () => {
     if (busy) return;
@@ -159,8 +159,8 @@ export default function Create() {
     const content = text.trim();
     const videoItem = media.find((m) => m.kind === "video");
 
-    if (isReel && !videoItem?.file) { setErr("Add a video to publish a Pulse."); return; }
-    if (!isReel && !content && media.length === 0) { setErr("Write something or add media first."); return; }
+    if (isPulse && !videoItem?.file) { setErr("Add a video to publish a Pulse."); return; }
+    if (!isPulse && !content && media.length === 0) { setErr("Write something or add media first."); return; }
 
     const hashtags = extractHashtags(content);
     const mentions = extractMentions(content);
@@ -169,15 +169,15 @@ export default function Create() {
     try {
       const fd = new FormData();
       fd.append("visibility", vis);
-      if (isReel) {
+      if (isPulse) {
         fd.append("video", videoItem.file);
         fd.append("caption", content);
         if (videoItem.cover != null) fd.append("thumbnailOffset", String(Math.max(0, Math.round(videoItem.cover * 10) / 10)));
         appendArray(fd, "hashtags", hashtags);
         appendArray(fd, "mentions", mentions);
-        await dok.reels.create(fd);
+        await dok.pulses.create(fd);
         toast?.success("Pulse uploaded — it'll appear once processing finishes");
-        nav("/app/reels");
+        nav("/app/pulse");
       } else {
         fd.append("content", content);
         fd.append("postType", type);
@@ -225,7 +225,7 @@ export default function Create() {
             onKeyDown={(e) => { if (e.key === "Escape") setSuggest(null); }}
             onBlur={() => setTimeout(() => setSuggest(null), 150)}
             rows={media.length ? 3 : 6}
-            placeholder={isReel ? "Add a caption for your Pulse…  use # and @" : "Share a case, paper or healthcare update…  use # and @"}
+            placeholder={isPulse ? "Add a caption for your Pulse…  use # and @" : "Share a case, paper or healthcare update…  use # and @"}
             className="w-full resize-none text-[15px] outline-none placeholder:text-ink-400"
           />
         </div>
@@ -270,11 +270,11 @@ export default function Create() {
                 FormData build above), and the feed renders single media at its natural
                 ratio. One item → natural ratio, full width. Several → a uniform grid,
                 but `object-contain` so each thumbnail still shows the whole frame. */}
-            <div className={cn(media.length === 1 ? "" : cn("grid gap-2", isReel ? "grid-cols-2" : "grid-cols-3"))}>
+            <div className={cn(media.length === 1 ? "" : cn("grid gap-2", isPulse ? "grid-cols-2" : "grid-cols-3"))}>
               {media.map((m, i) => (
                 <div key={i} className={cn(
                   "group relative overflow-hidden rounded-xl bg-ink-950",
-                  media.length > 1 && (isReel ? "aspect-[9/16]" : "aspect-square")
+                  media.length > 1 && (isPulse ? "aspect-[9/16]" : "aspect-square")
                 )}>
                   {m.kind === "video"
                     ? <video src={m.cover != null ? `${m.url}#t=${m.cover}` : m.url} preload="metadata" style={{ filter: presetCss(m), transform: `scale(${m.crop?.zoom || 1})` }} className={cn("w-full object-contain", media.length === 1 ? "max-h-[60vh]" : "h-full")} />
@@ -298,13 +298,13 @@ export default function Create() {
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-center text-xs text-ink-400">Tap the wand to crop, trim, {isReel ? "pick a cover, " : ""}add filters, text & music</p>
+            <p className="mt-2 text-center text-xs text-ink-400">Tap the wand to crop, trim, {isPulse ? "pick a cover, " : ""}add filters, text & music</p>
           </div>
         )}
 
         <div className="relative flex items-center justify-between border-t border-ink-900/[.06] p-4">
           <div className="flex items-center gap-1">
-            <input ref={fileRef} type="file" accept={isReel ? "video/*" : "image/*,video/*"} multiple={!isReel} hidden onChange={onFiles} />
+            <input ref={fileRef} type="file" accept={isPulse ? "video/*" : "image/*,video/*"} multiple={!isPulse} hidden onChange={onFiles} />
             <button onClick={() => fileRef.current?.click()} className="press rounded-full p-2 text-brand-600 hover:bg-brand-50" title="Photo / video"><ImageIcon size={20} /></button>
             <button onClick={() => fileRef.current?.click()} className="press rounded-full p-2 text-brand-600 hover:bg-brand-50" title="Attach file"><Paperclip size={20} /></button>
             <button onClick={() => setEmoji((v) => !v)} className="press rounded-full p-2 text-brand-600 hover:bg-brand-50" title="Emoji"><Smile size={20} /></button>
@@ -324,7 +324,7 @@ export default function Create() {
       {editing != null && media[editing] && (
         <MediaEditor
           item={media[editing]}
-          isReel={isReel}
+          isReel={isPulse}
           onClose={() => setEditing(null)}
           onSave={(edited) => { setMedia((m) => m.map((x, i) => (i === editing ? { ...edited, file: x.file } : x))); setEditing(null); }}
         />

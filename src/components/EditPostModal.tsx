@@ -15,7 +15,7 @@ export const canEditPost = (post) => Date.now() - new Date(post?.createdAt).getT
  */
 export default function EditPostModal({ open, onClose, post, demo, onSaved, kind = "post" }) {
   const toast = useToast();
-  const isReel = kind === "reel";
+  const isPulse = kind === "reel";
   const initial = post?.content ?? post?.caption ?? "";
   const [content, setContent] = useState(initial);
   const [saving, setSaving] = useState(false);
@@ -33,22 +33,22 @@ export default function EditPostModal({ open, onClose, post, demo, onSaved, kind
     try {
       if (!demo) {
         const id = post._id || post.id;
-        if (isReel) await dok.reels.update(id, { caption: text });
+        if (isPulse) await dok.pulses.update(id, { caption: text });
         else await dok.posts.update(id, { content: text });
       }
       onSaved?.(text);
-      toast?.success(isReel ? "Pulse updated" : "Post updated");
+      toast?.success(isPulse ? "Pulse updated" : "Post updated");
       onClose();
     } catch (e) {
       // 403 after the 24h window closes server-side
-      toast?.error(e?.response?.status === 403 ? `Editing closed — ${isReel ? "Pulses" : "posts"} can only be edited within 24 hours` : "Couldn't save your changes");
+      toast?.error(e?.response?.status === 403 ? `Editing closed — ${isPulse ? "Pulses" : "posts"} can only be edited within 24 hours` : "Couldn't save your changes");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={isReel ? "Edit Pulse" : "Edit post"} className="max-w-md">
+    <Modal open={open} onClose={onClose} title={isPulse ? "Edit Pulse" : "Edit post"} className="max-w-md">
       <div className="space-y-4 p-5">
         <textarea
           value={content}

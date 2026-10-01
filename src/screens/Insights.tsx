@@ -195,7 +195,7 @@ export default function Insights() {
                 : "Consultation insights are next"
           }
           message={
-            activeTab === "content" ? "Per-post and per-reel analytics — views, engagement, traffic sources, retention — are Phase 2."
+            activeTab === "content" ? "Per-post and per-pulse analytics — views, engagement, traffic sources, retention — are Phase 2."
               : activeTab === "audience" ? "Who your audience is — location, age, gender, device — lands in Phase 3."
                 : "Requests, response time, acceptance rate, and revenue, reported from your existing consultations data, land in Phase 4."
           }

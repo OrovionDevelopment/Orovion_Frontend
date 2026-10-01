@@ -11,7 +11,7 @@ README — note it is scoped to public routes and must never load inside `/app/*
 
 `public/` is the exception to "everything is client": server-rendered cards for
 the public share-link pages (its own README). `ShareSheet`, `PostCard` and
-`ReelCard` take every share URL from `src/lib/shareLinks.ts` — no request, no
+`PulseCard` take every share URL from `src/lib/shareLinks.ts` — no request, no
 `window.location.origin`, no hardcoded domain.
 Orovion's own admin dashboard is `src/features/analytics/`, a different thing.
 
@@ -21,7 +21,7 @@ sheets (never `bg-white`), the flipping `ink` ramp for content, and the static
 
 ## Pulse (reels) trio
 
-`ReelCard` is the single source of truth for **one reel**: player, mute toggle,
+`PulseCard` is the single source of truth for **one reel**: player, mute toggle,
 right action rail (like / comment / share / save / more), author + `FollowButton`
 + caption, double-tap-to-like, the view/watched pings, and every sheet it opens
 (3-dot `BottomSheet`, delete `Modal`, `ShareSheet`, `LikesSheet`, `CommentsSheet`,
@@ -29,7 +29,7 @@ right action rail (like / comment / share / save / more), author + `FollowButton
 
 | Consumer | Shape |
 |---|---|
-| `ReelViewer` | Full-screen portal overlay opened from a grid (profile reels). Owns the portal, close/up-down chrome and the current index. |
+| `PulseViewer` | Full-screen portal overlay opened from a grid (profile reels). Owns the portal, close/up-down chrome and the current index. |
 | `screens/Reels` | The Pulse tab's one-reel-at-a-time snap-scrolling feed. |
 
 Two contracts matter when touching these:
@@ -41,18 +41,18 @@ Two contracts matter when touching these:
   id), not in the card, so optimistic like/save/comment counts survive navigating
   away from a reel and back within a session.
 
-`ReelVideo` is the player underneath: native HLS on Safari/iOS, lazy-loaded
+`PulseVideo` is the player underneath: native HLS on Safari/iOS, lazy-loaded
 `hls.js` elsewhere, and a poster + status overlay while `processingStatus` is
 still `PENDING`/`PROCESSING` (or `FAILED`).
 
-## Reel posters
+## Pulse posters
 
-`reelPoster()` (`src/lib/utils.ts`) returns `undefined` whenever a reel has no
+`pulsePoster()` (`src/lib/utils.ts`) returns `undefined` whenever a reel has no
 genuine thumbnail, which is the normal case for reels uploaded via
 `POST /api/reels`. Every call site therefore guards the image:
 
 ```jsx
-{reelPoster(r) && <img src={reelPoster(r)} … />}
+{pulsePoster(r) && <img src={pulsePoster(r)} … />}
 ```
 
 The surrounding tile is already `bg-ink-950` with a play-icon overlay, so the

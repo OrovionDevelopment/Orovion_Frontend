@@ -15,8 +15,8 @@ describe("routeFor — notification deep-link routing", () => {
   });
 
   it("routes reel activity to the reels tab", () => {
-    expect(routeFor({ type: "reel_like" })).toBe("/app/reels");
-    expect(routeFor({ type: "mention_reel", meta: { reelId: "r1" } })).toBe("/app/reels");
+    expect(routeFor({ type: "reel_like" })).toBe("/app/pulse");
+    expect(routeFor({ type: "mention_reel", meta: { reelId: "r1" } })).toBe("/app/pulse");
   });
 
   it("routes follow/connection acceptance to the sender profile", () => {
