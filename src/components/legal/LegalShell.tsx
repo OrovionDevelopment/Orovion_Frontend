@@ -1,16 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Link } from "@/lib/router";
-import { Logo } from "@/components/ui/Primitives";
-import NavArrows from "@/components/ui/NavArrows";
 import { Mail, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import MarketingShell from "@/components/marketing/MarketingShell";
+import { Display, Eyebrow, enter } from "@/components/marketing/Type";
 
 /**
- * Public document shell for /privacy, /terms and /help — mirrors the Figma
- * legal screens: "Last updated" line, an "On this page" jump nav with
- * scroll-spy, numbered icon sections, and the legal contact card.
- * No auth required; safe to index and share.
+ * Public document shell for /privacy, /terms and /help, in the marketing frame
+ * (fixed nav, motion, parallax footer): eyebrow + display title that enter on
+ * load, a sticky "On this page" jump nav with scroll-spy (desktop), jump chips
+ * (tablet/phone), numbered icon sections that fade in on scroll, and the
+ * contact card. No auth required; safe to index and share.
  */
 export default function LegalShell({ eyebrow, title, updated, intro, sections, children, contact = true }) {
   const [active, setActive] = useState(sections?.[0]?.id);
@@ -32,108 +32,89 @@ export default function LegalShell({ eyebrow, title, updated, intro, sections, c
     return () => io.disconnect();
   }, [sections]);
 
+  const e = { eyebrow: enter(0.4, "above"), title: enter(0.4), meta: enter(0.6), body: enter(0.6, "none"), aside: enter(0.8) };
+
   return (
-    <div className="min-h-screen bg-ink-50">
-      {/* public topbar */}
-      <header className="glass sticky top-0 z-40 border-b border-ink-900/[.06]">
-        <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-5 sm:gap-4 sm:px-8">
-          <Link to="/"><Logo /></Link>
-          <NavArrows />
-          <nav className="ml-auto flex items-center gap-1 text-sm font-semibold text-ink-600 sm:gap-2">
-            <TopLink to="/help" label="Help center" />
-            <TopLink to="/privacy" label="Privacy" />
-            <TopLink to="/terms" label="Terms" />
-            <Link to="/login" className="btn-primary ml-2 hidden px-4 py-2 text-sm sm:inline-flex">Open Orovion</Link>
-          </nav>
-        </div>
-      </header>
+    <MarketingShell>
+      <section className="mk-top">
+        <div className="mk-container flex flex-col gap-14">
+          {eyebrow && <Eyebrow className={e.eyebrow.className} style={e.eyebrow.style}>{eyebrow}</Eyebrow>}
 
-      <main className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
-        <div className="max-w-2xl">
-          {eyebrow && <p className="text-sm font-bold text-brand-600">{eyebrow}</p>}
-          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl" style={{ textWrap: "balance" }}>{title}</h1>
-          {updated && <p className="mt-2 text-sm text-ink-500">{updated}</p>}
-          {intro && <div className="mt-5 space-y-3 text-[15px] leading-relaxed text-ink-700">{intro}</div>}
-        </div>
+          <div className="flex max-w-3xl flex-col gap-6">
+            <Display as="h1" className={e.title.className} style={e.title.style}>{title}</Display>
+            {(updated || intro) && (
+              <div className={cn("flex flex-col gap-4", e.meta.className)} style={e.meta.style}>
+                {updated && <p className="t-small text-ink-500">{updated}</p>}
+                {intro && <div className="max-w-[640px] space-y-3 t-body text-ink-600">{intro}</div>}
+              </div>
+            )}
+          </div>
 
-        <div className="mt-10 flex gap-10">
-          {/* On this page (desktop) */}
-          {sections?.length > 0 && (
-            <aside className="sticky top-24 hidden h-fit w-56 shrink-0 lg:block">
-              <p className="text-xs font-bold uppercase tracking-wide text-ink-400">On this page</p>
-              <nav className="no-scrollbar mt-3 max-h-[calc(100vh-10rem)] space-y-1 overflow-y-auto pr-1">
-                {sections.map((s, i) => (
-                  <a
-                    key={s.id}
-                    href={`#${s.id}`}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition",
-                      active === s.id ? "bg-brand-50 font-semibold text-brand-700" : "text-ink-500 hover:bg-ink-900/[.03] hover:text-ink-900"
-                    )}
-                  >
-                    <span className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-md text-[11px] font-bold", active === s.id ? "bg-brand-600 text-white" : "bg-ink-900/[.06] text-ink-500")}>{i + 1}</span>
-                    <span className="truncate">{s.title}</span>
-                  </a>
-                ))}
-              </nav>
-            </aside>
-          )}
-
-          <div className="min-w-0 max-w-2xl flex-1">
-            {/* jump chips (mobile) */}
+          <div className="grid gap-12 desk:grid-cols-[260px_1fr] desk:gap-24">
+            {/* On this page (desktop) */}
             {sections?.length > 0 && (
-              <div className="no-scrollbar -mx-1 mb-8 flex gap-2 overflow-x-auto px-1 lg:hidden">
-                {sections.map((s) => (
-                  <a key={s.id} href={`#${s.id}`} className="chip shrink-0 bg-surface text-ink-600 ring-1 ring-ink-900/[.06]">{s.title}</a>
-                ))}
-              </div>
+              <aside className={cn("sticky top-40 hidden h-fit desk:block", e.aside.className)} style={e.aside.style}>
+                <p className="t-eyebrow !text-ink-500">On this page</p>
+                <nav className="no-scrollbar mt-4 max-h-[calc(100vh-14rem)] space-y-1 overflow-y-auto pr-1" data-lenis-prevent>
+                  {sections.map((s, i) => (
+                    <a
+                      key={s.id}
+                      href={`#${s.id}`}
+                      data-cursor="snap"
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-300 ease-reveal",
+                        active === s.id ? "bg-brand-50 font-semibold text-brand-700" : "text-ink-500 hover:bg-ink-900/[.03] hover:text-ink-900"
+                      )}
+                    >
+                      <span className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-md text-[11px] font-bold transition-colors duration-300", active === s.id ? "bg-brand-600 text-white" : "bg-ink-900/[.06] text-ink-500")}>{i + 1}</span>
+                      <span className="truncate">{s.title}</span>
+                    </a>
+                  ))}
+                </nav>
+              </aside>
             )}
 
-            <div className="space-y-10">
-              {sections?.map((s, i) => {
-                const Icon = s.icon;
-                return (
-                  <section key={s.id} id={s.id} className="scroll-mt-24">
-                    <h2 className="flex items-center gap-3 font-display text-xl font-extrabold text-ink-900">
-                      {Icon && <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600"><Icon size={18} /></span>}
-                      <span><span className="mr-1.5 text-brand-600">{i + 1}.</span>{s.title}</span>
-                    </h2>
-                    <div className="prose-dok mt-4 space-y-3 text-[15px] leading-relaxed text-ink-700">{s.body}</div>
-                  </section>
-                );
-              })}
-              {children}
-            </div>
-
-            {contact && (
-              <div className="mt-12 flex flex-col items-start gap-3 rounded-2xl border border-ink-900/[.06] bg-surface p-5 shadow-card sm:flex-row sm:items-center">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600"><Mail size={20} /></span>
-                <div className="flex-1">
-                  <p className="font-semibold text-ink-900">Questions about these terms?</p>
-                  <p className="text-sm text-ink-500">Reach our team at <a href="mailto:support@orovion.com" className="font-semibold text-brand-700 hover:underline">support@orovion.com</a> — we reply within 2 business days.</p>
+            <div className={cn("min-w-0 max-w-3xl", e.body.className, !sections?.length && "desk:col-span-2")} style={e.body.style}>
+              {/* jump chips (tablet/phone) */}
+              {sections?.length > 0 && (
+                <div className="no-scrollbar -mx-1 mb-10 flex gap-2 overflow-x-auto px-1 desk:hidden">
+                  {sections.map((s) => (
+                    <a key={s.id} href={`#${s.id}`} className="chip shrink-0 bg-ink-50 text-ink-600 ring-1 ring-ink-900/[.06]">{s.title}</a>
+                  ))}
                 </div>
+              )}
+
+              <div className="space-y-14">
+                {sections?.map((s, i) => {
+                  const Icon = s.icon;
+                  return (
+                    <section key={s.id} id={s.id} className="mk-reveal scroll-mt-32">
+                      <h2 className="flex items-center gap-4 t-title text-ink-900">
+                        {Icon && <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600"><Icon size={19} /></span>}
+                        <span><span className="mr-2 text-brand-600">{String(i + 1).padStart(2, "0")}</span>{s.title}</span>
+                      </h2>
+                      <div className="prose-dok mt-5 space-y-3 t-body text-ink-700">{s.body}</div>
+                    </section>
+                  );
+                })}
+                {children}
               </div>
-            )}
-          </div>
-        </div>
-      </main>
 
-      <footer className="border-t border-ink-900/[.06] py-8">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-5 text-sm text-ink-400 sm:flex-row sm:px-8">
-          <p>© 2026 Orovion. All rights reserved. Built for the healthcare community.</p>
-          <div className="flex gap-5">
-            <Link to="/help" className="hover:text-brand-700">Help center</Link>
-            <Link to="/privacy" className="hover:text-brand-700">Privacy</Link>
-            <Link to="/terms" className="hover:text-brand-700">Terms</Link>
+              {contact && (
+                <div className="mk-reveal mt-16 flex flex-col items-start gap-4 rounded-2xl border border-ink-900/[.06] bg-ink-50 p-6 tab:flex-row tab:items-center">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-600 text-white"><Mail size={20} /></span>
+                  <div className="flex-1">
+                    <p className="t-body font-semibold text-ink-900">Questions about these terms?</p>
+                    <p className="t-small text-ink-600">Reach our team at <a href="mailto:support@orovion.com" className="link-u font-semibold text-brand-600">support@orovion.com</a> — we reply within 2 business days.</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </footer>
-    </div>
+      </section>
+    </MarketingShell>
   );
-}
-
-function TopLink({ to, label }) {
-  return <Link to={to} className="rounded-full px-3 py-2 transition hover:bg-brand-50 hover:text-brand-700">{label}</Link>;
 }
 
 /** Plain bullet list for enumerations without lead-in labels. */
@@ -142,7 +123,7 @@ export function Bullets({ items }) {
     <ul className="space-y-1.5">
       {items.map((it, i) => (
         <li key={i} className="flex gap-2.5">
-          <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" aria-hidden />
+          <span className="mt-[11px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" aria-hidden />
           <span>{it}</span>
         </li>
       ))}

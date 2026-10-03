@@ -72,7 +72,9 @@ export const viewport: Viewport = {
 // white. Key ("dl_theme") and fallback-to-system logic mirror src/lib/theme.ts.
 // Also restores the Appearance override stylesheet (accent/font/scale — cached as
 // compiled CSS under "dl_appearance_css" by AppearanceContext) and the duo flag.
-const noFlashTheme = `(function(){try{var t=localStorage.getItem("dl_theme");var d=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);var c=localStorage.getItem("dl_appearance_css");if(c){var s=document.createElement("style");s.id="dl-appearance";s.textContent=c;document.head.appendChild(s);}var a=JSON.parse(localStorage.getItem("dl_appearance")||"null");if(a&&a.duo)document.documentElement.dataset.duo="1";}catch(e){}})();`;
+// The leading `js` class lets the marketing scroll-reveals start hidden only
+// when script runs, so no-JS visitors and crawlers always see the content.
+const noFlashTheme = `(function(){document.documentElement.classList.add("js");try{var t=localStorage.getItem("dl_theme");var d=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);var c=localStorage.getItem("dl_appearance_css");if(c){var s=document.createElement("style");s.id="dl-appearance";s.textContent=c;document.head.appendChild(s);}var a=JSON.parse(localStorage.getItem("dl_appearance")||"null");if(a&&a.duo)document.documentElement.dataset.duo="1";}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

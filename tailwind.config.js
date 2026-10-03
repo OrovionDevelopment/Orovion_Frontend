@@ -9,6 +9,9 @@ module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
+      // Marketing-page breakpoints (tablet 810, desktop 1200, wide 1600) — new
+      // keys only, so the app's sm/md/lg/xl layouts are untouched.
+      screens: { tab: "810px", desk: "1200px", wide: "1600px" },
       colors: {
         // Orovion (ex-DokLynk) teal ramp — primary sits at 600 (#1E7B74).
         // 50–300 are tint roles (chip/ghost/hover fills) and flip with the theme;
@@ -89,6 +92,8 @@ module.exports = {
       },
       transitionTimingFunction: {
         standard: "cubic-bezier(.2,0,0,1)", emphasized: "cubic-bezier(.2,0,0,1)", out: "cubic-bezier(0,0,.2,1)",
+        // Marketing motion tokens (defined in globals.css).
+        spring: "var(--ease-spring)", load: "var(--ease-load)", reveal: "var(--ease-reveal)",
       },
       keyframes: {
         "fade-up": { "0%": { opacity: "0", transform: "translateY(16px)" }, "100%": { opacity: "1", transform: "translateY(0)" } },

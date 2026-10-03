@@ -1,29 +1,13 @@
 "use client";
 import { Rocket, BadgeCheck, Newspaper, Stethoscope, ShieldAlert } from "lucide-react";
-import { ChevronDown } from "lucide-react";
 import LegalShell from "@/components/legal/LegalShell";
-import { FAQ_SECTIONS, type FaqItem } from "@/lib/faq";
-
-/** Native-details FAQ accordion — keyboard accessible out of the box. */
-function Faq({ items }: { items: readonly FaqItem[] }) {
-  return (
-    <div className="divide-y divide-ink-900/[.05] overflow-hidden rounded-2xl border border-ink-900/[.06] bg-surface shadow-card">
-      {items.map(([q, a], i) => (
-        <details key={i} className="group">
-          <summary className="flex cursor-pointer items-center gap-3 px-4 py-3.5 text-[15px] font-semibold text-ink-900 transition hover:bg-ink-900/[.02] [&::-webkit-details-marker]:hidden">
-            <span className="flex-1">{q}</span>
-            <ChevronDown size={16} className="shrink-0 text-ink-400 transition-transform duration-200 group-open:rotate-180" />
-          </summary>
-          <div className="px-4 pb-4 text-sm leading-relaxed text-ink-600">{a}</div>
-        </details>
-      ))}
-    </div>
-  );
-}
+import Accordion from "@/components/marketing/Accordion";
+import PillButton from "@/components/marketing/PillButton";
+import { FAQ_SECTIONS } from "@/lib/faq";
 
 /** Section icon by id. Content itself lives in `src/lib/faq.ts`, which the
     FAQPage JSON-LD on /help also reads — one source, so markup and visible
-    copy can never disagree. */
+    copy can never disagree. The accordion keeps closed answers in the DOM. */
 const ICONS: Record<string, any> = {
   "getting-started": Rocket,
   verification: BadgeCheck,
@@ -32,11 +16,11 @@ const ICONS: Record<string, any> = {
   safety: ShieldAlert,
 };
 
-const SECTIONS = FAQ_SECTIONS.map((s) => ({
+const SECTIONS = FAQ_SECTIONS.map((s, i) => ({
   id: s.id,
   icon: ICONS[s.id],
   title: s.title,
-  body: <Faq items={s.items} />,
+  body: <Accordion items={s.items} defaultOpen={i === 0 ? [0] : []} reveal={false} />,
 }));
 
 export default function HelpCenter() {
@@ -45,7 +29,15 @@ export default function HelpCenter() {
       eyebrow="Support"
       title="Help center"
       updated={undefined}
+      intro={<p>Answers about accounts, verification, the home feed, consultations and safety. Can’t find what you need? Our team is one message away.</p>}
       sections={SECTIONS}
-    />
+      contact={false}
+    >
+      <div className="mk-reveal flex flex-col items-start gap-6 rounded-2xl bg-ink-50 p-8">
+        <p className="t-title text-ink-900">Still need help?</p>
+        <p className="max-w-[480px] t-body text-ink-600">Send us a message and a real person on the Orovion team will reply within two business days.</p>
+        <PillButton to="/contact">Contact us</PillButton>
+      </div>
+    </LegalShell>
   );
 }

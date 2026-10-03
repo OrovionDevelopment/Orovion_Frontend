@@ -5,10 +5,10 @@ import {
   Phone, Play, Search, Send, Stethoscope, Video, Wifi,
 } from "lucide-react";
 import { Avatar, Verified } from "@/components/ui/Primitives";
-import NavArrows from "@/components/ui/NavArrows";
 import StoreBadge from "@/components/ui/StoreBadge";
-import { SiteNav, SiteFooter } from "@/components/landing/SiteChrome";
-import { useScrollReveal, cn } from "@/lib/utils";
+import MarketingShell from "@/components/marketing/MarketingShell";
+import { Accent, Display, Eyebrow, enter } from "@/components/marketing/Type";
+import { cn } from "@/lib/utils";
 
 // TODO: set the real store URLs once the listings are live; the badges become
 // links automatically. Until then they render as static badges with a note.
@@ -23,17 +23,13 @@ const SAMPLE = [
 
 /** /mobile-app — marketing page for the iOS & Android apps. */
 export default function MobileAppPage() {
-  useScrollReveal();
   return (
-    <div className="overflow-x-clip bg-surface">
-      <NavArrows variant="floating" />
-      <SiteNav />
+    <MarketingShell>
       <Hero />
       <Screens />
       <Capabilities />
       <StoresCTA />
-      <SiteFooter />
-    </div>
+    </MarketingShell>
   );
 }
 
@@ -41,7 +37,7 @@ export default function MobileAppPage() {
 function BadgeSlot({ store, url }: { store: "apple" | "google"; url: string | null }) {
   if (url) {
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="group press" aria-label={store === "apple" ? "Download Orovion on the App Store" : "Get Orovion on Google Play"}>
+      <a href={url} target="_blank" rel="noopener noreferrer" data-cursor="snap" className="group press rounded-xl" aria-label={store === "apple" ? "Download Orovion on the App Store" : "Get Orovion on Google Play"}>
         <StoreBadge store={store} />
       </a>
     );
@@ -50,34 +46,40 @@ function BadgeSlot({ store, url }: { store: "apple" | "google"; url: string | nu
 }
 
 function Hero() {
+  const e = { eyebrow: enter(0.4, "above"), title: enter(0.4), intro: enter(0.6), badges: enter(0.7), phone: enter(0.6, "none") };
   return (
-    <section className="relative">
-      <div className="absolute inset-0 mesh" />
-      <div className="absolute inset-x-0 top-0 h-[560px] grid-bg" />
-      <div className="container-x relative grid items-center gap-10 pb-16 pt-10 sm:gap-14 sm:pb-20 sm:pt-16 lg:grid-cols-2 lg:pb-28 lg:pt-20">
-        <div>
-          <span className="inline-flex animate-fade-in items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold text-brand-700">
-            <Bell size={13} /> Now on the App Store &amp; Google Play
-          </span>
-          <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-ink-900 text-balance sm:text-5xl sm:leading-[1.05] md:text-6xl">
-            Orovion, in <span className="text-gradient">your pocket.</span>
-          </h1>
-          <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink-500">
-            Your healthcare network — connections, knowledge, conversations and
-            private consultations — wherever you go.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <BadgeSlot store="apple" url={APP_STORE_URL} />
-            <BadgeSlot store="google" url={PLAY_STORE_URL} />
+    <section className="mk-top overflow-hidden">
+      <div className="mk-container flex flex-col gap-14">
+        <Eyebrow className={e.eyebrow.className} style={e.eyebrow.style}>Mobile app · iOS &amp; Android</Eyebrow>
+        <div className="mk-split items-center" style={{ ["--mk-gap" as string]: "64px" }}>
+          <div className="flex flex-col gap-10">
+            <div className="flex flex-col gap-6">
+              <Display as="h1" className={e.title.className} style={e.title.style}>
+                Orovion, in <Accent>your pocket.</Accent>
+              </Display>
+              <p className={cn("max-w-[480px] t-body-lg text-ink-600", e.intro.className)} style={e.intro.style}>
+                Your healthcare network — connections, knowledge, conversations and private
+                consultations — wherever you go.
+              </p>
+            </div>
+            <div className={cn("flex flex-col gap-3", e.badges.className)} style={e.badges.style}>
+              <div className="flex flex-wrap items-center gap-3">
+                <BadgeSlot store="apple" url={APP_STORE_URL} />
+                <BadgeSlot store="google" url={PLAY_STORE_URL} />
+              </div>
+              {!APP_STORE_URL && !PLAY_STORE_URL && (
+                <p className="t-small text-ink-500">Download Orovion and carry your healthcare network with you.</p>
+              )}
+            </div>
           </div>
-          {!APP_STORE_URL && !PLAY_STORE_URL && (
-            <p className="mt-3 text-xs text-ink-400">Download Orovion and carry your healthcare network with you.</p>
-          )}
-        </div>
-        <div className="reveal in mx-auto">
-          <PhoneFrame tilt="rotate-2">
-            <FeedScreen />
-          </PhoneFrame>
+          <div className={cn("relative mx-auto", e.phone.className)} style={e.phone.style}>
+            <div aria-hidden className="absolute -inset-16 rounded-full bg-brand-600/10 blur-3xl" />
+            <div className="relative">
+              <PhoneFrame tilt="rotate-2">
+                <FeedScreen />
+              </PhoneFrame>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -86,20 +88,26 @@ function Hero() {
 
 function Screens() {
   return (
-    <section className="bg-ink-50 py-16 sm:py-24">
-      <div className="container-x">
-        <div className="reveal mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-4xl font-extrabold tracking-tight text-ink-900 text-balance sm:text-5xl">Every surface, made for one hand</h2>
-          <p className="mt-4 text-lg text-ink-500">The connected Orovion experience, designed around the way you discover, connect and interact on the go.</p>
+    <section className="mk-section bg-ink-50">
+      <div className="mk-container flex flex-col gap-14 tab:gap-20">
+        <div className="mk-split items-end" style={{ ["--mk-gap" as string]: "24px" }}>
+          <div className="flex flex-col gap-6">
+            <Eyebrow className="mk-reveal">Designed for one hand</Eyebrow>
+            <Display className="mk-reveal">Every surface, <Accent>made to move.</Accent></Display>
+          </div>
+          <p className="mk-reveal max-w-[480px] t-body text-ink-600">
+            The connected Orovion experience, designed around the way you discover, connect and
+            interact on the go.
+          </p>
         </div>
-        <div className="mt-10 grid items-start justify-items-center gap-12 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid items-start justify-items-center gap-14 tab:grid-cols-3 tab:gap-8">
           <ScreenDemo caption="The feed" text="Cases, research and healthcare content from professionals and people you follow.">
             <FeedScreen />
           </ScreenDemo>
           <ScreenDemo caption="Real-time chat" text="Private conversations with presence, read states, files and real-time communication.">
             <ChatScreen />
           </ScreenDemo>
-          <ScreenDemo caption="Pulses" text="Short-form healthcare and professional content, designed for quick discovery on the go." className="sm:col-span-2 lg:col-span-1">
+          <ScreenDemo caption="Pulses" text="Short-form healthcare and professional content, designed for quick discovery on the go.">
             <PulseScreen />
           </ScreenDemo>
         </div>
@@ -110,11 +118,11 @@ function Screens() {
 
 function ScreenDemo({ caption, text, children, className = "" }: { caption: string; text: string; children: React.ReactNode; className?: string }) {
   return (
-    <figure className={cn("reveal flex max-w-xs flex-col items-center text-center", className)}>
+    <figure className={cn("mk-reveal flex max-w-xs flex-col items-center text-center", className)}>
       <PhoneFrame small>{children}</PhoneFrame>
-      <figcaption className="mt-6">
-        <p className="font-display text-lg font-bold text-ink-900">{caption}</p>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{text}</p>
+      <figcaption className="mt-8 flex flex-col gap-2">
+        <p className="t-title !text-xl text-ink-900">{caption}</p>
+        <p className="t-small text-ink-600">{text}</p>
       </figcaption>
     </figure>
   );
@@ -129,21 +137,24 @@ const CAPABILITIES = [
 
 function Capabilities() {
   return (
-    <section className="container-x py-16 sm:py-24">
-      <div className="reveal mx-auto max-w-2xl text-center">
-        <h2 className="font-display text-4xl font-extrabold tracking-tight text-ink-900 text-balance sm:text-5xl">Nothing left behind</h2>
-        <p className="mt-4 text-lg text-ink-500">The core Orovion experience, built to move with you.</p>
-      </div>
-      <div className="mt-10 grid gap-5 sm:mt-14 sm:grid-cols-2">
-        {CAPABILITIES.map((c, i) => (
-          <div key={c.title} className="reveal card flex items-start gap-4 p-6" style={{ transitionDelay: `${i * 60}ms` }}>
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-600 text-white shadow-glow"><c.icon size={20} /></span>
-            <div>
-              <h3 className="text-base font-bold text-ink-900">{c.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-ink-500">{c.text}</p>
-            </div>
-          </div>
-        ))}
+    <section className="mk-section">
+      <div className="mk-container mk-split mk-split--rev items-start">
+        <div className="flex flex-col gap-6 self-start tab:sticky tab:top-40">
+          <Eyebrow className="mk-reveal">Nothing left behind</Eyebrow>
+          <Display className="mk-reveal">The full network, <Accent>wherever you are.</Accent></Display>
+          <p className="mk-reveal max-w-[480px] t-body text-ink-600">The core Orovion experience, built to move with you between wards, lectures and home.</p>
+        </div>
+        <ul className="flex flex-col">
+          {CAPABILITIES.map((c) => (
+            <li key={c.title} className="mk-reveal flex gap-6 border-t border-ink-900/[.08] py-8 first:border-t-0 first:pt-0 tab:py-10">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600"><c.icon size={22} strokeWidth={1.7} /></span>
+              <div className="flex flex-col gap-2">
+                <h3 className="t-title text-ink-900">{c.title}</h3>
+                <p className="max-w-[520px] t-body text-ink-600">{c.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -151,17 +162,19 @@ function Capabilities() {
 
 function StoresCTA() {
   return (
-    <section className="container-x pb-16 sm:pb-24">
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 px-6 py-12 text-center shadow-glow sm:px-16 sm:py-14">
-        <div className="absolute inset-0 grid-bg opacity-30" />
-        <div className="relative">
-          <h2 className="font-display text-3xl font-extrabold tracking-tight text-white text-balance sm:text-4xl">Available on iOS and Android</h2>
-          <p className="mx-auto mt-3 max-w-xl text-lg text-white/85">Download Orovion and carry your network with you.</p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+    <section className="mk-section bg-ink-50">
+      <div className="mk-container mk-split items-end" style={{ ["--mk-gap" as string]: "32px" }}>
+        <div className="flex flex-col gap-6">
+          <Eyebrow className="mk-reveal">Get the app</Eyebrow>
+          <Display className="mk-reveal">Available on <Accent>iOS and Android.</Accent></Display>
+          <p className="mk-reveal max-w-[480px] t-body text-ink-600">Download Orovion and carry your network with you.</p>
+        </div>
+        <div className="mk-reveal flex flex-col gap-4">
+          <div className="flex flex-wrap gap-3">
             <BadgeSlot store="apple" url={APP_STORE_URL} />
             <BadgeSlot store="google" url={PLAY_STORE_URL} />
           </div>
-          <p className="mt-4 text-sm text-white/70">Prefer the browser? <Link to="/login" className="font-semibold text-white underline underline-offset-2 hover:text-white/90">Open Orovion on the web</Link>.</p>
+          <p className="t-small text-ink-600">Prefer the browser? <Link to="/login" className="link-u font-semibold text-brand-600">Open Orovion on the web</Link>.</p>
         </div>
       </div>
     </section>

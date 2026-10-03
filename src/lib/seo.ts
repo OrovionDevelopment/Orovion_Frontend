@@ -31,8 +31,8 @@ export const DEFAULT_DESCRIPTION =
 /**
  * Official brand profiles, emitted as `Organization.sameAs`. This is the signal
  * Google uses to tie this domain to the Orovion brand entity — the prerequisite
- * for a Knowledge Panel. Keep in sync with the footer links in
- * `src/components/landing/SiteChrome.tsx`.
+ * for a Knowledge Panel. Keep in sync with `SOCIALS` in `src/lib/marketing.ts`
+ * (the marketing footer and /contact render those).
  */
 export const SOCIAL_PROFILES = [
   "https://www.linkedin.com/company/orovion/",
