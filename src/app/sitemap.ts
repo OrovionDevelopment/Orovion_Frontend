@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo";
 import { TEAM } from "@/lib/team";
+import { JOURNAL } from "@/lib/journal";
 
 /**
  * Served at /sitemap.xml — the URL submitted to Google Search Console.
@@ -14,6 +15,9 @@ import { TEAM } from "@/lib/team";
  */
 const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
+  { path: "/about", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/services", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/journal", changeFrequency: "weekly", priority: 0.7 },
   { path: "/team", changeFrequency: "monthly", priority: 0.8 },
   { path: "/mobile-app", changeFrequency: "monthly", priority: 0.8 },
   { path: "/help", changeFrequency: "monthly", priority: 0.6 },
@@ -35,6 +39,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...TEAM.map((m) => ({
       url: absoluteUrl(`/team/${m.slug}`),
       lastModified,
+      changeFrequency: "yearly" as const,
+      priority: 0.5,
+    })),
+    // Journal articles carry their own publication date.
+    ...JOURNAL.map((a) => ({
+      url: absoluteUrl(`/journal/${a.slug}`),
+      lastModified: new Date(`${a.date}T00:00:00Z`),
       changeFrequency: "yearly" as const,
       priority: 0.5,
     })),

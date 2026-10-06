@@ -8,7 +8,9 @@
  *
  * Request routing MIRRORS src/lib/offline.ts (swStrategyFor) — keep in sync.
  */
-const VERSION = "orovion-v1";
+// Bump to purge every older cache on activate. v2: drops v1 caches that held
+// stale `next dev` chunks on origins also used for production runs.
+const VERSION = "orovion-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGES_CACHE = `${VERSION}-pages`;
 const OFFLINE_URL = "/offline.html";

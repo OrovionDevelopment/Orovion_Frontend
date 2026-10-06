@@ -8,7 +8,9 @@ import { FillText } from "../Type";
  * Four tall image cards right after the trust toggle (reference "Our
  * services"): moody photo drifting inside the card (200px parallax + grain),
  * title top-left, description low, and a dot whose "Read more" label fades in
- * on hover (0.6s spring). 4-up on desktop, 2×2 on tablet, stacked on phones.
+ * on hover (0.6s spring; always shown on touch screens). Each card opens its
+ * service's section on /services (`#slug`). 4-up on desktop, 2×2 on tablet,
+ * stacked on phones.
  */
 export default function Services() {
   return (
@@ -31,7 +33,7 @@ export default function Services() {
             <p className="absolute bottom-20 left-6 right-6 max-w-[300px] t-small text-white/90">{s.text}</p>
             <span className="absolute bottom-6 left-6 flex items-center gap-4">
               <span aria-hidden className="h-1 w-1 rounded-full bg-white" />
-              <span className="t-eyebrow !text-white opacity-0 transition-opacity duration-[600ms] ease-spring group-hover:opacity-100 group-focus-visible:opacity-100">Read more</span>
+              <span className="mk-hover-reveal t-eyebrow !text-white">Read more</span>
             </span>
           </Link>
         ))}

@@ -1,6 +1,6 @@
 # Marketing pages: layout & motion system
 
-Applies to the public site only: `/`, `/contact`, `/team`, `/team/[slug]`,
+Applies to the public site only: `/`, `/about`, `/services`, `/journal`, `/journal/[slug]`, `/contact`, `/team`, `/team/[slug]`,
 `/mobile-app`, `/help`, `/privacy`, `/terms`. The logged-in app (`/app/*`) keeps
 its own 150–340ms motion rules from `DESIGN.md`/`PRODUCT.md`.
 
@@ -53,8 +53,9 @@ design: 2–4px lifts, 20–40px slides, 0.94–1.12 scales.
 | Sticky columns | scroll | `position: sticky; top: 160px` | — | tablet + desktop |
 | Footer scene parallax | scroll | `translateY` 0 → 320px (tablet 160) | linear | tablet + desktop |
 | Nav → white over dark blocks | a `data-nav-dark="true"` block (footer, home hero stage, big quote) spans the 44px line | link and logo colors change smoothly | 0.5s | desktop only |
-| Pill button | hover | label +28px, right dot out, left dot in; the pill lifts 2px with a soft shadow | 0.6s spring; lift 0.5s `--ease-premium` | pointer devices |
-| Pill button | press | 0.97 scale | 0.15s | all |
+| Pill button | hover / keyboard focus | text roll (Althea reference): the label slides up out of the pill (one pill height) and fades while an identical copy rises from below into its place; the fade trails the move; leaving reverses it. The pill itself stays put; light pills also turn the label brand. | 0.7s `--ease-premium` (~95% of travel by 0.35s), fade 0.55s | hover: pointer devices; focus: all |
+| Pill button | press | 0.97 scale | 0.12s | all |
+| Menu toggle (tablet/phone) | open / close | the same roll, from "Menu" to "Close" and back | 0.7s `--ease-premium` | tablet + phone |
 | Cards (`.mk-lift`: service cards, community posts, team cards) | hover | lift 4px (+ soft shadow, photo zoom 1.04 where set) | 0.6s / 0.9s `--ease-premium` | pointer devices |
 | FAQ card | hover | border tints brand, soft shadow | 0.5s | pointer devices |
 | Pill button | submit | right dot → 31px disc with spinner | 0.6s; spin 1s linear | all |
@@ -118,6 +119,10 @@ services → philosophy → story → how it works → ready → statement + big
 → story → community → numbers → FAQ → contact. Components live in
 `src/components/marketing/home/`; copy and photos come from `HOME` in
 `src/lib/marketing.ts`.
+
+> The home **numbers** section is currently switched off (commented out in
+> `src/screens/Landing.tsx`, import and element). Uncomment both to bring it
+> back; `/services` still shows it.
 
 Scroll-linked values are written straight to the DOM from one rAF-throttled
 scroll frame (`useScrollFrame`). React never re-renders per frame; only the
@@ -193,6 +198,85 @@ Which mode an element gets:
 - **`data-cursor="native"`:** hides the custom cursor over that area.
 - **Any other link or button:** the ring grows.
 
+## About page (`/about`)
+
+The section order follows the reference about page:
+
+1. Hero with long threads
+2. The way we help
+3. Founders
+4. Team cards
+5. Statement
+6. Ready
+7. Big quote
+8. Story
+9. FAQ
+
+Components live in `src/components/marketing/about/`. The hero is the
+shared `ThreadHero`. The statement, quote, story, ready and FAQ sections
+reuse the home components (`Statement` / `QuoteDome` from
+`home/BigQuote.tsx`, `Story`, `Ready`, `FaqSection`).
+
+| Element | Trigger | Motion | Duration / easing | Breakpoints |
+|---|---|---|---|---|
+| Hero threads (two long thin lines, `.mk-draw`) | load | draw themselves in (`stroke-dashoffset` 1 → 0) | 2.8s `--ease-premium`, from 0.2s / 0.45s | all |
+| Hero threads | scroll | drift up at 25% of the scroll, so the header gains depth | — | desktop |
+| Headline | load | word by word, blur → sharp (`BlurWords`), first line in the brand color | from 0.3s / 0.5s | all |
+| Side note, eyebrow, intro | load | rise 24px + fade (`rise()`) | at 0.8s / 1s / 1.1s | all |
+| "The way we help" | scroll | sky photo parallax 180px; words light up one by one (`ScrollWords`); the nav turns white | — | all |
+| Team cards | enters viewport / hover | rise, staggered; lift 4px, photo zoom 1.06 | — | all / pointer |
+| Big quote | scroll | dome reveal + thread, as on the home page | — | all |
+
+Every big heading and quote has the letter fill.
+
+## Services page (`/services`)
+
+The section order follows the reference services page:
+
+1. Hero (`ThreadHero`, threads mirrored)
+2. One full-bleed section per service
+3. Numbers
+4. Three stories, photos alternating right → left → right (`flip` on the
+   second; same motion as the home stories)
+5. FAQ
+6. Contact
+
+(The reference's pricing section was left out on purpose.)
+
+Each service section's id is its slug, so a home card's "Read more"
+(`/services#clinical-cases` …) lands right on it. Components live in
+`src/components/marketing/services/`; content comes from `SERVICES` and
+`SERVICES_PAGE`.
+
+| Element | Trigger | Motion | Duration / easing | Breakpoints |
+|---|---|---|---|---|
+| Service photos | scroll | parallax 200px behind a dark gradient; the nav turns white | — | all |
+| Service title, text, pill | enters viewport | rise, staggered; titles have the letter fill | 1.1s `--ease-premium` | all |
+| Service thread | scroll | one long thread (680×3600 box) draws from "top of the first section at mid-screen" to "bottom of the last at mid-screen"; smoothed (τ 150ms) | — | tablet + desktop |
+
+## Journal page (`/journal`)
+
+The section order follows the reference journal page: `ThreadHero`
+("Insights That Matter.") → every article as an `ArticleCard` (blob photo,
+title, excerpt, "Read more"), two to a row, rising in staggered → `Ready`.
+The home page's "Insights for sharper thinking" CTA opens it.
+
+## Journal articles (`/journal/[slug]`)
+
+The section order follows the reference journal article: the article (a
+pinned photo beside the text) → more insights → FAQ. The home page's
+community cards open these on "Read more". Content lives in
+`src/lib/journal.ts`; components in `src/components/marketing/journal/`.
+
+| Element | Trigger | Motion | Duration / easing | Breakpoints |
+|---|---|---|---|---|
+| Long threads behind the photo | load / scroll | draw in; drift at 25% of the scroll | 2.8s | tablet + desktop |
+| Photo (organic blob) | load / scroll | rises in; stays pinned (`sticky`, 150px) while the article scrolls, leaves with it | 1.1s `rise()` | tablet + desktop pin |
+| Icon + kicker, title, lede, date | load | rise in, staggered | 0.2 → 0.55s `rise()` | all |
+| Section headings and paragraphs | enters viewport | fade + rise, batch stagger; headings have the letter fill | 1.1s | all |
+| Pull quote | enters viewport | slides in from the right; letter fill | 1.1s | all |
+| More-insights cards | enters viewport / hover | rise; photo zoom 1.06, lift | — | all / pointer |
+
 ## Letter fill
 
 After the "b" reference wordmark. While the pointer is over a letter of a
@@ -238,7 +322,8 @@ const e = enter(0.4);                     // load entrance, desktop only
 
 - `prefers-reduced-motion: reduce` → no Lenis, no load entrances (the logo is
   static), no parallax or mouse depth, reveals shown immediately with no
-  movement (plus the global reduced-motion rule).
+  movement (plus the global reduced-motion rule). Pill labels crossfade in
+  place instead of rolling (`--pill-roll: 0`).
 - Reveals only hide content when JS runs (the `.js` class is set pre-paint).
 - FAQ items are real buttons with `aria-expanded`/`aria-controls`; the mobile
   menu is `inert` when closed, locks scroll, closes on Esc and restores focus.

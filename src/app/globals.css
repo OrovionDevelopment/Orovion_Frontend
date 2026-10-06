@@ -355,6 +355,12 @@ html.lenis { scroll-behavior: auto !important; }
 @media (prefers-reduced-motion: reduce) { .js .mk-reveal, .js .mk-reveal.mk-mask { opacity: 1; translate: none; scale: none; clip-path: none; } .js .mk-reveal.mk-mask img { scale: none; } }
 @media print { .js .mk-reveal, .js .mk-reveal.mk-mask { opacity: 1; translate: none; scale: none; clip-path: none; } }
 
+/* Hover-only labels (service cards' "Read more"): fade in on hover or keyboard
+   focus; always shown on touch screens, which have no hover. */
+.mk-hover-reveal { opacity: 0; transition: opacity .6s var(--ease-spring); }
+.group:hover .mk-hover-reveal, .group:focus-visible .mk-hover-reveal { opacity: 1; }
+@media (hover: none) { .mk-hover-reveal { opacity: 1; } }
+
 /* Hover lift for cards (transform, so it stacks with the reveal's translate). */
 .mk-lift { transition: transform .6s var(--ease-premium), box-shadow .6s var(--ease-premium), border-color .5s var(--ease-reveal); }
 .mk-lift-img img { transition: transform .9s var(--ease-premium); }
@@ -407,41 +413,49 @@ html.lenis { scroll-behavior: auto !important; }
   .soc { transition: opacity .6s var(--ease-spring); }
   @media (hover: hover) { .soc:hover { opacity: .5; } }
 
-  /* ── dot-swap pill button ───────────────────────────────────────────── */
+  /* ── pill button (text roll) ────────────────────────────────────────── */
   .pill {
-    --pill-bg: rgb(var(--brand-600)); --pill-fg: #fff; --pill-fg-hover: #fff; --pill-dot: #fff; --pill-dot-in: #fff;
+    --pill-bg: rgb(var(--brand-600)); --pill-fg: #fff; --pill-fg-hover: #fff; --pill-dot: #fff;
     position: relative; isolation: isolate; display: inline-flex; align-items: center; height: 40px; padding: 1px 48px 0 20px;
     border-radius: 999px; overflow: hidden; background: var(--pill-bg); color: var(--pill-fg);
     font-family: "Inter", system-ui, sans-serif; font-size: 12px; font-weight: 600; line-height: 1.4; letter-spacing: .11em; text-transform: uppercase;
     white-space: nowrap; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
-    transition: background-color .5s var(--ease-reveal), color .5s var(--ease-reveal), opacity .3s, transform .5s var(--ease-premium), box-shadow .5s var(--ease-premium);
+    --pill-roll: 40px; /* how far the label rolls: the pill's height */
+    transition: background-color .5s var(--ease-reveal), color .5s var(--ease-reveal), opacity .3s, transform .2s var(--ease-premium);
   }
-  /* Lift 2px with a soft brand shadow on hover; a quick, small press on click. */
-  @media (hover: hover) {
-    .pill:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -16px rgb(var(--brand-700) / .7); }
-    .pill--light:hover { box-shadow: 0 14px 28px -16px rgb(0 0 0 / .45); }
-  }
-  .pill:active { transform: translateY(0) scale(.97); transition-duration: .5s, .5s, .3s, .15s, .5s; }
-  .pill--sm { height: 39px; }
+  /* A quick, small press on click. */
+  .pill:active { transform: scale(.97); transition-duration: .5s, .5s, .3s, .12s; }
+  .pill--sm { height: 39px; --pill-roll: 39px; }
   /* For dark backdrops (footer, nav over the footer) — literal white is fine on solid brand color. */
-  .pill--light { --pill-bg: #fff; --pill-fg: #0e1213; --pill-fg-hover: rgb(var(--brand-600)); --pill-dot: #0e1213; --pill-dot-in: rgb(var(--brand-600)); }
-  .pill__label { display: block; transition: transform .6s var(--ease-spring), color .6s var(--ease-spring); }
-  .pill__dot { position: absolute; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 999px; background: var(--pill-dot); transition: transform .6s var(--ease-spring), opacity .25s; }
-  .pill__dot--a { right: 16px; }
-  .pill__dot--b { left: -16px; background: var(--pill-dot-in); }
+  .pill--light { --pill-bg: #fff; --pill-fg: #0e1213; --pill-fg-hover: rgb(var(--brand-600)); --pill-dot: #0e1213; }
+  /* Text roll (Althea reference): on hover or keyboard focus the label slides
+     up out of the pill and fades, while an identical copy rises from below into
+     its place — 0.7s soft settle, the fade trailing the move. Leaving reverses
+     it. The pill itself stays put. */
+  .pill__label { position: relative; display: block; transition: color .6s var(--ease-reveal); }
+  .pill__roll { display: block; transition: transform .7s var(--ease-premium), opacity .55s var(--ease-reveal); }
+  .pill__roll--in { position: absolute; left: 0; top: 0; width: 100%; transform: translateY(var(--pill-roll)); opacity: 0; }
   @media (hover: hover) {
-    .pill:hover .pill__label { transform: translateX(28px); color: var(--pill-fg-hover); }
-    .pill:hover .pill__dot { transform: translateX(32px); }
+    .pill:not(.pill--toggle):hover .pill__roll:not(.pill__roll--in) { transform: translateY(calc(-1 * var(--pill-roll))); opacity: 0; }
+    .pill:not(.pill--toggle):hover .pill__roll--in { transform: none; opacity: 1; }
+    .pill:not(.pill--toggle):hover .pill__label { color: var(--pill-fg-hover); }
   }
-  /* Menu ⇄ Close toggle: the open state holds the swapped dots. */
-  .pill.is-open .pill__label { transform: translateX(28px); }
-  .pill.is-open .pill__dot { transform: translateX(32px); }
+  .pill:not(.pill--toggle):focus-visible .pill__roll:not(.pill__roll--in) { transform: translateY(calc(-1 * var(--pill-roll))); opacity: 0; }
+  .pill:not(.pill--toggle):focus-visible .pill__roll--in { transform: none; opacity: 1; }
+  /* Menu ⇄ Close toggle: its two labels differ, and opening rolls to the second. */
+  .pill--toggle.is-open .pill__roll:not(.pill__roll--in) { transform: translateY(calc(-1 * var(--pill-roll))); opacity: 0; }
+  .pill--toggle.is-open .pill__roll--in { transform: none; opacity: 1; }
+  /* Reduced motion: no travel — the two copies simply crossfade in place. */
+  @media (prefers-reduced-motion: reduce) { .pill, .pill--sm { --pill-roll: 0px; } }
+  .pill__dot { position: absolute; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 999px; background: var(--pill-dot); transition: opacity .25s; }
+  .pill__dot--a { right: 16px; }
   .pill:focus-visible { outline: 2px solid rgb(var(--brand-600)); outline-offset: 3px; }
   .pill--light:focus-visible { outline-color: #fff; }
   .pill:disabled, .pill[aria-disabled="true"] { opacity: .5; pointer-events: none; }
   .pill[data-state="loading"], .pill[data-state="success"] { pointer-events: none; }
-  .pill[data-state="loading"] .pill__label, .pill[data-state="success"] .pill__label { transform: none; color: var(--pill-fg); }
-  .pill[data-state="loading"] .pill__dot { transform: none; }
+  .pill[data-state="loading"] .pill__label, .pill[data-state="success"] .pill__label { color: var(--pill-fg); }
+  .pill[data-state="loading"] .pill__roll:not(.pill__roll--in), .pill[data-state="success"] .pill__roll:not(.pill__roll--in) { transform: none; opacity: 1; }
+  .pill[data-state="loading"] .pill__roll--in, .pill[data-state="success"] .pill__roll--in { transform: translateY(var(--pill-roll)); opacity: 0; }
   .pill[data-state="loading"] .pill__dot--a { opacity: 0; }
   /* Loading: the right-hand dot swells into a 31px disc with a spinning ring. */
   .pill__loader { position: absolute; right: 5px; top: 50%; width: 31px; height: 31px; margin-top: -15.5px; border-radius: 999px; display: grid; place-items: center; background: var(--pill-dot); opacity: 0; transform: scale(.13); transition: transform .6s var(--ease-spring), opacity .2s; }
@@ -634,6 +648,15 @@ html.lenis { scroll-behavior: auto !important; }
 .mk-swap-before.is-on { opacity: 0; pointer-events: none; }
 .mk-swap-after { opacity: 0; transition: opacity .3s var(--ease-reveal); }
 .mk-swap-after.is-on { opacity: 1; transition: opacity .6s var(--ease-reveal) .4s; }
+
+/* Load-drawn threads (about hero): each path (pathLength=1) draws itself in
+   once, 2.8s soft settle, staggered with --mk-d. */
+@keyframes mk-draw { to { stroke-dashoffset: 0; } }
+.mk-draw path { stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .mk-draw path { animation: mk-draw 2.8s var(--ease-premium) var(--mk-d, .2s) forwards; }
+}
+@media (prefers-reduced-motion: reduce) { .mk-draw path { stroke-dashoffset: 0; } }
 
 /* Scroll-lit words (philosophy): dim until JS drives them; full without JS. */
 .js [data-mk-word] { opacity: .2; }

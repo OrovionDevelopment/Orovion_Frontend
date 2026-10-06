@@ -27,7 +27,7 @@ export const NAV_ZONES_EVENT = "mk:nav-zones";
  *    (0.5 → 0.8s), and a smooth change to all-white while it sits over any
  *    section marked `data-nav-dark="true"` (the home hero before its toggle
  *    flips, the big quote, the footer);
- *  · tablet/phone: solid bar with the logo and a dot-swap Menu/Close pill that
+ *  · tablet/phone: solid bar with the logo and a Menu/Close pill (text roll) that
  *    opens the full-screen menu;
  *  · everywhere: the animated logo (AnimatedLogo), which eases down to 88% once
  *    the page scrolls (the bar also lifts with a soft shadow on tablet/phone).
@@ -96,12 +96,16 @@ export default function SiteNav() {
               onClick={() => setMenuOpen((o) => !o)}
               aria-expanded={menuOpen}
               aria-controls="mk-mobile-menu"
-              className={cn("pill pill--sm w-[110px]", menuOpen && "is-open")}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              className={cn("pill pill--sm pill--toggle w-[110px]", menuOpen && "is-open")}
               data-menu-toggle
             >
-              <span className="pill__label">{menuOpen ? "Close" : "Menu"}</span>
+              {/* rolls from "Menu" to "Close" as the menu opens (globals.css "Text roll") */}
+              <span className="pill__label" aria-hidden>
+                <span className="pill__roll">Menu</span>
+                <span className="pill__roll pill__roll--in">Close</span>
+              </span>
               <span className="pill__dot pill__dot--a" aria-hidden />
-              <span className="pill__dot pill__dot--b" aria-hidden />
             </button>
           </div>
         </div>

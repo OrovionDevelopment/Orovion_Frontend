@@ -1,13 +1,17 @@
 "use client";
 import { HOME, STATS } from "@/lib/marketing";
-import { useCountUp } from "@/lib/utils";
+import { cn, useCountUp } from "@/lib/utils";
 import { Accent, Display } from "../Type";
 
-/** Impact numbers on the soft band (reference "Numbers"): statement + four counters. */
-export default function Numbers() {
+/**
+ * Impact numbers (reference "Numbers"): statement + four counters. On the
+ * soft band by default (the FAQ band below continues it); `plain` sits on the
+ * page background with its own bottom spacing.
+ */
+export default function Numbers({ plain = false }: { plain?: boolean }) {
   const n = HOME.numbers;
   return (
-    <section aria-label="Orovion in numbers" className="relative bg-ink-50 pt-20 tab:pt-[120px] desk:pt-40">
+    <section aria-label="Orovion in numbers" className={cn("relative pt-20 tab:pt-[120px] desk:pt-40", plain ? "pb-20 tab:pb-[120px] desk:pb-40" : "bg-ink-50")}>
       <div className="mk-container mk-split items-start" style={{ ["--mk-gap" as string]: "24px" }}>
         <Display size="sm" className="mk-reveal mk-from-left">{n.title} <Accent>{n.accent}</Accent></Display>
         <p className="mk-reveal mk-from-right max-w-[440px] t-body text-ink-600">{n.text}</p>

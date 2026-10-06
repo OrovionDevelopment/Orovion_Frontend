@@ -13,12 +13,14 @@
  * screens) so this stays importable from unit tests.
  */
 import { FAQ_SECTIONS, type FaqItem } from "./faq";
+import { JOURNAL } from "./journal";
 
 export type NavLinkItem = { label: string; href: string };
 
 /** Primary nav (desktop bar + mobile menu). Section anchors are absolute so they work from every page. */
 export const NAV_LINKS: NavLinkItem[] = [
-  { label: "Features", href: "/#features" },
+  { label: "About", href: "/about" },
+  { label: "Services", href: "/services" },
   { label: "Team", href: "/team" },
   { label: "Get the app", href: "/mobile-app" },
   { label: "Help", href: "/help" },
@@ -29,7 +31,9 @@ export const NAV_LINKS: NavLinkItem[] = [
 export const SITEMAP: NavLinkItem[][] = [
   [
     { label: "Home", href: "/" },
-    { label: "Features", href: "/#features" },
+    { label: "About us", href: "/about" },
+    { label: "Services", href: "/services" },
+    { label: "Journal", href: "/journal" },
     { label: "Stories", href: "/#stories" },
     { label: "How consults work", href: "/#how-it-works" },
     { label: "Meet the team", href: "/team" },
@@ -90,6 +94,62 @@ export const STEPS = [
   { title: "Meet on secure video", text: "Join the call inside Orovion. Prescriptions and summaries stay in your consultation history — only you and your doctor can open them." },
 ];
 
+/**
+ * The four services: a card on the home page (`title`, `text`, `image`) whose
+ * "Read more" opens its full section on /services (`#slug`: `body`, `photo`,
+ * `cta`). Copy is product description — adjust to taste.
+ */
+export const SERVICES = [
+  {
+    slug: "clinical-cases",
+    title: "Clinical Cases",
+    text: "De-identified cases discussed by verified specialists — real perspectives you can trust.",
+    image: "/marketing/service-cases.jpg",
+    photo: "/marketing/svc-cases.jpg",
+    body: [
+      "Real cases are where medicine is learned. On Orovion, clinicians share de-identified cases — with consent and without identifying details — and verified specialists weigh in with their reasoning, references and follow-ups.",
+      "Every reply carries its author’s verified credentials, so you always know whose perspective you are reading. Ideal for doctors looking for a second opinion and students learning how experts think.",
+    ],
+    cta: { label: "Explore cases", to: "/app/explore" },
+  },
+  {
+    slug: "medical-pulses",
+    title: "Medical Pulses",
+    text: "Short clinical explainers and procedures, made by the people who perform them.",
+    image: "/marketing/service-pulses.jpg",
+    photo: "/marketing/svc-pulses.jpg",
+    body: [
+      "Pulses are short clinical explainers — procedures, signs and techniques — made by the people who perform them every day. Watch them between rounds, save the ones you need and come back before your next shift.",
+      "Each Pulse is tagged by specialty and credited to a verified author, so the feed stays practical, accurate and easy to search.",
+    ],
+    cta: { label: "Watch Pulses", to: "/app/pulse" },
+  },
+  {
+    slug: "research-thesis",
+    title: "Research & Thesis",
+    text: "Papers, theses and new findings, shared and discussed with their authors.",
+    image: "/marketing/service-research.jpg",
+    photo: "/marketing/svc-research.jpg",
+    body: [
+      "Share your papers, theses and new findings, and discuss them with peers who understand the work. Authors stay visible, and every discussion links back to the original.",
+      "From early questions to published results, research on Orovion reaches the clinicians and students it can help most — and the feedback that makes it stronger.",
+    ],
+    cta: { label: "Browse research", to: "/app/explore" },
+  },
+  {
+    slug: "private-consults",
+    title: "Private Consults",
+    text: "Secure video consultations with license-verified doctors, booked in minutes.",
+    image: "/marketing/service-consults.jpg",
+    photo: "/marketing/svc-consults.jpg",
+    body: [
+      "Book secure video consultations with license-verified doctors. Pick a slot from their live availability, share your reports and meet inside Orovion — no third-party apps.",
+      "Prescriptions and summaries stay in your consultation history, visible only to you and your doctor, so follow-ups are simple.",
+    ],
+    cta: { label: "Book a consult", to: "/app/consults" },
+  },
+];
+
 export const HOME = {
   hero: {
     title: "Where Healthcare Comes Together.",
@@ -111,16 +171,12 @@ export const HOME = {
       text: "Every clinician on Orovion passes license verification. These are the ways we help people learn, connect and get care with confidence.",
     },
   },
-  services: [
-    { title: "Clinical Cases", text: "De-identified cases discussed by verified specialists — real perspectives you can trust.", image: "/marketing/service-cases.jpg", href: "/app/explore" },
-    { title: "Medical Pulses", text: "Short clinical explainers and procedures, made by the people who perform them.", image: "/marketing/service-pulses.jpg", href: "/app/pulse" },
-    { title: "Research & Thesis", text: "Papers, theses and new findings, shared and discussed with their authors.", image: "/marketing/service-research.jpg", href: "/app/explore" },
-    { title: "Private Consults", text: "Secure video consultations with license-verified doctors, booked in minutes.", image: "/marketing/service-consults.jpg", href: "/app/consults" },
-  ],
+  /** Service cards — "Read more" opens the service's section on /services. */
+  services: SERVICES.map((s) => ({ title: s.title, text: s.text, image: s.image, href: `/services#${s.slug}` })),
   philosophy: {
     eyebrow: "Our philosophy",
     text: "At Orovion, we don’t ask you to take trust on faith — we verify it. Through licensed professionals, transparent authorship and real conversations, we help medical knowledge move safely between the people who need it.",
-    cta: { label: "Meet the team", to: "/team" },
+    cta: { label: "Meet the team", to: "/about" },
   },
   stories: [
     {
@@ -174,18 +230,124 @@ export const HOME = {
     eyebrow: "From the community",
     title: "Insights for sharper thinking and better care.",
     text: "Cases, explainers and research from verified clinicians — one clear idea at a time.",
-    cta: { label: "Explore the feed", to: "/app/explore" },
-    posts: [
-      { placeholder: true, tag: "Pulse", title: "Reading a paediatric ECG in 60 seconds", text: "Rate, rhythm, axis — a cardiologist’s quick framework for the night shift.", image: "/marketing/journal-heart.jpg", href: "/app/pulse" },
-      { placeholder: true, tag: "Case study", title: "What makes a case discussion useful?", text: "Three neurologists on the details that turn a post into a better decision.", image: "/marketing/journal-brain.jpg", href: "/app/explore" },
-      { placeholder: true, tag: "Research", title: "Biomarkers, without the jargon", text: "A lab physician explains which results change management — and which don’t.", image: "/marketing/journal-lab.jpg", href: "/app/explore" },
-    ],
+    cta: { label: "Explore the feed", to: "/journal" },
+    /** Journal cards — "Read more" opens the article (src/lib/journal.ts). */
+    posts: JOURNAL.map((a) => ({ tag: a.tag, title: a.title, text: a.excerpt, image: a.image.src, href: `/journal/${a.slug}` })),
   },
   numbers: {
     title: "From the first case to lasting change,",
     accent: "these numbers reflect a network built on trust.",
     text: "Every count below is a verified person, a real discussion or a consultation that happened on Orovion.",
   },
+};
+
+/* ── About page (/about) ──────────────────────────────────────────────
+   Section order mirrors the reference about page: hero (long threads) → the
+   way we help (scroll-lit text over a photo) → founders (story) → team
+   cards → statement → ready → big quote → story → FAQ.
+   The founders and team cards read from src/lib/team.ts. Everything marked
+   `placeholder: true` is illustrative copy to replace. */
+
+export const ABOUT = {
+  hero: {
+    lead: "Your Health,",
+    title: "Our Purpose.",
+    side: "Find out who we are, what we stand for, and how we bring trusted care closer to everyone.",
+    eyebrow: "About",
+    intro: "At Orovion, we believe every question about health deserves an answer you can trust. Our role is to bring verified clinicians, medical students and patients together — with clarity, accountability and care.",
+  },
+  help: {
+    eyebrow: "The way we help",
+    image: { src: "/marketing/about-help.jpg", alt: "" },
+    text: "We start by verifying — really verifying — every clinician who joins. From there, we build a space that is honest, useful and safe: cases shared with consent, knowledge shared with authorship, and consultations booked with confidence.",
+  },
+  founders: {
+    placeholder: true,
+    title: { lead: "Meet Our", accent: "Founders" },
+    lead: { before: "Orovion was started by ", strong: "Pawan Gupta, Adarsh Singh and Ayush Sachan, engineers from MMMUT Gorakhpur", after: " who believed finding trusted medical knowledge and care should be far simpler than it is." },
+    text: "They built Orovion to be a calm, verified space where healthcare professionals can share what they know, and where anyone can find guidance with confidence.",
+  },
+  team: {
+    eyebrow: "Our team",
+    title: "The People Building Orovion.",
+    text: "Orovion is more than a platform — each member of our team works to make trusted healthcare easier to find, understand and act on.",
+  },
+  statement: {
+    placeholder: true,
+    title: "Care grounded in evidence, guided by verification, and",
+    accent: "built for lasting trust.",
+    text: "Our platform creates room for that trust to grow. We check credentials, keep authorship visible and protect every conversation. Learn more about",
+    link: { label: "how verification works", to: "/help#verification" },
+    tail: "and what to expect from us.",
+  },
+  quote: {
+    placeholder: true,
+    text: "Every verified answer makes the next decision a little easier — for the doctor and for the patient.",
+    author: "The Orovion team",
+    image: { src: "/marketing/about-quote.jpg", alt: "Dark clouds lit by warm light" },
+  },
+  story: {
+    placeholder: true,
+    eyebrow: "Real people. Real care.",
+    title: "Care that found its way home.",
+    text: "When Ravi’s mother moved back to their village, her cardiologist was a six-hour journey away. On Orovion, a verified specialist reviewed her reports, met them on video and stayed in touch — and Ravi finally stopped worrying between visits.",
+    cta: { label: "Start your journey", to: "/login" },
+    images: [
+      { src: "/marketing/about-story-main.jpg", alt: "A doctor talking with a patient in a clinic" },
+      { src: "/marketing/about-story-detail.jpg", alt: "A smiling nurse with a stethoscope" },
+    ],
+  },
+};
+
+/* ── Services page (/services) ────────────────────────────────────────
+   Mirrors the reference services page: hero (long threads) → one full-bleed
+   section per service (one thread runs through all of them) → numbers →
+   three stories (alternating sides) → FAQ → contact. */
+
+export const SERVICES_PAGE = {
+  hero: {
+    lead: "Every Step",
+    title: "of Your Care.",
+    side: "Explore how Orovion helps you learn, share and get care — tailored to your goals, pace and needs.",
+    eyebrow: "Services",
+    intro: "Knowledge and care designed entirely around you — your questions, your pace and your needs. We help you move forward with verified answers, real conversations and lasting confidence.",
+  },
+  /** Three stories in a row; the page alternates the photo side (right, left, right). */
+  stories: [
+    {
+      placeholder: true,
+      eyebrow: "Real learners. Real progress.",
+      title: "From textbook to bedside.",
+      text: "Final-year student Priya used to freeze on complex scans. A month of Pulses and case discussions with verified radiologists later, she walked her own patient through the findings — calmly, and correctly.",
+      cta: { label: "Start learning", to: "/login" },
+      images: [
+        { src: "/marketing/svc-story-main.jpg", alt: "A medical student in a mask holding up an X-ray" },
+        { src: "/marketing/svc-story-detail.jpg", alt: "A doctor reviewing brain scans" },
+      ],
+    },
+    {
+      placeholder: true,
+      eyebrow: "Real research. Real impact.",
+      title: "From thesis to practice.",
+      text: "Second-year resident Arjun had the data but no one to sharpen it with. Through Research & Thesis he found a verified mentor, tightened his methods over three rounds of review, and presented his study at his department’s grand rounds.",
+      cta: { label: "Share your research", to: "/login" },
+      images: [
+        { src: "/marketing/svc-story-research-main.jpg", alt: "Two clinicians reviewing data on a monitor" },
+        { src: "/marketing/svc-story-research-detail.jpg", alt: "A researcher in a mask examining a sample in a flask" },
+      ],
+    },
+    {
+      placeholder: true,
+      eyebrow: "Real patients. Real answers.",
+      title: "A second opinion, without the wait.",
+      text: "When Meera’s father was advised spine surgery, the family wanted to be sure. A private consult with a verified orthopaedic surgeon — reports reviewed, every question answered on video — gave them a clear plan within two days.",
+      cta: { label: "Book a consult", to: "/login" },
+      images: [
+        { src: "/marketing/svc-story-consult-main.jpg", alt: "A doctor in a white coat with a stethoscope" },
+        { src: "/marketing/svc-story-consult-detail.jpg", alt: "Typing on a laptop beside a stethoscope" },
+      ],
+    },
+  ],
 };
 
 /* ── FAQ ──────────────────────────────────────────────────────────────── */
@@ -201,6 +363,38 @@ export const LANDING_FAQ: readonly FaqItem[] = [
   ...faqSection("verification").slice(0, 2),
   ...faqSection("consultations").slice(0, 1),
   ...faqSection("safety").slice(2, 3),
+];
+
+/** FAQ on /about — what people ask before trusting a new platform. */
+export const ABOUT_FAQ: readonly FaqItem[] = [
+  ...faqSection("getting-started").slice(0, 2),
+  ...faqSection("verification").slice(0, 3),
+  ...faqSection("safety").slice(0, 1),
+];
+
+/** FAQ on /services — how the services and consultations work. */
+export const SERVICES_FAQ: readonly FaqItem[] = [
+  ...faqSection("consultations").slice(0, 3),
+  ...faqSection("posts-feed").slice(0, 2),
+  ...faqSection("verification").slice(0, 1),
+];
+
+/** The journal page (/journal): hero copy above the article grid. */
+export const JOURNAL_PAGE = {
+  hero: {
+    lead: "Insights",
+    title: "That Matter.",
+    side: "Cases, explainers and research to help you think clearly and care with confidence.",
+    eyebrow: "Journal",
+    intro: "Our journal is where verified clinicians share cases, practical explainers and research — one clear idea at a time, to help you learn, decide and care with confidence.",
+  },
+};
+
+/** FAQ on journal articles — how posts and discussions work, and how they stay safe. */
+export const JOURNAL_FAQ: readonly FaqItem[] = [
+  ...faqSection("posts-feed").slice(0, 3),
+  ...faqSection("safety").slice(0, 2),
+  ...faqSection("verification").slice(0, 1),
 ];
 
 /** FAQ on /contact — the questions people most often write in about. */

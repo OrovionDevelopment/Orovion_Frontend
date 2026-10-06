@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { usePathname } from "@/lib/router";
-import { clarityInitSnippet, isTrackablePath, isValidProjectId } from "@/lib/clarity";
+import { clarityCommand, clarityInitSnippet, isTrackablePath, isValidProjectId } from "@/lib/clarity";
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
 
@@ -23,7 +23,9 @@ const PROJECT_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
  *
  * The route guard is therefore an explicit `clarity("stop")` on every navigation
  * away from a public route, and `clarity("start")` on the way back. The tag is
- * loaded once, latched, and never re-injected.
+ * loaded once, latched, and never re-injected. The first session is NOT started
+ * explicitly: Clarity starts itself when the tag loads, and a second start makes
+ * it warn "CL001: Multiple Clarity tags detected" (see `clarityCommand`).
  *
  * Calls made before the tag finishes downloading are safe: the inline snippet
  * installs a queueing stub, so a `stop` issued during a fast navigation is
@@ -35,6 +37,7 @@ export default function ClarityAnalytics() {
   // page out of prerendering.
   const pathname = usePathname();
   const [loaded, setLoaded] = useState(false);
+  const stopped = useRef(false);
 
   const enabled = isValidProjectId(PROJECT_ID);
   const trackable = enabled && isTrackablePath(pathname);
@@ -51,8 +54,11 @@ export default function ClarityAnalytics() {
     if (!loaded) return;
     const clarity = (window as any).clarity;
     if (typeof clarity !== "function") return;
+    const command = clarityCommand(trackable, stopped.current);
+    if (!command) return;
     try {
-      clarity(trackable ? "start" : "stop");
+      clarity(command);
+      stopped.current = command === "stop";
     } catch { /* analytics must never break the app */ }
   }, [loaded, trackable]);
 

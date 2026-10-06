@@ -17,19 +17,22 @@ type AsLink = Common & { to: string; external?: boolean; onClick?: () => void };
 type AsButton = Common & { to?: undefined; type?: "button" | "submit"; disabled?: boolean; onClick?: () => void };
 
 /**
- * The signature pill: uppercase label with a dot on the right. On hover the
- * label slides 28px right while that dot slides out and a second dot slides in
- * from the left (0.6s spring). `state="loading"` swells the dot into a spinner
- * disc. Hover effects are pointer-only, so touch devices get the static pill.
+ * The signature pill: uppercase label with a dot on the right. On hover (or
+ * keyboard focus) the label rolls: it slides up out of the pill and fades while
+ * an identical copy rises into its place (0.7s; Althea reference — globals.css
+ * "Text roll"). `state="loading"` swells the dot into a spinner disc. Hover
+ * effects are pointer-only, so touch devices get the static pill.
  */
 export default function PillButton(props: AsLink | AsButton) {
   const { children, variant = "brand", size = "md", state = "idle", className } = props;
   const cls = cn("pill", variant === "light" && "pill--light", size === "sm" && "pill--sm", className);
   const inner = (
     <>
-      <span className="pill__label">{children}</span>
+      <span className="pill__label">
+        <span className="pill__roll">{children}</span>
+        <span className="pill__roll pill__roll--in" aria-hidden>{children}</span>
+      </span>
       <span className="pill__dot pill__dot--a" aria-hidden />
-      <span className="pill__dot pill__dot--b" aria-hidden />
       <span className="pill__loader" aria-hidden><span className="pill__spinner" /></span>
     </>
   );

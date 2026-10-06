@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isTrackablePath, isValidProjectId, clarityInitSnippet } from "../clarity";
+import { isTrackablePath, isValidProjectId, clarityInitSnippet, clarityCommand } from "../clarity";
 
 describe("isValidProjectId", () => {
   it("accepts a real Clarity project id", () => {
@@ -93,5 +93,20 @@ describe("clarityInitSnippet", () => {
 
   it("installs the queueing stub, so a stop issued before load is not lost", () => {
     expect(clarityInitSnippet("abcd1234ef")!).toContain("c[a].q");
+  });
+});
+
+describe("clarityCommand", () => {
+  it("never re-starts a session Clarity already started itself (CL001: multiple tags)", () => {
+    expect(clarityCommand(true, false)).toBeNull();
+  });
+
+  it("stops on a private route, once", () => {
+    expect(clarityCommand(false, false)).toBe("stop");
+    expect(clarityCommand(false, true)).toBeNull();
+  });
+
+  it("resumes on a public route only after a stop", () => {
+    expect(clarityCommand(true, true)).toBe("start");
   });
 });

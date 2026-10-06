@@ -8,7 +8,7 @@ import PillButton, { type PillState } from "./PillButton";
 /**
  * The /contact enquiry form, laid out like the reference booking form:
  * five groups 64px apart, underline fields, square brand checkboxes and the
- * dot-swap submit. There is no public contact API, so submitting opens the
+ * pill submit. There is no public contact API, so submitting opens the
  * visitor's mail app with everything pre-filled (src/lib/contact.ts). Native
  * validation runs first; the button then shows its spinner and a success label.
  */

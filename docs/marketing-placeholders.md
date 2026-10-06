@@ -13,6 +13,14 @@ users, ratings or numbers.
 | `HOME.quote` | quote from "Dr. Arjun Malhotra" — invented person |
 | `HOME.community.posts` | three sample posts — titles and teasers are invented; they link to the feed, not to real posts |
 | `HOME.hero`, `.trust`, `.services`, `.philosophy`, `.how` (`STEPS`), `.ready`, `.statement`, `.numbers` | product copy — adjust to taste |
+| `ABOUT.founders`, `ABOUT.statement`, `ABOUT.quote` | about-page copy — the founder story wording, the statement and the quote ("The Orovion team") are drafts to confirm |
+| `ABOUT.story` | about-page story — "Ravi" and his mother are invented people |
+| `SERVICES` | the four services: home cards + `/services` sections (product description — check every feature claim) |
+| `SERVICES_PAGE.stories` | the three services-page stories — "Priya" (learning), "Arjun" (research) and "Meera" (second-opinion consult) are invented people |
+| `JOURNAL` (`src/lib/journal.ts`) | three journal articles (ECG, case discussions, biomarkers) behind the home "Read more" cards — written to be generally accurate but **not clinically reviewed**; dates and "The Orovion editorial team" byline are placeholders. Have a clinician review them, or replace them, before launch |
+
+`/about` reads from `ABOUT`, plus the real founders in `src/lib/team.ts`: the
+three team cards, each linking to its member page.
 
 The home page (`/`) reads everything from `HOME`; section order and motion
 are described in `docs/marketing-motion.md` ("Home page").
@@ -45,6 +53,17 @@ path in `src/lib/marketing.ts`.
 | `journal-heart.jpg` | community post 1 | 1530026405186-ed1f139313f8 |
 | `journal-brain.jpg` | community post 2 | 1559757148-5c350d0d3c56 |
 | `journal-lab.jpg` | community post 3 | 1581594693702-fbdc51b2763b |
+| `about-help.jpg` | about: "The way we help" background (grey-blue clouds) | 1517685352821-92cf88aee5a5 |
+| `about-quote.jpg` | about: big quote (dark clouds, warm light) | 1504608524841-42fe6f032b4b |
+| `about-story-main.jpg` | about: story, large photo | 1631217868264-e5b90bb7e133 |
+| `about-story-detail.jpg` | about: story, inset photo | 1622253692010-333f2da6031d |
+| `svc-cases.jpg`, `svc-pulses.jpg`, `svc-research.jpg`, `svc-consults.jpg` | `/services` full-bleed sections (2400×1500 versions of the service-card photos) | same ids as `service-*.jpg` |
+| `svc-story-main.jpg` | services story 1 (learning), large photo | 1527613426441-4da17471b66d |
+| `svc-story-detail.jpg` | services story 1, inset photo | 1581595219315-a187dd40c322 |
+| `svc-story-research-main.jpg` | services story 2 (research), large photo — cropped to the two faces | 1666214280391-8ff5bd3c0bf0 |
+| `svc-story-research-detail.jpg` | services story 2, inset photo | 1609188076864-c35269136b09 |
+| `svc-story-consult-main.jpg` | services story 3 (consult), large photo | 1612349317150-e413f6a5b16d |
+| `svc-story-consult-detail.jpg` | services story 3, inset photo | 1576091160550-2173dba999ef |
 | `avatar-1.jpg` … `avatar-5.jpg` | avatar stacks (`TRUST_AVATARS`) | in order: 1438761681033-6461ffad8d80, 1500648767791-00dcc994a43e, 1494790108377-be9c29b29330, 1507003211169-0a1dd7228f2d, 1580489944761-15a19d654956 |
 | `avatar-6.jpg` … `avatar-8.jpg` | **unused** — safe to delete | 1506794778202-cad84cf45f1d, 1544005313-94ddf0286df2, 1472099645785-5658abf4ff4e |
 
@@ -72,5 +91,6 @@ users, at least:
 `src/components/marketing/ContactForm.tsx` with a `dok.*` call; the button
 already has `loading` / `success` states.
 
-Also ask the API team to add **`contact`** to the reserved-usernames list —
-`/contact` now shadows a profile with that username (same as `/help`, `/team`).
+Also ask the API team to add **`contact`**, **`about`** and **`services`**
+to the reserved-usernames list — these pages now shadow profiles with those
+usernames (same as `/help`, `/team`).

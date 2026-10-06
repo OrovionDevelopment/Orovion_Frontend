@@ -83,3 +83,15 @@ export function clarityInitSnippet(projectId: string | undefined | null): string
     `window.clarity("consentv2",{ad_Storage:"denied",analytics_Storage:"denied"});`
   );
 }
+
+/**
+ * What the route guard should tell Clarity on a navigation. Clarity starts
+ * itself when its tag loads (it is only ever loaded on a public route), so an
+ * explicit "start" is sent only to resume after a "stop" — starting a session
+ * that is already running makes Clarity report "CL001: Multiple Clarity tags
+ * detected". Private routes always get exactly one "stop".
+ */
+export function clarityCommand(trackable: boolean, stopped: boolean): "start" | "stop" | null {
+  if (!trackable) return stopped ? null : "stop";
+  return stopped ? "start" : null;
+}

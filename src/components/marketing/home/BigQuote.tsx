@@ -3,6 +3,7 @@ import { useCallback, useRef } from "react";
 import { Link } from "@/lib/router";
 import { HOME } from "@/lib/marketing";
 import { rangeProgress } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import { useScrollFrame } from "../useScrollFrame";
 import { Accent, FillText } from "../Type";
 import ParallaxImage from "./ParallaxImage";
@@ -13,15 +14,35 @@ const QUOTE_THREAD: ThreadLine[] = [
   { d: "M 196 0 C 230 230, 132 430, 104 610 C 78 776, 148 916, 226 888 C 306 860, 284 734, 190 756 C 98 778, 66 920, 118 1000" },
 ];
 
+type StatementContent = { title: string; accent: string; text: string; link: { label: string; to: string }; tail: string };
+type QuoteContent = { text: string; author: string; image: { src: string; alt: string } };
+
 /**
- * Statement + big quote (reference "Text section" + "Big quote"): a two-column
- * statement on the soft band, then a full-bleed dark photo that rises through a
- * dome — its top edge starts as a wide arc and flattens to full-bleed as the
- * section reaches the top of the screen. The photo drifts (parallax), a thread
- * draws itself beside the quote, and the nav turns white over it.
+ * Statement (reference "Text section"): heading with an accent tail on the
+ * left, a short paragraph with an inline link on the right. `plain` sits on
+ * the page background instead of the soft band.
  */
-export default function BigQuote() {
-  const { statement: s, quote: q } = HOME;
+export function Statement({ content: s, plain = false }: { content: StatementContent; plain?: boolean }) {
+  return (
+    <section className={cn("relative", !plain && "bg-ink-50")}>
+      <div className="mk-container mk-split items-start pb-20 pt-20 tab:pb-[120px] tab:pt-[120px] desk:pt-40" style={{ ["--mk-gap" as string]: "32px" }}>
+        <h2 className="mk-reveal mk-from-left t-display-sm text-ink-900 text-balance"><FillText>{s.title} <Accent>{s.accent}</Accent></FillText></h2>
+        <p className="mk-reveal mk-from-right max-w-[440px] t-body text-ink-600">
+          {s.text} <Link to={s.link.to} className="link-u font-semibold text-brand-600">{s.link.label}</Link> {s.tail}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Big quote (reference "Big quote"): a full-bleed dark photo that rises
+ * through a dome — its top edge starts as a wide arc and flattens to
+ * full-bleed as the section reaches the top of the screen. The photo drifts
+ * (parallax), a thread draws itself beside the quote, and the nav turns white
+ * over it. `className` colors the band around the arc (match the section above).
+ */
+export function QuoteDome({ quote: q, id, className = "bg-ink-50" }: { quote: QuoteContent; id?: string; className?: string }) {
   const dome = useRef<HTMLDivElement>(null);
 
   useScrollFrame(useCallback(() => {
@@ -34,15 +55,8 @@ export default function BigQuote() {
   }, []));
 
   return (
-    <section className="relative bg-ink-50">
-      <div className="mk-container mk-split items-start pb-20 pt-20 tab:pb-[120px] tab:pt-[120px] desk:pt-40" style={{ ["--mk-gap" as string]: "32px" }}>
-        <h2 className="mk-reveal mk-from-left t-display-sm text-ink-900 text-balance"><FillText>{s.title} <Accent>{s.accent}</Accent></FillText></h2>
-        <p className="mk-reveal mk-from-right max-w-[440px] t-body text-ink-600">
-          {s.text} <Link to={s.link.to} className="link-u font-semibold text-brand-600">{s.link.label}</Link> {s.tail}
-        </p>
-      </div>
-
-      <div id="big-quote" ref={dome} data-nav-dark="true" className="relative min-h-[640px] overflow-hidden bg-brand-950 [clip-path:ellipse(60%_100%_at_50%_100%)]" style={{ height: "100svh" }}>
+    <section className={cn("relative", className)}>
+      <div id={id} ref={dome} data-nav-dark="true" className="relative min-h-[640px] overflow-hidden bg-brand-950 [clip-path:ellipse(60%_100%_at_50%_100%)]" style={{ height: "100svh" }}>
         <ParallaxImage src={q.image.src} alt={q.image.alt} intensity={300} noise={0.12} sizes="100vw" className="absolute inset-0" imgClassName="saturate-[.7]" />
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-brand-950/90 via-brand-950/40 to-brand-950/30" />
         <div aria-hidden className="absolute bottom-0 right-[8%] top-0 hidden w-[300px] tab:block">
@@ -56,5 +70,15 @@ export default function BigQuote() {
         </figure>
       </div>
     </section>
+  );
+}
+
+/** Home: the statement on the soft band, then the big quote (the thread waves end at `#big-quote`). */
+export default function BigQuote() {
+  return (
+    <>
+      <Statement content={HOME.statement} />
+      <QuoteDome quote={HOME.quote} id="big-quote" />
+    </>
   );
 }
