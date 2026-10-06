@@ -12,8 +12,14 @@ const BLOBS = [
  * A photo in an organic blob shape with a faint, rotated outline around it
  * (reference "Journal" / "Team" cards). `index` picks one of three shapes so
  * neighbours differ. Inside a `.group`, the photo eases in slightly on hover.
+ *
+ * Depth (MotionRoot `data-depth`): the photo drifts `drift` px as a far layer
+ * inside the blob while the outline drifts the other way, so the outline seems
+ * to slide around the shape as the page scrolls. The photo's wrapper is
+ * `drift` px taller above and below (tablet/desktop only — `.mk-blob-drift`)
+ * so no edge ever shows.
  */
-export default function BlobPhoto({ src, alt = "", index, sizes, position, frame = "aspect-[1.12] max-w-[420px]", outline = true, priority, className }: {
+export default function BlobPhoto({ src, alt = "", index, sizes, position, frame = "aspect-[1.12] max-w-[420px]", outline = true, drift = 24, priority, className }: {
   src: string;
   alt?: string;
   index: number;
@@ -24,23 +30,34 @@ export default function BlobPhoto({ src, alt = "", index, sizes, position, frame
   frame?: string;
   /** The faint rotated outline (off: the photo fills the frame). */
   outline?: boolean;
+  /** Depth drift of the photo in px (the outline moves ~60% of it the other way); 0 = still. */
+  drift?: number;
   priority?: boolean;
   className?: string;
 }) {
   const b = BLOBS[index % BLOBS.length];
   return (
     <div className={cn("relative w-full", frame, className)}>
-      {outline && <span aria-hidden className="mk-blob-outline absolute inset-0" style={{ borderRadius: b.outline, transform: `rotate(${b.rotate})` }} />}
-      <div className={cn("absolute overflow-hidden", outline ? "inset-[7%]" : "inset-0")} style={{ borderRadius: b.shape }}>
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes={sizes}
-          priority={priority}
-          className="object-cover transition-transform duration-[1200ms] ease-spring group-hover:scale-[1.06]"
-          style={position ? { objectPosition: position } : undefined}
+      {outline && (
+        <span
+          aria-hidden
+          data-depth={drift ? Math.round(drift * 0.6) : undefined}
+          className="mk-blob-outline absolute inset-0"
+          style={{ borderRadius: b.outline, transform: `rotate(${b.rotate})` }}
         />
+      )}
+      <div className={cn("absolute overflow-hidden", outline ? "inset-[7%]" : "inset-0")} style={{ borderRadius: b.shape }}>
+        <div data-depth={drift ? -drift : undefined} className="mk-blob-drift" style={{ ["--drift" as string]: `${drift}px` }}>
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes={sizes}
+            priority={priority}
+            className="object-cover transition-transform duration-[1200ms] ease-spring group-hover:scale-[1.06]"
+            style={position ? { objectPosition: position } : undefined}
+          />
+        </div>
       </div>
     </div>
   );

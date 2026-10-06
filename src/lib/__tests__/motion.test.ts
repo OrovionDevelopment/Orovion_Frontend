@@ -3,7 +3,7 @@ import {
   parallaxTravel, parallaxProgress, parallaxOffset, isOverDarkSection, isInsideDarkZone, NAV_SWAP_LINE,
   rangeProgress, drawProgress, dashOffset, revealProgress, wordOpacity, imageParallaxY, fadeThrough, toggleState, smoothToward,
   springStep, springSettled, snapFrame, CURSOR_SPRINGS, type SpringConfig, dropStretch, blobRadii, blobPath,
-  pointerOffset, revealStagger, WHEEL, wheelRotation, wheelCenterProgress, cardTilt, depthOffset,
+  pointerOffset, revealStagger, WHEEL, wheelRotation, wheelCenterProgress, cardTilt, depthOffset, depthScale,
 } from "../motion";
 
 describe("wheelRotation (services wheel)", () => {
@@ -392,5 +392,16 @@ describe("depthOffset", () => {
   it("is linear in scroll", () => {
     const a = depthOffset(600, h, vh, 40), b = depthOffset(500, h, vh, 40), c = depthOffset(400, h, vh, 40);
     expect(Math.abs((a - b) - (b - c))).toBeLessThanOrEqual(0.11); // equal steps, up to the 0.1px rounding
+  });
+});
+
+describe("depthScale", () => {
+  it("is off on phones, half on tablets, full on desktop", () => {
+    expect(depthScale(390)).toBe(0);
+    expect(depthScale(809)).toBe(0);
+    expect(depthScale(810)).toBe(0.5);
+    expect(depthScale(1199)).toBe(0.5);
+    expect(depthScale(1200)).toBe(1);
+    expect(depthScale(1920)).toBe(1);
   });
 });

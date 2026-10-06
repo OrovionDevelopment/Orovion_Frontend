@@ -15,10 +15,9 @@ Building blocks for the public marketing pages. Motion spec and inventory:
 | `PillButton` | Text-roll pill (`variant` brand/light, `state` idle/loading/success). Link or button. The label is rendered twice (second copy `aria-hidden`) so it can roll; the menu toggle in `SiteNav` reuses the markup with `pill--toggle`. |
 | `Type` | `Eyebrow`, `Display`, `Accent`, `enter(delay, from)` (desktop load entrance), `rise(delay)` (all screens), and `FillText` — big text whose letters fill with color on hover (used inside `Display`). |
 | `Links` | `WipeLink` (underline wipe) and `SocialLinks`. |
-| `Trust` | `AvatarStack` and `TrustBlock` (label, faces, rating). |
 | `Accordion` / `FaqSection` | FAQ cards and the two-column FAQ band. |
 | `ContactForm` | The `/contact` form (mailto hand-off). |
-| `ContactSection` | Contact block: intro, sticky trust + `ReachUs`, form. `page` → `/contact` hero (h1, load entrances); otherwise a section (used at the end of `/`). |
+| `ContactSection` | Contact block: intro, sticky `ReachUs`, form. `page` → `/contact` hero (h1, load entrances); otherwise a section (used at the end of `/`). |
 | `ReachUs` | Email · phone · address line with the social icons. |
 | `useScrollFrame` | rAF-throttled scroll/resize callback. |
 
@@ -44,9 +43,8 @@ The rest of the page reuses `Statement` / `QuoteDome` (from `home/BigQuote`),
 
 | Component | Role |
 |---|---|
-| `ServiceSections` | One full-bleed photo section per service (`id` = slug, the target of the home cards' "Read more"), with one thread drawn through all of them. |
 
-The rest of the page reuses `ThreadHero`, `Numbers` (`plain`), `Story`,
+The rest of the page reuses `ThreadHero`, `Story`,
 `FaqSection` and `ContactSection`.
 
 ### `journal/` — `/journal` and `/journal/[slug]`
@@ -73,14 +71,14 @@ its card on the home page and its sitemap entry.
 | `Philosophy` | Scroll-lit statement (`ScrollWords`). |
 | `Story` | Text + two overlapping parallax photos; `flip` mirrors it. |
 | `HowItWorks` | `#how-it-works` — big title, steps, sticky odometer number. |
-| `Ready` | Join CTA with trust block and `ReachUs`. |
+| `Ready` | Join CTA with `ReachUs`. |
 | `BigQuote` | Statement band, then the full-bleed quote with the dome reveal and a thread. Exports `Statement` and `QuoteDome` separately (content as props) for other pages. |
 | `Community` | `#community` — three blob-shaped journal cards; "Read more" opens the article at `/journal/[slug]`. |
-| `Numbers` | Statement + count-up `STATS`. |
+| `Numbers` | Statement + count-up `STATS` on the soft band. Not shown anywhere right now (commented out on the home page). |
 | `GetApp` | `#get-the-app` (above the FAQ) — copy + store badges on the left; on the right a scroll-drawn double thread traces a phone, which then fills in and shows a QR to `/mobile-app` (mouse/trackpad) or the app icon + a "Get the app" pill (touch). Depth parallax: rings behind lag, the phone rises faster, both lean with the mouse. |
 | `ScrollThread` | SVG strokes that draw themselves on scroll (`pathLength=1` + dash offset, smoothed). |
 | `ParallaxImage` | Image that drifts inside its frame on scroll (`intensity` px), optional grain. |
-| `BlobPhoto` | Photo in an organic blob shape with a faint rotated outline (community posts, team cards). |
+| `BlobPhoto` | Photo in an organic blob shape with a faint rotated outline (community posts, team cards, journal cards, article photo). Depth: the photo drifts `drift` px (default 24) inside the blob while the outline drifts the other way; `drift={0}` keeps it still. Wrap staggered cards in a `data-depth` div (see `MotionRoot`). |
 | `TextEffects` | `BlurWords` (load, word by word; `fill` adds the letter fill, used on the hero headline) and `ScrollWords` (scroll-lit words, letters fill too). Both are screen-reader safe. |
 
 Rules:

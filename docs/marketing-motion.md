@@ -44,7 +44,7 @@ design: 2–4px lifts, 20–40px slides, 0.94–1.12 scales.
 | H1 | load | fade + rise 20px | 1s, 0.4s | desktop only |
 | Intro paragraph | load | fade + rise 20px | 1s, 0.6s | desktop only |
 | Right column (form / photo) | load | fade only | 1s, 0.6s | desktop only |
-| Trust block / floating cards | load | fade + rise 20px | 1s, 0.8 / 1.0s | desktop only |
+| Reach-us column / floating cards | load | fade + rise 20px | 1s, 0.8 / 1.0s | desktop only |
 | Everything with `.mk-reveal` | 10% into the viewport (or fully on screen) | fade + rise 28px; a section can pick left / right (40px, 24px on phones), zoom (0.94 → 1) or fade — see "Scroll reveals" | 0.9s opacity, 1.1s move, `--ease-premium`; batch stagger 70ms | all |
 | `.mk-reveal` | fully out of view | snaps back (replays on re-entry) | instant | all |
 | Large story photo (`.mk-mask`) | enters viewport | rounded window opens from a 9%/7% inset while the photo settles from 1.14 | 1.4s / 1.8s `--ease-premium` | all |
@@ -52,6 +52,10 @@ design: 2–4px lifts, 20–40px slides, 0.94–1.12 scales.
 | Progressive blur strip | static, 220px | 8 backdrop-blur layers 0.16 → 20px | — | desktop only |
 | Sticky columns | scroll | `position: sticky; top: 160px` | — | tablet + desktop |
 | Footer scene parallax | scroll | `translateY` 0 → 320px (tablet 160) | linear | tablet + desktop |
+| Depth layers (`data-depth="N"`, site-wide) | scroll | one rAF loop in `MotionRoot` moves each tagged element N px over its pass (`depthOffset`: +N entering → 0 centred → −N leaving; positive rises faster than the page, negative lags), measured on its parent or the nearest `[data-depth-frame]` (pinned content). Sets `translate`, so it sits on wrappers, never on `.mk-reveal` elements; promoted to its own GPU layer (`will-change`) | linear in scroll (Lenis-smoothed on desktop) | desktop full, tablet half (`depthScale`), phones off |
+| Blob photos (`BlobPhoto`: community posts, team cards, journal cards, article photo) | scroll | the photo drifts as a far layer inside the blob (−24px; the article's pinned photo −32px over the whole read) while the faint outline drifts the other way (+14px), so the outline seems to slide around the shape | depth layers | desktop, tablet (half) |
+| Staggered card columns | scroll | the lower middle card rises faster than its neighbours (+40px: home Community, About team cards); on /journal and "More insights" the right-hand column rises faster (+48px) | depth layers | desktop, tablet (half) |
+| Team profile card (/team, /team/[slug]) | scroll | cover art lags (−12px), the avatar floats forward (+10px), measured over the member's whole story (the card is sticky) | depth layers | desktop, tablet (half) |
 | Nav → white over dark blocks | a `data-nav-dark="true"` block (footer, home hero stage, big quote) spans the 44px line | link and logo colors change smoothly | 0.5s | desktop only |
 | Pill button | hover / keyboard focus | text roll (Althea reference): the label slides up out of the pill (one pill height) and fades while an identical copy rises from below into its place; the fade trails the move; leaving reverses it. The pill itself stays put; light pills also turn the label brand. | 0.7s `--ease-premium` (~95% of travel by 0.35s), fade 0.55s | hover: pointer devices; focus: all |
 | Pill button | press | 0.97 scale | 0.12s | all |
@@ -103,7 +107,7 @@ After the entrance:
   | `.mk-from-fade` | fade only |
   | `.mk-mask` | opens a large photo from an inset window |
 
-- **On the home page:** stories slide in from their text side; Ready, the
+- **On the home page:** Ready, the
   statement, Numbers, FAQ and Contact bring the left column from the left
   and the right column from the right; cards and steps rise.
 - **Stagger:** reveals arriving in the same frame are staggered in reading
@@ -115,14 +119,14 @@ After the entrance:
 ## Home page (`/`)
 
 Section order follows the reference home page: hero → trust toggle →
-services → philosophy → story → how it works → ready → statement + big quote
-→ story → community → numbers → get the app → FAQ → contact. Components live in
+services → philosophy → how it works → ready → statement + big quote
+→ community → numbers → get the app → FAQ → contact. Components live in
 `src/components/marketing/home/`; copy and photos come from `HOME` in
 `src/lib/marketing.ts`.
 
-> The home **numbers** section is currently switched off (commented out in
-> `src/screens/Landing.tsx`, import and element). Uncomment both to bring it
-> back; `/services` still shows it.
+> The **numbers** section is currently switched off everywhere: commented out
+> in `src/screens/Landing.tsx` (import and element) and removed from
+> `/services`. Uncomment both lines on the home page to bring it back.
 
 Scroll-linked values are written straight to the DOM from one rAF-throttled
 scroll frame (`useScrollFrame`). React never re-renders per frame; only the
@@ -243,25 +247,18 @@ Every big heading and quote has the letter fill.
 The section order follows the reference services page:
 
 1. Hero (`ThreadHero`, threads mirrored)
-2. One full-bleed section per service
-3. Numbers
-4. Three stories, photos alternating right → left → right (`flip` on the
-   second; same motion as the home stories)
-5. FAQ
-6. Contact
+2. Four stories, one per service in the home card order (Clinical Cases,
+   Medical Pulses, Research & Thesis, Private Consults), photos alternating
+   right → left → right → left (`flip` on every second; the shared `Story`
+   section, as on /about). Each story's id is its service slug, so a home
+   card's "Read more" (`/services#clinical-cases` …) lands right on it.
+3. FAQ
+4. Contact
 
-(The reference's pricing section was left out on purpose.)
-
-Each service section's id is its slug, so a home card's "Read more"
-(`/services#clinical-cases` …) lands right on it. Components live in
-`src/components/marketing/services/`; content comes from `SERVICES` and
-`SERVICES_PAGE`.
-
-| Element | Trigger | Motion | Duration / easing | Breakpoints |
-|---|---|---|---|---|
-| Service photos | scroll | parallax 200px behind a dark gradient; the nav turns white | — | all |
-| Service title, text, pill | enters viewport | rise, staggered; titles have the letter fill | 1.1s `--ease-premium` | all |
-| Service thread | scroll | one long thread (680×3600 box) draws from "top of the first section at mid-screen" to "bottom of the last at mid-screen"; smoothed (τ 150ms) | — | tablet + desktop |
+(The reference's pricing section, its four full-bleed service sections and
+the numbers band were left out on purpose.) Content comes from
+`SERVICES_PAGE`; every section reuses shared components, so its motion is
+described with them (hero threads, Story, FAQ, Contact).
 
 ## Journal page (`/journal`)
 
@@ -332,7 +329,8 @@ const e = enter(0.4);                     // load entrance, desktop only
 - `prefers-reduced-motion: reduce` → no Lenis, no load entrances (the logo is
   static), no parallax or mouse depth, reveals shown immediately with no
   movement (plus the global reduced-motion rule). The "Get the app" phone is
-  drawn in full with no depth or mouse parallax. Pill labels crossfade in
+  drawn in full with no depth or mouse parallax, and no `data-depth` layer
+  moves anywhere (they are also off on phones). Pill labels crossfade in
   place instead of rolling (`--pill-roll: 0`). The home service wheel is not
   pinned or turned: the cards sit in a plain row (a snap carousel on smaller
   screens) and never tilt.

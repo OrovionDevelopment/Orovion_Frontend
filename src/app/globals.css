@@ -587,11 +587,6 @@ html.lenis { scroll-behavior: auto !important; }
   .mk-check:checked::before { opacity: 1; }
   .mk-check:focus-visible { outline: 2px solid rgb(var(--brand-600)); outline-offset: 2px; }
 
-  /* ── avatar stack: crescent cut-out where the next face overlaps ─────── */
-  .mk-avatar { position: relative; width: 48px; height: 48px; flex: none; }
-  .mk-avatar + .mk-avatar { margin-left: -16px; }
-  .mk-avatar--cut { -webkit-mask: radial-gradient(circle 27px at 56px 50%, transparent 98%, #000 100%); mask: radial-gradient(circle 27px at 56px 50%, transparent 98%, #000 100%); }
-
   /* ── footer scene (always-dark brand context, accent-var driven) ─────── */
   .mk-footer-scene {
     background:
@@ -748,6 +743,17 @@ html.lenis { scroll-behavior: auto !important; }
 
 /* Community "blob" photos with a faint offset outline. */
 .mk-blob-outline { border: 1px solid rgb(var(--ink-900) / .12); }
+/* The photo layer inside a blob: taller by --drift above and below wherever
+   depth layers run (tablet + desktop, motion allowed), so its drift never
+   shows an edge; phones keep the exact framing. */
+.mk-blob-drift { position: absolute; inset: 0; }
+@media (min-width: 810px) and (prefers-reduced-motion: no-preference) {
+  .mk-blob-drift { top: calc(-1 * var(--drift, 0px)); bottom: calc(-1 * var(--drift, 0px)); }
+  /* Depth layers (MotionRoot) move every scroll frame: give each its own GPU
+     layer so moving a photo inside a clipped blob doesn't repaint it — on
+     /journal this took scrolling from ~30 slow frames per pass to none. */
+  [data-depth] { will-change: translate; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mk-word, .mk-hero-backdrop, .mk-hero-circles, .mk-hero-thread > svg { animation: none; }

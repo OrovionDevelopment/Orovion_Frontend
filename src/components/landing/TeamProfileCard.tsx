@@ -9,12 +9,14 @@ export default function TeamProfileCard({ member: m, headingAs: H = "h3" }: { me
     <div className="overflow-hidden rounded-2xl border border-ink-900/[.06] bg-surface">
       {/* cover — the backdrop is the literal color baked into Cover.png (NOT a
           theme var: it must match the asset even if the accent is rethemed). */}
-      <div className="relative h-44">
+      {/* Depth on marketing pages (MotionRoot `data-depth`; inert elsewhere):
+          the cover art lags behind, the avatar floats a little forward. */}
+      <div className="relative h-44 overflow-hidden">
         <div className="absolute inset-0 bg-[#1e7b74]" />
-        <img src="/team/Cover.png" alt="" aria-hidden className="absolute inset-0 h-full w-full object-contain object-center" />
+        <img src="/team/Cover.png" alt="" aria-hidden data-depth={-12} className="absolute inset-0 h-full w-full object-contain object-center" />
       </div>
       <div className="px-6 pb-6">
-        <div className="relative z-10 -mt-12 w-max rounded-3xl bg-surface p-1.5 shadow-card">
+        <div data-depth={10} className="relative z-10 -mt-12 w-max rounded-3xl bg-surface p-1.5 shadow-card">
           <TeamAvatar member={m} className="h-24 w-24 rounded-2xl text-2xl" />
         </div>
         <H className="mt-4 t-title !text-xl text-ink-900">{m.name}</H>

@@ -15,8 +15,8 @@ const TILT_QUERY = "(hover: hover) and (pointer: fine) and (prefers-reduced-moti
 /**
  * The four service cards right after the trust toggle — moody photo drifting
  * inside the card (200px parallax + grain), title top-left, description low,
- * and a dot whose "Read more" fades in on hover. Each card opens its section
- * on /services (`#slug`).
+ * and a dot whose "Read more" fades in on hover. Each card opens its story on
+ * /services (`#slug`).
  *
  * Motion (Althea reference):
  *  · desktop: a 200vh track pins a 100vh stage and the cards ride the top of a

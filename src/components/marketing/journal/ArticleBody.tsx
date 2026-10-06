@@ -30,13 +30,14 @@ export default function ArticleBody({ article: a }: { article: JournalArticle })
   const minutes = readingMinutes(a);
 
   return (
-    <article className="relative overflow-x-clip pb-20 pt-36 tab:pb-[120px] tab:pt-[170px] desk:pb-40">
+    // depth frame: the pinned photo drifts across the whole read, not its own (fixed) box
+    <article data-depth-frame className="relative overflow-x-clip pb-20 pt-36 tab:pb-[120px] tab:pt-[170px] desk:pb-40">
       <LongThreads className="absolute left-1/2 top-[110px] hidden h-[680px] w-[max(100%,1200px)] -translate-x-1/2 tab:block" />
 
       <div className="mk-container relative grid items-start gap-14 tab:grid-cols-2 tab:gap-10">
         {/* pinned photo */}
         <div className={`tab:sticky tab:top-[150px] ${rise(0.15).className}`} style={rise(0.15).style}>
-          <BlobPhoto src={a.image.src} alt={a.image.alt} index={0} outline={false} priority frame="aspect-[1.45] max-w-[660px]" sizes="(min-width: 810px) 46vw, 92vw" />
+          <BlobPhoto src={a.image.src} alt={a.image.alt} index={0} outline={false} drift={32} priority frame="aspect-[1.45] max-w-[660px]" sizes="(min-width: 810px) 46vw, 92vw" />
         </div>
 
         {/* article */}

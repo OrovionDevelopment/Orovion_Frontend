@@ -1,10 +1,9 @@
 import { HOME } from "@/lib/marketing";
 import PillButton from "../PillButton";
 import ReachUs from "../ReachUs";
-import { TrustBlock } from "../Trust";
 import { Accent, Display } from "../Type";
 
-/** "Ready to join?" call to action with the trust block (reference "Ready to find your path?"). */
+/** "Ready to join?" call to action with the ways to reach us (reference "Ready to find your path?"). */
 export default function Ready() {
   const r = HOME.ready;
   return (
@@ -16,7 +15,6 @@ export default function Ready() {
           <div className="mk-reveal pt-10"><PillButton to={r.cta.to}>{r.cta.label}</PillButton></div>
         </div>
         <div className="mk-from-right flex flex-col gap-20">
-          <TrustBlock />
           <ReachUs />
         </div>
       </div>

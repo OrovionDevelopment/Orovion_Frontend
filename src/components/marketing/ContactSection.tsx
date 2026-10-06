@@ -2,7 +2,6 @@
 import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { Accent, Display, Eyebrow, enter } from "./Type";
-import { TrustBlock } from "./Trust";
 import ContactForm from "./ContactForm";
 import ReachUs from "./ReachUs";
 
@@ -11,8 +10,8 @@ const none: Motion = { className: "" };
 
 /**
  * The reference "Book a session" block: eyebrow, then a 6/1/5 split with the
- * intro and a sticky trust block on the left and the enquiry form on the
- * right. Phones order it intro → form → trust.
+ * intro and the sticky ways to reach us on the left and the enquiry form on
+ * the right. Phones order it intro → form → reach us.
  *
  * `page` mode is the top of /contact: h1, page-load entrances, top padding
  * that clears the fixed nav. Otherwise it is a closing section (h2, scroll
@@ -20,8 +19,8 @@ const none: Motion = { className: "" };
  */
 export default function ContactSection({ page = false, id }: { page?: boolean; id?: string }) {
   const e: Record<string, Motion> = page
-    ? { eyebrow: enter(0.4, "above"), title: enter(0.4), intro: enter(0.6), form: enter(0.6, "none"), trust: enter(0.8) }
-    : { eyebrow: { className: "mk-reveal" }, title: { className: "mk-reveal mk-from-left" }, intro: { className: "mk-reveal mk-from-left" }, form: { className: "mk-reveal mk-from-right" }, trust: none };
+    ? { eyebrow: enter(0.4, "above"), title: enter(0.4), intro: enter(0.6), form: enter(0.6, "none"), reach: enter(0.8) }
+    : { eyebrow: { className: "mk-reveal" }, title: { className: "mk-reveal mk-from-left" }, intro: { className: "mk-reveal mk-from-left" }, form: { className: "mk-reveal mk-from-right" }, reach: none };
 
   return (
     <section id={id} className={cn("relative scroll-mt-24", page ? "mk-top" : "mk-section")}>
@@ -41,8 +40,7 @@ export default function ContactSection({ page = false, id }: { page?: boolean; i
                 business days.
               </p>
             </div>
-            <div className={cn("sticky top-40 z-[1] hidden flex-col gap-20 tab:flex", e.trust.className)} style={e.trust.style}>
-              <TrustBlock />
+            <div className={cn("sticky top-40 z-[1] hidden flex-col gap-20 tab:flex", e.reach.className)} style={e.reach.style}>
               <ReachUs />
             </div>
           </div>
@@ -53,7 +51,6 @@ export default function ContactSection({ page = false, id }: { page?: boolean; i
         </div>
 
         <div className="flex flex-col gap-20 tab:hidden">
-          <TrustBlock />
           <ReachUs />
         </div>
       </div>

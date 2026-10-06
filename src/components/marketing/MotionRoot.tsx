@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { revealStagger } from "@/lib/motion";
+import { depthOffset, depthScale, revealStagger } from "@/lib/motion";
 
 const DESKTOP = "(min-width: 1200px)";
 const REDUCED = "(prefers-reduced-motion: reduce)";
@@ -18,7 +18,16 @@ const ANCHOR_OFFSET = -96;
  *     vanishing on screen. Elements arriving in the same frame are staggered
  *     in reading order (`--mk-rd`, 70ms apart); one arriving alone starts at
  *     once. New nodes (route changes, accordions) are picked up by a
- *     MutationObserver.
+ *     MutationObserver;
+ *  3. drives every `[data-depth="N"]` layer: one rAF-throttled scroll loop
+ *     moves it N px over its pass through the screen (`depthOffset`: +N while
+ *     entering, 0 centred, −N leaving — positive rises faster than the page,
+ *     negative lags). It measures the element's parent, or the nearest
+ *     `[data-depth-frame]` ancestor (use one around pinned/sticky content),
+ *     so a layer never measures its own movement. Strength by width
+ *     (`depthScale`): off on phones, half on tablets; off under reduced
+ *     motion. It sets the `translate` property, so never put it on an
+ *     `.mk-reveal` element (reveals animate `translate`) — wrap instead.
  */
 export default function MotionRoot() {
   const pathname = usePathname();
@@ -94,6 +103,54 @@ export default function MotionRoot() {
     });
     mo.observe(document.body, { childList: true, subtree: true });
     return () => { enter.disconnect(); exit.disconnect(); mo.disconnect(); };
+  }, [pathname]);
+
+  // ── depth layers ([data-depth]) ──────────────────────────────────────
+  useEffect(() => {
+    const reduced = window.matchMedia(REDUCED);
+    type Layer = { el: HTMLElement; frame: Element; range: number };
+    let layers: Layer[] = [];
+    let raf = 0, collectRaf = 0;
+
+    const update = () => {
+      raf = 0;
+      const vh = window.innerHeight;
+      const scale = reduced.matches ? 0 : depthScale(window.innerWidth);
+      for (const l of layers) {
+        if (!scale || !l.range) {
+          if (l.el.style.translate) l.el.style.translate = "";
+          continue;
+        }
+        const r = l.frame.getBoundingClientRect();
+        if (r.bottom < -vh || r.top > 2 * vh) continue; // far off screen
+        l.el.style.translate = `0 ${depthOffset(r.top, r.height, vh, l.range * scale)}px`;
+      }
+    };
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+    const collect = () => {
+      collectRaf = 0;
+      layers = Array.from(document.querySelectorAll<HTMLElement>("[data-depth]")).map((el) => ({
+        el,
+        frame: el.closest("[data-depth-frame]") ?? el.parentElement ?? el,
+        range: Number(el.dataset.depth) || 0,
+      }));
+      schedule();
+    };
+
+    collect();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    reduced.addEventListener("change", schedule);
+    const mo = new MutationObserver(() => { if (!collectRaf) collectRaf = requestAnimationFrame(collect); });
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      cancelAnimationFrame(collectRaf);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      reduced.removeEventListener("change", schedule);
+      mo.disconnect();
+    };
   }, [pathname]);
 
   return null;

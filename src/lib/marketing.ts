@@ -34,7 +34,6 @@ export const SITEMAP: NavLinkItem[][] = [
     { label: "About us", href: "/about" },
     { label: "Services", href: "/services" },
     { label: "Journal", href: "/journal" },
-    { label: "Stories", href: "/#stories" },
     { label: "How consults work", href: "/#how-it-works" },
     { label: "Meet the team", href: "/team" },
   ],
@@ -56,24 +55,7 @@ export const SOCIALS = [
   { key: "reddit", label: "Reddit", href: "https://www.reddit.com/user/orovion/" },
 ] as const;
 
-/* ── Social proof ─────────────────────────────────────────────────────── */
-
-/** Face photos used in avatar stacks. placeholder: true */
-export const TRUST_AVATARS = [
-  { src: "/marketing/avatar-1.jpg", alt: "" },
-  { src: "/marketing/avatar-2.jpg", alt: "" },
-  { src: "/marketing/avatar-3.jpg", alt: "" },
-  { src: "/marketing/avatar-4.jpg", alt: "" },
-  { src: "/marketing/avatar-5.jpg", alt: "" },
-];
-
-export const TRUST = {
-  placeholder: true,
-  label: "Trusted by 12,000+ healthcare professionals",
-  badge: "+12k",
-  rating: "4.9",
-  ratingLabel: "out of 5 from verified members",
-};
+/* ── Numbers ──────────────────────────────────────────────────────────── */
 
 export const STATS = [
   { value: 12000, suffix: "+", label: "Verified clinicians", placeholder: true },
@@ -95,9 +77,9 @@ export const STEPS = [
 ];
 
 /**
- * The four services: a card on the home page (`title`, `text`, `image`) whose
- * "Read more" opens its full section on /services (`#slug`: `body`, `photo`,
- * `cta`). Copy is product description — adjust to taste.
+ * The four services, shown as the home page's card wheel (`title`, `text`,
+ * `image`); each card's "Read more" opens its story on /services (`#slug`).
+ * Copy is product description — adjust to taste.
  */
 export const SERVICES = [
   {
@@ -105,48 +87,24 @@ export const SERVICES = [
     title: "Clinical Cases",
     text: "De-identified cases discussed by verified specialists — real perspectives you can trust.",
     image: "/marketing/service-cases.jpg",
-    photo: "/marketing/svc-cases.jpg",
-    body: [
-      "Real cases are where medicine is learned. On Orovion, clinicians share de-identified cases — with consent and without identifying details — and verified specialists weigh in with their reasoning, references and follow-ups.",
-      "Every reply carries its author’s verified credentials, so you always know whose perspective you are reading. Ideal for doctors looking for a second opinion and students learning how experts think.",
-    ],
-    cta: { label: "Explore cases", to: "/app/explore" },
   },
   {
     slug: "medical-pulses",
     title: "Medical Pulses",
     text: "Short clinical explainers and procedures, made by the people who perform them.",
     image: "/marketing/service-pulses.jpg",
-    photo: "/marketing/svc-pulses.jpg",
-    body: [
-      "Pulses are short clinical explainers — procedures, signs and techniques — made by the people who perform them every day. Watch them between rounds, save the ones you need and come back before your next shift.",
-      "Each Pulse is tagged by specialty and credited to a verified author, so the feed stays practical, accurate and easy to search.",
-    ],
-    cta: { label: "Watch Pulses", to: "/app/pulse" },
   },
   {
     slug: "research-thesis",
     title: "Research & Thesis",
     text: "Papers, theses and new findings, shared and discussed with their authors.",
     image: "/marketing/service-research.jpg",
-    photo: "/marketing/svc-research.jpg",
-    body: [
-      "Share your papers, theses and new findings, and discuss them with peers who understand the work. Authors stay visible, and every discussion links back to the original.",
-      "From early questions to published results, research on Orovion reaches the clinicians and students it can help most — and the feedback that makes it stronger.",
-    ],
-    cta: { label: "Browse research", to: "/app/explore" },
   },
   {
     slug: "private-consults",
     title: "Private Consults",
     text: "Secure video consultations with license-verified doctors, booked in minutes.",
     image: "/marketing/service-consults.jpg",
-    photo: "/marketing/svc-consults.jpg",
-    body: [
-      "Book secure video consultations with license-verified doctors. Pick a slot from their live availability, share your reports and meet inside Orovion — no third-party apps.",
-      "Prescriptions and summaries stay in your consultation history, visible only to you and your doctor, so follow-ups are simple.",
-    ],
-    cta: { label: "Book a consult", to: "/app/consults" },
   },
 ];
 
@@ -178,30 +136,6 @@ export const HOME = {
     text: "At Orovion, we don’t ask you to take trust on faith — we verify it. Through licensed professionals, transparent authorship and real conversations, we help medical knowledge move safely between the people who need it.",
     cta: { label: "Meet the team", to: "/about" },
   },
-  stories: [
-    {
-      placeholder: true,
-      eyebrow: "Real clinicians. Real cases.",
-      title: "A second opinion before morning rounds.",
-      text: "Dr. Ananya Mehra posted a puzzling case at 2 a.m. By sunrise, three interventional cardiologists in other cities had weighed in — and her patient’s plan was clearer for it.",
-      cta: { label: "Read the story", to: "/login" },
-      images: [
-        { src: "/marketing/story-a-main.jpg", alt: "Two doctors reviewing a brain scan on a monitor" },
-        { src: "/marketing/story-a-detail.jpg", alt: "Doctor in a white coat, arms crossed" },
-      ],
-    },
-    {
-      placeholder: true,
-      eyebrow: "Care, closer to home.",
-      title: "A follow-up without the three-hour drive.",
-      text: "When Meera’s father needed a cardiology review, a verified specialist read his reports and met them on video the same week. The prescription was waiting before the call ended.",
-      cta: { label: "Read the story", to: "/login" },
-      images: [
-        { src: "/marketing/story-b-main.jpg", alt: "A caregiver holding an older patient’s hand" },
-        { src: "/marketing/story-b-detail.jpg", alt: "Nurse checking a patient’s blood pressure" },
-      ],
-    },
-  ],
   how: {
     title: { lead: "How", accent: "It Works" },
     text: "Getting care doesn’t have to be complicated. Our process is simple, verified at every step, and designed around your time — from the first search to the follow-up.",
@@ -241,7 +175,6 @@ export const HOME = {
     eyebrow: "From the community",
     title: "Insights for sharper thinking and better care.",
     text: "Cases, explainers and research from verified clinicians — one clear idea at a time.",
-    cta: { label: "Explore the feed", to: "/journal" },
     /** Journal cards — "Read more" opens the article (src/lib/journal.ts). */
     posts: JOURNAL.map((a) => ({ tag: a.tag, title: a.title, text: a.excerpt, image: a.image.src, href: `/journal/${a.slug}` })),
   },
@@ -311,9 +244,9 @@ export const ABOUT = {
 };
 
 /* ── Services page (/services) ────────────────────────────────────────
-   Mirrors the reference services page: hero (long threads) → one full-bleed
-   section per service (one thread runs through all of them) → numbers →
-   three stories (alternating sides) → FAQ → contact. */
+   After the reference services page: hero (long threads) → four stories, one
+   per service (alternating sides; each is its home card's "Read more"
+   target) → FAQ → contact. */
 
 export const SERVICES_PAGE = {
   hero: {
@@ -323,10 +256,27 @@ export const SERVICES_PAGE = {
     eyebrow: "Services",
     intro: "Knowledge and care designed entirely around you — your questions, your pace and your needs. We help you move forward with verified answers, real conversations and lasting confidence.",
   },
-  /** Three stories in a row; the page alternates the photo side (right, left, right). */
+  /**
+   * One story per service, in the home card order; the page alternates the
+   * photo side (right, left, right, left). `slug` matches `SERVICES` — it is
+   * the story's anchor, where that home card's "Read more" lands.
+   */
   stories: [
     {
       placeholder: true,
+      slug: "clinical-cases",
+      eyebrow: "Real clinicians. Real cases.",
+      title: "A clearer plan by sunrise.",
+      text: "Dr. Ananya Mehra posted a puzzling set of scans at 2 a.m. — de-identified, with one question. By sunrise, three verified specialists in other cities had weighed in, and her patient’s plan was clearer for it.",
+      cta: { label: "Explore cases", to: "/login" },
+      images: [
+        { src: "/marketing/svc-story-cases-main.jpg", alt: "A surgical team in masks looking down into the camera" },
+        { src: "/marketing/svc-story-cases-detail.jpg", alt: "A doctor reviewing scans on a lightbox" },
+      ],
+    },
+    {
+      placeholder: true,
+      slug: "medical-pulses",
       eyebrow: "Real learners. Real progress.",
       title: "From textbook to bedside.",
       text: "Final-year student Priya used to freeze on complex scans. A month of Pulses and case discussions with verified radiologists later, she walked her own patient through the findings — calmly, and correctly.",
@@ -338,6 +288,7 @@ export const SERVICES_PAGE = {
     },
     {
       placeholder: true,
+      slug: "research-thesis",
       eyebrow: "Real research. Real impact.",
       title: "From thesis to practice.",
       text: "Second-year resident Arjun had the data but no one to sharpen it with. Through Research & Thesis he found a verified mentor, tightened his methods over three rounds of review, and presented his study at his department’s grand rounds.",
@@ -349,6 +300,7 @@ export const SERVICES_PAGE = {
     },
     {
       placeholder: true,
+      slug: "private-consults",
       eyebrow: "Real patients. Real answers.",
       title: "A second opinion, without the wait.",
       text: "When Meera’s father was advised spine surgery, the family wanted to be sure. A private consult with a verified orthopaedic surgeon — reports reviewed, every question answered on video — gave them a clear plan within two days.",

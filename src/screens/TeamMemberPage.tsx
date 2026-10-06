@@ -21,7 +21,8 @@ export default function TeamMemberPage({ member: m }: { member: TeamMember }) {
 
   return (
     <MarketingShell>
-      <article className="mk-top">
+      {/* depth frame: the sticky profile card's layers drift across the whole page */}
+      <article data-depth-frame className="mk-top">
         <div className="mk-container flex flex-col gap-14">
           <Link to="/team" data-cursor="snap" className={cn("group inline-flex w-max items-center gap-2 t-eyebrow", e.back.className)} style={e.back.style}>
             <ArrowLeft size={14} className="transition-transform duration-500 ease-spring group-hover:-translate-x-1" />

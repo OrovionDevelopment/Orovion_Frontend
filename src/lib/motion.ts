@@ -106,6 +106,17 @@ export function imageParallaxY(top: number, height: number, viewportHeight: numb
 }
 
 /**
+ * Strength of the site-wide depth layers (`data-depth`) for a viewport width:
+ * none on phones (layer motion is a strong vestibular trigger on a small,
+ * hand-held screen), half on tablets, full on desktop.
+ */
+export function depthScale(viewportWidth: number): number {
+  if (viewportWidth >= MOTION_BREAKPOINTS.desktop) return 1;
+  if (viewportWidth >= MOTION_BREAKPOINTS.tablet) return 0.5;
+  return 0;
+}
+
+/**
  * Centred depth parallax for a layer: +range px while its (untransformed) box
  * enters at the viewport bottom, 0 when the box is centred on screen, −range
  * px as it leaves at the top. A positive range rises faster than the page

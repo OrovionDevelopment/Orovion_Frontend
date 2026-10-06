@@ -63,7 +63,8 @@ function Members() {
 
 function MemberProfile({ member: m, flip }: { member: TeamMember; flip: boolean }) {
   return (
-    <article id={m.slug} className="scroll-mt-32">
+    // depth frame: the sticky profile card's layers drift across this member's story
+    <article id={m.slug} data-depth-frame className="scroll-mt-32">
       <div className={cn("grid items-start gap-10 tab:gap-14", flip ? "tab:grid-cols-[1fr_300px] desk:grid-cols-[1fr_360px]" : "tab:grid-cols-[300px_1fr] desk:grid-cols-[360px_1fr]")}>
         <div className={cn("mk-reveal tab:sticky tab:top-40", flip && "tab:order-2")}>
           <TeamProfileCard member={m} />

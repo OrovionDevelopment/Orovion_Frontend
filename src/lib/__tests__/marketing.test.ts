@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { LANDING_FAQ, CONTACT_FAQ, ABOUT_FAQ, SERVICES_FAQ, JOURNAL_FAQ, NAV_LINKS, SITEMAP, HOME, SERVICES } from "../marketing";
+import { LANDING_FAQ, CONTACT_FAQ, ABOUT_FAQ, SERVICES_FAQ, JOURNAL_FAQ, NAV_LINKS, SITEMAP, HOME, SERVICES, SERVICES_PAGE } from "../marketing";
 import { ALL_FAQ_ITEMS } from "../faq";
 
 const questions = new Set(ALL_FAQ_ITEMS.map(([q]) => q));
@@ -35,8 +35,12 @@ describe("services", () => {
     for (const s of slugs) expect(s).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
   });
 
-  it("links each landing card's Read more to its own section of /services", () => {
+  it("links each landing card's Read more to its own story on /services", () => {
     expect(HOME.services.map((c) => c.href)).toEqual(SERVICES.map((s) => `/services#${s.slug}`));
+  });
+
+  it("has one /services story per service, so no card lands on a missing anchor", () => {
+    expect(SERVICES_PAGE.stories.map((s) => s.slug)).toEqual(SERVICES.map((s) => s.slug));
   });
 });
 
@@ -54,8 +58,15 @@ describe("home: get the app", () => {
 });
 
 describe("journal links", () => {
-  it("sends the home community CTA to the journal page", () => {
-    expect(HOME.community.cta.to).toBe("/journal");
+  it("opens a journal article from every home community card", () => {
+    expect(HOME.community.posts.length).toBeGreaterThan(0);
+    for (const p of HOME.community.posts) expect(p.href.startsWith("/journal/")).toBe(true);
+  });
+
+  it("keeps footer anchors to home sections that still exist", () => {
+    // in-page anchors only — the removed home stories took #stories with them
+    const anchors = SITEMAP.flat().map((l) => l.href).filter((h) => h.startsWith("/#"));
+    for (const h of anchors) expect(["/#how-it-works", "/#community", "/#features", "/#contact", "/#get-the-app"]).toContain(h);
   });
 
   it("lists the journal in the footer sitemap", () => {

@@ -10,7 +10,6 @@ import ThreadWaves from "@/components/marketing/home/ThreadWaves";
 import HeroSequence from "@/components/marketing/home/HeroSequence";
 import Services from "@/components/marketing/home/Services";
 import Philosophy from "@/components/marketing/home/Philosophy";
-import Story from "@/components/marketing/home/Story";
 import HowItWorks from "@/components/marketing/home/HowItWorks";
 import Ready from "@/components/marketing/home/Ready";
 import BigQuote from "@/components/marketing/home/BigQuote";
@@ -19,7 +18,7 @@ import GetApp from "@/components/marketing/home/GetApp";
 // Numbers section is switched off for now — to enable it again, uncomment this
 // import and <Numbers /> below (between <Community /> and the FAQ).
 // import Numbers from "@/components/marketing/home/Numbers";
-import { HOME, LANDING_FAQ } from "@/lib/marketing";
+import { LANDING_FAQ } from "@/lib/marketing";
 import { useAuth } from "@/context/AuthContext";
 
 /**
@@ -54,11 +53,9 @@ export default function Landing() {
       <HeroSequence />
       <Services />
       <Philosophy />
-      <Story id="stories" story={HOME.stories[0]} />
       <HowItWorks />
       <Ready />
       <BigQuote />
-      <Story story={HOME.stories[1]} flip />
       <Community />
       {/* <Numbers /> — disabled for now; see the import note above */}
       <GetApp />

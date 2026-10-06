@@ -25,21 +25,23 @@ export default function TeamCards() {
 
       <div className="mk-container mt-16 grid gap-16 tab:mt-20 tab:grid-cols-3 tab:gap-8">
         {TEAM.map((m, i) => (
-          <Link
-            key={m.slug}
-            to={`/team/${m.slug}`}
-            data-cursor="View"
-            className={cn("mk-reveal mk-lift group flex flex-col items-center gap-6 text-center", i === 1 && "tab:mt-28")}
-          >
-            <BlobPhoto src={m.photo ?? "/team/Cover.png"} alt={m.name} index={i} position="50% 28%" sizes="(min-width: 810px) 30vw, 90vw" />
-            <div className="flex max-w-[340px] flex-col items-center gap-3">
-              <h3 className="mk-accent font-display text-[30px] font-medium leading-[1.1] tracking-[-.03em] text-brand-600 desk:text-[34px]">
-                <FillText>{m.name}</FillText>
-              </h3>
-              <p className="t-small text-ink-600">{m.focus.join(" · ")}</p>
-              <span className="ul-wipe mt-2 t-eyebrow">Read more</span>
-            </div>
-          </Link>
+          // depth wrapper (reveals own the card's `translate`): the lower middle card rises faster
+          <div key={m.slug} data-depth={i === 1 ? 40 : undefined} className={cn(i === 1 && "tab:mt-28")}>
+            <Link
+              to={`/team/${m.slug}`}
+              data-cursor="View"
+              className="mk-reveal mk-lift group flex flex-col items-center gap-6 text-center"
+            >
+              <BlobPhoto src={m.photo ?? "/team/Cover.png"} alt={m.name} index={i} position="50% 28%" sizes="(min-width: 810px) 30vw, 90vw" />
+              <div className="flex max-w-[340px] flex-col items-center gap-3">
+                <h3 className="mk-accent font-display text-[30px] font-medium leading-[1.1] tracking-[-.03em] text-brand-600 desk:text-[34px]">
+                  <FillText>{m.name}</FillText>
+                </h3>
+                <p className="t-small text-ink-600">{m.focus.join(" · ")}</p>
+                <span className="ul-wipe mt-2 t-eyebrow">Read more</span>
+              </div>
+            </Link>
+          </div>
         ))}
       </div>
     </section>

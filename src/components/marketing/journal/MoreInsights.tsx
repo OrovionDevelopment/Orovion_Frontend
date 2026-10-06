@@ -18,7 +18,10 @@ export default function MoreInsights({ articles }: { articles: JournalArticle[] 
       </div>
 
       <div className="mk-container mt-16 grid gap-16 tab:mt-20 tab:grid-cols-2 tab:gap-10">
-        {articles.map((a, i) => <ArticleCard key={a.slug} article={a} index={i + 1} />)}
+        {articles.map((a, i) => (
+          // depth wrapper: the right-hand card rises a little faster, as on /journal
+          <div key={a.slug} data-depth={i % 2 === 1 ? 48 : undefined}><ArticleCard article={a} index={i + 1} /></div>
+        ))}
       </div>
     </section>
   );
