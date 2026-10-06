@@ -77,6 +77,7 @@ its card on the home page and its sitemap entry.
 | `BigQuote` | Statement band, then the full-bleed quote with the dome reveal and a thread. Exports `Statement` and `QuoteDome` separately (content as props) for other pages. |
 | `Community` | `#community` — three blob-shaped journal cards; "Read more" opens the article at `/journal/[slug]`. |
 | `Numbers` | Statement + count-up `STATS`. |
+| `GetApp` | `#get-the-app` (above the FAQ) — copy + store badges on the left; on the right a scroll-drawn double thread traces a phone, which then fills in and shows a QR to `/mobile-app` (mouse/trackpad) or the app icon + a "Get the app" pill (touch). Depth parallax: rings behind lag, the phone rises faster, both lean with the mouse. |
 | `ScrollThread` | SVG strokes that draw themselves on scroll (`pathLength=1` + dash offset, smoothed). |
 | `ParallaxImage` | Image that drifts inside its frame on scroll (`intensity` px), optional grain. |
 | `BlobPhoto` | Photo in an organic blob shape with a faint rotated outline (community posts, team cards). |

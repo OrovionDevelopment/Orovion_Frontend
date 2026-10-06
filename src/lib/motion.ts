@@ -106,6 +106,17 @@ export function imageParallaxY(top: number, height: number, viewportHeight: numb
 }
 
 /**
+ * Centred depth parallax for a layer: +range px while its (untransformed) box
+ * enters at the viewport bottom, 0 when the box is centred on screen, −range
+ * px as it leaves at the top. A positive range rises faster than the page
+ * (near layer); a negative one lags behind it (far layer).
+ */
+export function depthOffset(top: number, height: number, viewportHeight: number, range: number): number {
+  const p = rangeProgress(viewportHeight - top, 0, viewportHeight + height); // 0 entering → 1 leaving
+  return Math.round((1 - 2 * p) * range * 10) / 10 + 0;
+}
+
+/**
  * Opacity of a background layer that fades in while `enterTop` (an element's
  * top) rises through the viewport and fades out while `exitTop` does.
  */

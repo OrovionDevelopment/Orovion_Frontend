@@ -420,6 +420,32 @@ html.lenis { scroll-behavior: auto !important; }
   .mk-wheel__card { box-shadow: 0 40px 80px -48px rgb(var(--ink-900) / .5); }
 }
 
+/* ── Get the app (home, above the FAQ; thread-drawn phone) ───────────────
+   Component: src/components/marketing/home/GetApp.tsx. Two strands draw with
+   the scroll (pathLength 1 + dashoffset, smoothed τ 150ms) and trace a phone;
+   `is-ready` lands once the outline closes: the phone body fills in and its
+   content settles (QR on mouse/trackpad screens, icon + button on touch). */
+.mk-app__body { fill: rgb(var(--surface)); opacity: 0; filter: drop-shadow(0 30px 40px rgb(var(--ink-900) / .12)); transition: opacity .8s var(--ease-reveal); }
+.mk-app.is-ready .mk-app__body { opacity: 1; }
+/* The stage box sits above its own (negative-z) layers: let the pointer
+   through it; the phone screen takes it back once the phone is ready. */
+.mk-app, .mk-app__screen { pointer-events: none; }
+.mk-app.is-ready .mk-app__screen { pointer-events: auto; }
+.mk-app__scan, .mk-app__tap { display: none; }
+@media (hover: hover) and (pointer: fine) { .mk-app__scan { display: flex; } }
+@media not all and (hover: hover) and (pointer: fine) { .mk-app__tap { display: flex; } }
+.mk-app__in { opacity: 0; translate: 0 14px; scale: .96; transition: opacity .7s var(--ease-premium), translate .9s var(--ease-premium), scale .9s var(--ease-premium); }
+.mk-app.is-ready .mk-app__in { opacity: 1; translate: none; scale: none; }
+.mk-app.is-ready .mk-app__in:nth-child(2) { transition-delay: .1s; }
+.mk-app.is-ready .mk-app__in:nth-child(3) { transition-delay: .2s; }
+@media (prefers-reduced-motion: reduce) { .mk-app__body, .mk-app__in { transition: none; } }
+/* Far layer: faint rings centred on the phone (x 340/640 of the stage), the
+   hero's motif; JS moves the layer (depth parallax + mouse). */
+.mk-app__rings > span { position: absolute; left: 53.125%; top: 50%; aspect-ratio: 1; border: 1px solid rgb(var(--brand-600) / .18); border-radius: 999px; translate: -50% -50%; }
+.mk-app__rings > span:nth-child(1) { width: 62%; }
+.mk-app__rings > span:nth-child(2) { width: 90%; opacity: .7; }
+.mk-app__rings > span:nth-child(3) { width: 118%; opacity: .45; }
+
 @keyframes pill-spin { to { transform: rotate(360deg); } }
 @keyframes mk-menu-item { from { opacity: 0; transform: translateY(20px); } }
 

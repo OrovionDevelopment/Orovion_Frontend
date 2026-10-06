@@ -226,6 +226,17 @@ export const HOME = {
     author: "Dr. Arjun Malhotra · Consultant Pediatrician",
     image: { src: "/marketing/quote-theatre.jpg", alt: "Surgeons working under operating-theatre lights" },
   },
+  /** "Get the app" band above the FAQ: a thread draws a phone; desktop shows a QR inside, touch screens a button. */
+  app: {
+    eyebrow: "Get the app",
+    title: "Your verified network,",
+    accent: "in your pocket.",
+    text: "Follow cases, catch a Pulse between rounds and book a consult from anywhere — the same verified Orovion, made for one hand.",
+    facts: ["Free to join", "iOS & Android", "Verified clinicians only"],
+    to: "/mobile-app",
+    scan: { title: "Scan to get Orovion", hint: "Point your phone’s camera at the code" },
+    tap: { text: "Learn, share and get care on the go.", cta: "Get the app" },
+  },
   community: {
     eyebrow: "From the community",
     title: "Insights for sharper thinking and better care.",

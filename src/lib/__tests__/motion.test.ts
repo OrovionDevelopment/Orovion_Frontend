@@ -3,7 +3,7 @@ import {
   parallaxTravel, parallaxProgress, parallaxOffset, isOverDarkSection, isInsideDarkZone, NAV_SWAP_LINE,
   rangeProgress, drawProgress, dashOffset, revealProgress, wordOpacity, imageParallaxY, fadeThrough, toggleState, smoothToward,
   springStep, springSettled, snapFrame, CURSOR_SPRINGS, type SpringConfig, dropStretch, blobRadii, blobPath,
-  pointerOffset, revealStagger, WHEEL, wheelRotation, wheelCenterProgress, cardTilt,
+  pointerOffset, revealStagger, WHEEL, wheelRotation, wheelCenterProgress, cardTilt, depthOffset,
 } from "../motion";
 
 describe("wheelRotation (services wheel)", () => {
@@ -371,5 +371,26 @@ describe("revealStagger", () => {
     expect(revealStagger(3)).toBeCloseTo(0.21, 5);
     expect(revealStagger(50)).toBeCloseTo(revealStagger(7), 5);
     expect(revealStagger(50)).toBeLessThanOrEqual(0.5);
+  });
+});
+
+describe("depthOffset", () => {
+  const vh = 900, h = 600;
+  it("is +range entering at the bottom, 0 centred, −range leaving at the top", () => {
+    expect(depthOffset(vh, h, vh, 40)).toBe(40);
+    expect(depthOffset((vh - h) / 2, h, vh, 40)).toBe(0);
+    expect(depthOffset(-h, h, vh, 40)).toBe(-40);
+  });
+  it("clamps outside the pass", () => {
+    expect(depthOffset(vh + 500, h, vh, 40)).toBe(40);
+    expect(depthOffset(-h - 500, h, vh, 40)).toBe(-40);
+  });
+  it("lags behind the page with a negative range (far layer)", () => {
+    expect(depthOffset(vh, h, vh, -60)).toBe(-60);
+    expect(depthOffset(-h, h, vh, -60)).toBe(60);
+  });
+  it("is linear in scroll", () => {
+    const a = depthOffset(600, h, vh, 40), b = depthOffset(500, h, vh, 40), c = depthOffset(400, h, vh, 40);
+    expect(Math.abs((a - b) - (b - c))).toBeLessThanOrEqual(0.11); // equal steps, up to the 0.1px rounding
   });
 });

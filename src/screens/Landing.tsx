@@ -15,6 +15,7 @@ import HowItWorks from "@/components/marketing/home/HowItWorks";
 import Ready from "@/components/marketing/home/Ready";
 import BigQuote from "@/components/marketing/home/BigQuote";
 import Community from "@/components/marketing/home/Community";
+import GetApp from "@/components/marketing/home/GetApp";
 // Numbers section is switched off for now — to enable it again, uncomment this
 // import and <Numbers /> below (between <Community /> and the FAQ).
 // import Numbers from "@/components/marketing/home/Numbers";
@@ -60,6 +61,7 @@ export default function Landing() {
       <Story story={HOME.stories[1]} flip />
       <Community />
       {/* <Numbers /> — disabled for now; see the import note above */}
+      <GetApp />
       <FaqSection
         title={<>Your questions.<br /><Accent>Answered.</Accent></>}
         subtitle="Not sure where to start? These answers cover what most people ask before joining Orovion."

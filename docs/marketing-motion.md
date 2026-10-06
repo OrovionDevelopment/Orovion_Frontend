@@ -116,7 +116,7 @@ After the entrance:
 
 Section order follows the reference home page: hero → trust toggle →
 services → philosophy → story → how it works → ready → statement + big quote
-→ story → community → numbers → FAQ → contact. Components live in
+→ story → community → numbers → get the app → FAQ → contact. Components live in
 `src/components/marketing/home/`; copy and photos come from `HOME` in
 `src/lib/marketing.ts`.
 
@@ -152,6 +152,11 @@ toggle's three states go through React state.
 | Service card photos | scroll | layer 200px taller than the card, `translateY` −200 → 0 while the card crosses the screen | linear | all |
 | Service card | hover | "Read more" + dot fade in | 0.6s spring | pointer devices |
 | Philosophy text | scroll | words light up 0.2 → 1 in reading order as the block rises from the screen bottom to 25% from the top; smoothed (τ 90ms) | — | all |
+| Get the app — thread | scroll | two strands (main 2px + echo 1.25px at 45%) enter from the page's left edge behind the copy, curl once and trace a phone (screen + bezel) clockwise; drawn from "stage top at 85% of the screen" to "stage bottom at 98%"; smoothed (τ 150ms); the camera pill draws over the last 6% | — | all |
+| Get the app — phone | outline closes (progress ≥ 0.985; resets below 0.9) | body fills with the surface colour (+ soft drop shadow), then its content rises 14px + scales .96 → 1 and fades in, 0.1s apart: QR card ("Scan to get Orovion") on mouse/trackpad screens, app icon + "Get the app" pill on touch screens | 0.8s fill; 0.9s `--ease-premium` | all |
+| Get the app — copy | enters viewport | eyebrow, headline (letter fill), text, badges, facts rise, staggered | 1.1s `--ease-premium` | all |
+| Get the app — depth parallax | scroll | three depths over the section's pass (`depthOffset`, centred: +range entering → 0 centred → −range leaving): copy moves with the page; phone + thread (near) +36 → −36px, so they rise a little faster; faint rings behind the phone (far, the hero's motif) −56 → +56px, so they lag | linear in scroll (Lenis-smoothed on desktop) | all |
+| Get the app — mouse depth | pointer move (while on screen) | the phone leans up to 10/7px against the pointer, the rings 16/11px with it | eased τ 450ms | mouse/trackpad |
 | Story photos | scroll | main photo parallax 120px, inset 80px | linear | all |
 | Thread waves (fixed layer) | scroll | fade in as How It Works enters, out as the big quote enters | linear | all |
 | How It Works number | scroll | sticky "0" + a rolling digit; the last step whose top passed 60% of the screen sets it | 0.8s `cubic-bezier(.6,0,.4,1)` | tablet + desktop (phones show inline numbers) |
@@ -326,7 +331,8 @@ const e = enter(0.4);                     // load entrance, desktop only
 
 - `prefers-reduced-motion: reduce` → no Lenis, no load entrances (the logo is
   static), no parallax or mouse depth, reveals shown immediately with no
-  movement (plus the global reduced-motion rule). Pill labels crossfade in
+  movement (plus the global reduced-motion rule). The "Get the app" phone is
+  drawn in full with no depth or mouse parallax. Pill labels crossfade in
   place instead of rolling (`--pill-roll: 0`). The home service wheel is not
   pinned or turned: the cards sit in a plain row (a snap carousel on smaller
   screens) and never tilt.

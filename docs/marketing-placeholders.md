@@ -16,6 +16,7 @@ users, ratings or numbers.
 | `ABOUT.founders`, `ABOUT.statement`, `ABOUT.quote` | about-page copy — the founder story wording, the statement and the quote ("The Orovion team") are drafts to confirm |
 | `ABOUT.story` | about-page story — "Ravi" and his mother are invented people |
 | `SERVICES` | the four services: home cards + `/services` sections (product description — check every feature claim) |
+| `HOME.app` | home "Get the app" copy — the three facts ("Free to join", "iOS & Android", "Verified clinicians only") are claims to confirm. The QR encodes `SITE_URL` + `/mobile-app` and the badges/button go there too, until the store listings exist (then set the store URLs in `src/screens/MobileAppPage.tsx`). If `SITE_URL` changes length, re-check `QR_SIZE` in `GetApp.tsx` (5px per module) |
 | `SERVICES_PAGE.stories` | the three services-page stories — "Priya" (learning), "Arjun" (research) and "Meera" (second-opinion consult) are invented people |
 | `JOURNAL` (`src/lib/journal.ts`) | three journal articles (ECG, case discussions, biomarkers) behind the home "Read more" cards — written to be generally accurate but **not clinically reviewed**; dates and "The Orovion editorial team" byline are placeholders. Have a clinician review them, or replace them, before launch |
 
