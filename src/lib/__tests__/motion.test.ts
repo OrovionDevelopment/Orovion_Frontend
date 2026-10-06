@@ -3,8 +3,78 @@ import {
   parallaxTravel, parallaxProgress, parallaxOffset, isOverDarkSection, isInsideDarkZone, NAV_SWAP_LINE,
   rangeProgress, drawProgress, dashOffset, revealProgress, wordOpacity, imageParallaxY, fadeThrough, toggleState, smoothToward,
   springStep, springSettled, snapFrame, CURSOR_SPRINGS, type SpringConfig, dropStretch, blobRadii, blobPath,
-  pointerOffset, revealStagger,
+  pointerOffset, revealStagger, WHEEL, wheelRotation, wheelCenterProgress, cardTilt,
 } from "../motion";
+
+describe("wheelRotation (services wheel)", () => {
+  const vh = 900, track = (WHEEL.trackVh / 100) * vh, n = 4; // the real track: 220vh
+  it("starts the pin with the first card peeking in at the right", () => {
+    expect(wheelRotation(0, track, vh, n)).toBeCloseTo(WHEEL.enter);
+    expect(WHEEL.enter).toBeGreaterThan(WHEEL.step); // only the first card is on stage
+  });
+  it("ends the pin with the last card just left of centre", () => {
+    const w = wheelRotation(-(track - vh), track, vh, n);
+    expect(w + (n - 1) * WHEEL.step).toBeCloseTo(-WHEEL.exit);
+  });
+  it("turns at a constant rate before, during and after the pin", () => {
+    const a = wheelRotation(450, track, vh, n), b = wheelRotation(0, track, vh, n), c = wheelRotation(-450, track, vh, n);
+    expect(a - b).toBeCloseTo(b - c);
+    expect(a).toBeGreaterThan(b); // scrolling down turns the wheel left (angles fall)
+  });
+  it("is linear in scroll: ~6°/100px at a 900px viewport", () => {
+    const perPx = wheelRotation(0, track, vh, n) - wheelRotation(-1, track, vh, n);
+    expect(perPx * 100).toBeGreaterThan(5);
+    expect(perPx * 100).toBeLessThan(7);
+  });
+  it("survives a degenerate track", () => {
+    expect(Number.isFinite(wheelRotation(-100, vh, vh, n))).toBe(true);
+  });
+});
+
+describe("wheelCenterProgress", () => {
+  it("is the pinned progress where card i sits upright at the top", () => {
+    const vh = 900, track = (WHEEL.trackVh / 100) * vh, n = 4;
+    for (let i = 0; i < n; i++) {
+      const q = wheelCenterProgress(i, n);
+      const w = wheelRotation(-q * (track - vh), track, vh, n);
+      expect(w + i * WHEEL.step).toBeCloseTo(0);
+      expect(q).toBeGreaterThan(0);
+      expect(q).toBeLessThan(1);
+    }
+  });
+});
+
+describe("cardTilt", () => {
+  const card = { cx: 500, cy: 400, w: 360, h: 480 };
+  const tilt = (x: number, y: number, angle = 0) => cardTilt(x, y, card.cx, card.cy, card.w, card.h, angle, 20);
+  it("is flat with the pointer at the centre", () => {
+    const t = tilt(500, 400);
+    expect(t.x).toBeCloseTo(0);
+    expect(t.y).toBeCloseTo(0);
+  });
+  it("brings the corner under the pointer toward the viewer", () => {
+    const br = tilt(500 + 180, 400 + 240); // bottom-right edge
+    expect(br.x).toBeCloseTo(20); // rotateX > 0: bottom edge comes forward
+    expect(br.y).toBeCloseTo(-20); // rotateY < 0: right edge comes forward
+    const tl = tilt(500 - 90, 400 - 120); // halfway to the top-left corner
+    expect(tl.x).toBeCloseTo(-10);
+    expect(tl.y).toBeCloseTo(10);
+  });
+  it("clamps outside the card", () => {
+    const t = tilt(5000, -5000);
+    expect(t.x).toBeCloseTo(-20);
+    expect(t.y).toBeCloseTo(-20);
+  });
+  it("measures the pointer in the card's own (rotated) frame", () => {
+    // card turned 90° clockwise: its top edge now faces the screen's right
+    const t = tilt(500 + 240, 400, 90);
+    expect(t.x).toBeCloseTo(-20); // top edge comes forward
+    expect(t.y).toBeCloseTo(0);
+    // and a small wheel angle barely changes the answer
+    const s = tilt(500 + 180, 400, 8);
+    expect(s.y).toBeLessThan(-19);
+  });
+});
 
 describe("parallaxTravel", () => {
   it("is 320 on desktop, 160 on tablet, 0 on phones", () => {

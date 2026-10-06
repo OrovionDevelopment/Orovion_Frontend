@@ -152,6 +152,52 @@ export function revealStagger(index: number): number {
   return Math.min(Math.max(0, index), 7) * 0.07;
 }
 
+/* ── Services wheel (home cards; Althea reference) ───────────────────── */
+
+/**
+ * The home service cards ride the top of a big wheel on desktop: `step`°
+ * apart, each tilted along the curve. The stage pins while the headline above
+ * is still on screen, with the first card peeking in at `enter`° (right edge);
+ * the wheel turns until the last card sits `exit`° left of centre. `trackVh`
+ * mirrors the track height in globals.css ("Services wheel"); `tilt` is the
+ * pointer tilt at a card's edge.
+ */
+export const WHEEL = { step: 13, enter: 22, exit: 8, trackVh: 220, tilt: 20 } as const;
+
+/**
+ * Wheel rotation (deg) for a track whose top is at `top` (px, viewport
+ * coordinates). The stage is pinned while top runs 0 → −(trackHeight − vh);
+ * before and after, the wheel keeps turning at the same rate, so the cards
+ * roll in with the stage and roll out with it. Card i sits at rotation + i·step.
+ */
+export function wheelRotation(top: number, trackHeight: number, vh: number, count: number, step: number = WHEEL.step, enter: number = WHEEL.enter, exit: number = WHEEL.exit): number {
+  const pinned = Math.max(1, trackHeight - vh);
+  const q = -top / pinned; // 0 at pin start, 1 at pin end (extrapolated outside)
+  const to = -(exit + (count - 1) * step);
+  return enter + (to - enter) * q;
+}
+
+/** Pinned progress (0..1) at which card `index` stands upright at the top of the wheel. */
+export function wheelCenterProgress(index: number, count: number, step: number = WHEEL.step, enter: number = WHEEL.enter, exit: number = WHEEL.exit): number {
+  const to = -(exit + (count - 1) * step);
+  return (-index * step - enter) / (to - enter);
+}
+
+/**
+ * 3D tilt (deg) for a card under the pointer: the corner nearest the pointer
+ * comes toward the viewer, up to `max` at the card's edges, flat at its centre.
+ * The pointer is measured in the card's own frame, so it stays right while
+ * the card is rotated by `angleDeg` on the wheel. Returns rotateX / rotateY.
+ */
+export function cardTilt(px: number, py: number, cx: number, cy: number, width: number, height: number, angleDeg: number, max: number = WHEEL.tilt): { x: number; y: number } {
+  if (!(width > 0) || !(height > 0)) return { x: 0, y: 0 };
+  const a = (angleDeg * Math.PI) / 180, dx = px - cx, dy = py - cy;
+  const lx = dx * Math.cos(a) + dy * Math.sin(a); // undo the card's rotation
+  const ly = -dx * Math.sin(a) + dy * Math.cos(a);
+  const nx = clamp(lx / (width / 2), -1, 1), ny = clamp(ly / (height / 2), -1, 1);
+  return { x: ny * max + 0, y: -nx * max + 0 }; // "+ 0" turns −0 into 0
+}
+
 /* ── Custom cursor (marketing pages) ─────────────────────────────────── */
 
 export type SpringConfig = { stiffness: number; damping: number; mass?: number };

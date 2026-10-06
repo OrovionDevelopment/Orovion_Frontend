@@ -69,7 +69,7 @@ its card on the home page and its sitemap entry.
 |---|---|
 | `ThreadWaves` | Fixed background thread layer; fades in/out between two section ids. |
 | `HeroSequence` | Hero + trust toggle: pinned stage, portrait fade, scroll-drawn thread, word-by-word headline, the dot → switch → on sequence. |
-| `Services` | `#features` — four photo cards with parallax and a hover "Read more" that opens the service's section on `/services`. |
+| `Services` | `#features` — four photo cards with parallax and a hover "Read more" that opens the service's section on `/services`. Desktop: they ride a scroll-driven wheel (pinned stage); tablet/phone: a snap carousel with dots; every card tilts toward the pointer (Althea reference; math in `motion.ts` `WHEEL`, `wheelRotation`, `cardTilt`). |
 | `Philosophy` | Scroll-lit statement (`ScrollWords`). |
 | `Story` | Text + two overlapping parallax photos; `flip` mirrors it. |
 | `HowItWorks` | `#how-it-works` — big title, steps, sticky odometer number. |

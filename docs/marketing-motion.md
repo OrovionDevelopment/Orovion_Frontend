@@ -56,7 +56,7 @@ design: 2–4px lifts, 20–40px slides, 0.94–1.12 scales.
 | Pill button | hover / keyboard focus | text roll (Althea reference): the label slides up out of the pill (one pill height) and fades while an identical copy rises from below into its place; the fade trails the move; leaving reverses it. The pill itself stays put; light pills also turn the label brand. | 0.7s `--ease-premium` (~95% of travel by 0.35s), fade 0.55s | hover: pointer devices; focus: all |
 | Pill button | press | 0.97 scale | 0.12s | all |
 | Menu toggle (tablet/phone) | open / close | the same roll, from "Menu" to "Close" and back | 0.7s `--ease-premium` | tablet + phone |
-| Cards (`.mk-lift`: service cards, community posts, team cards) | hover | lift 4px (+ soft shadow, photo zoom 1.04 where set) | 0.6s / 0.9s `--ease-premium` | pointer devices |
+| Cards (`.mk-lift`: community posts, team cards) | hover | lift 4px (+ soft shadow, photo zoom 1.04 where set) | 0.6s / 0.9s `--ease-premium` | pointer devices |
 | FAQ card | hover | border tints brand, soft shadow | 0.5s | pointer devices |
 | Pill button | submit | right dot → 31px disc with spinner | 0.6s; spin 1s linear | all |
 | Nav / sitemap link | hover | 1px underline wipes in from left, out to right | 0.4s spring | pointer devices |
@@ -145,6 +145,10 @@ toggle's three states go through React state.
 | Trust toggle | a marker crosses mid-screen | 2px dot → switch "off" → "on": track grows, knob 58 → 88 → 112px | 1.2s spring (track color 0.8s) | all |
 | Hero stage | toggle on / off | fades out; the nav returns to its normal colors | 1.2s / 0.8s spring | all |
 | Toggle copy | toggle on | "before" fades out; "after" fades in | 0.3s; 0.6s after 0.4s, `--ease-reveal` | all |
+| Service cards — wheel (Althea reference) | scroll | the section slides 44vh up under the trust headline; a 220vh track pins a 100vh stage while that headline is still on screen. The four cards ride the top of a big wheel (radius 139vw, top at 52% of the stage), 13° apart and tilted along the curve: the first peeks in at 22° (right edge), each stands upright in the middle in turn, and the pin ends with the last one 8° left of centre; before and after the pin the wheel keeps turning at the same rate (≈6.4°/100px at a 900px screen). Linear in scroll, smoothed by Lenis. Cards ~360×480 (`min(25vw·4/3, 62vh)` tall) | — | desktop (≥1200, motion allowed) |
+| Service cards — carousel | swipe / dot | horizontal scroll that snaps card by card (1 per view on phones, 2 on tablet); dots follow and jump; all four simply sit in a row on desktop with reduced motion | native snap; dot jump smooth | phone, tablet, desktop + reduced motion |
+| Service card | pointer move | 3D tilt toward the pointer: the corner nearest it comes forward, up to 20° at the edges (500px perspective), measured in the card's own frame on the wheel; flat again on leave. Replaces the old 4px lift | 0.4s `--ease-premium` (≈0.25s to catch up) | mouse/trackpad, motion allowed |
+| Service card (keyboard) | focus | on the wheel, the page scrolls so the focused card stands upright in the middle | instant | desktop |
 | Service card photos | scroll | layer 200px taller than the card, `translateY` −200 → 0 while the card crosses the screen | linear | all |
 | Service card | hover | "Read more" + dot fade in | 0.6s spring | pointer devices |
 | Philosophy text | scroll | words light up 0.2 → 1 in reading order as the block rises from the screen bottom to 25% from the top; smoothed (τ 90ms) | — | all |
@@ -323,7 +327,9 @@ const e = enter(0.4);                     // load entrance, desktop only
 - `prefers-reduced-motion: reduce` → no Lenis, no load entrances (the logo is
   static), no parallax or mouse depth, reveals shown immediately with no
   movement (plus the global reduced-motion rule). Pill labels crossfade in
-  place instead of rolling (`--pill-roll: 0`).
+  place instead of rolling (`--pill-roll: 0`). The home service wheel is not
+  pinned or turned: the cards sit in a plain row (a snap carousel on smaller
+  screens) and never tilt.
 - Reveals only hide content when JS runs (the `.js` class is set pre-paint).
 - FAQ items are real buttons with `aria-expanded`/`aria-controls`; the mobile
   menu is `inert` when closed, locks scroll, closes on Esc and restores focus.
