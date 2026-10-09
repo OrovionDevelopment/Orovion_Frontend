@@ -62,7 +62,7 @@ export default function ThreadHero({ content: h, label, flip = false }: { conten
 
         <div className="mt-20 grid gap-6 tab:mt-28 tab:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] desk:grid-cols-[minmax(0,1fr)_minmax(0,3.2fr)]">
           <Eyebrow className={rise(1).className} style={rise(1).style}>{h.eyebrow}</Eyebrow>
-          <p className={`mk-indent max-w-[980px] text-[20px] leading-[1.5] tracking-[-.01em] text-ink-800 tab:text-[24px] desk:text-[28px] ${rise(1.1).className}`} style={rise(1.1).style}>
+          <p className={`max-w-[980px] text-[20px] leading-[1.5] tracking-[-.01em] text-ink-800 tab:text-[24px] desk:text-[28px] ${rise(1.1).className}`} style={rise(1.1).style}>
             {h.intro}
           </p>
         </div>

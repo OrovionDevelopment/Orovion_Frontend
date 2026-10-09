@@ -31,7 +31,7 @@ export default function HowItWorks() {
         <h2 className="mk-reveal font-display text-[64px] font-medium leading-[.92] tracking-[-.045em] text-ink-900 tab:text-[96px] desk:text-[128px]">
           <FillText>{title.lead} <Accent>{title.accent}</Accent></FillText>
         </h2>
-        <p className="mk-reveal mk-indent mt-10 max-w-[960px] text-lg leading-[1.6] text-ink-700 tab:ml-[22%] tab:mt-14 desk:text-[22px]">{text}</p>
+        <p className="mk-reveal mt-10 max-w-[1000px] text-balance text-lg leading-[1.6] text-ink-700 tab:mt-14 desk:text-[22px]">{text}</p>
       </div>
 
       <div className="mk-container relative mt-16 grid tab:mt-24 tab:grid-cols-[5fr_1fr_6fr]">

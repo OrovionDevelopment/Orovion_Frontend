@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { JOURNAL, findArticle, relatedArticles, readingMinutes, formatArticleDate } from "../journal";
+import { JOURNAL, findArticle, relatedArticles, readingMinutes } from "../journal";
 import { HOME } from "../marketing";
 
 describe("journal articles", () => {
@@ -10,7 +10,6 @@ describe("journal articles", () => {
       expect(a.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
       expect(a.sections.length).toBeGreaterThanOrEqual(2);
       for (const s of a.sections) expect(s.paragraphs.length).toBeGreaterThan(0);
-      expect(a.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
   });
 
@@ -33,14 +32,9 @@ describe("journal articles", () => {
 
   it("estimates reading time at ~200 words a minute, at least 1", () => {
     const words = (n: number) => Array.from({ length: n }, () => "word").join(" ");
-    const art = (n: number) => ({ ...JOURNAL[0], lede: words(n), sections: [{ heading: "", paragraphs: [""] }], quote: "" });
+    const art = (n: number) => ({ ...JOURNAL[0], lede: words(n), sections: [{ heading: "", paragraphs: [""] }] });
     expect(readingMinutes(art(10))).toBe(1);
     expect(readingMinutes(art(450))).toBe(3);
     for (const a of JOURNAL) expect(readingMinutes(a)).toBeGreaterThanOrEqual(1);
-  });
-
-  it("formats dates the same on the server and in the browser", () => {
-    expect(formatArticleDate("2026-09-18")).toBe("18 September 2026");
-    expect(formatArticleDate("2026-01-03")).toBe("3 January 2026");
   });
 });

@@ -17,7 +17,7 @@ export default function Community() {
       <div className="mk-container flex flex-col items-center gap-6 text-center">
         <Sparkles aria-hidden size={40} strokeWidth={1.4} className="mk-reveal text-brand-600" />
         <Eyebrow className="mk-reveal">{c.eyebrow}</Eyebrow>
-        <Display size="sm" className="mk-reveal max-w-[640px]">{c.title}</Display>
+        <Display size="sm" className="mk-reveal max-w-[640px]">{c.title.split("\n").map((line, i) => (i ? [<br key={i} />, line] : line))}</Display>
         <p className="mk-reveal max-w-[420px] t-body text-ink-600">{c.text}</p>
       </div>
 

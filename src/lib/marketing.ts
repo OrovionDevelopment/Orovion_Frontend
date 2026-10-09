@@ -66,8 +66,8 @@ export const STATS = [
 
 /* ── Home page (/) ────────────────────────────────────────────────────
    Section order mirrors the reference home page: hero → trust toggle →
-   services → philosophy → story → how it works → ready → text + big quote →
-   story → community → numbers → FAQ → contact. Everything marked
+   services → philosophy → how it works → ready → text + big quote →
+   community → get the app → FAQ → contact (numbers is switched off). Everything marked
    `placeholder: true` is illustrative copy to replace. */
 
 export const STEPS = [
@@ -96,7 +96,7 @@ export const SERVICES = [
   },
   {
     slug: "Research-Thesis",
-    title: "Research & Thesis",
+    title: "Research Summary",
     text: "Discover concise summaries of research, findings and academic work shared by the healthcare community.",
     image: "/marketing/service-research.jpg",
   },
@@ -113,14 +113,14 @@ export const HOME = {
     title: "Where Healthcare Comes Together.",
     text: "Orovion brings healthcare professionals, medical students and people to connect, share knowledge, explore real cases and access private consultations in one place.",
     cta: { label: "Join Orovion", to: "/login" },
-    image: { src: "/marketing/hero-portrait.jpg", srcPhone: "/marketing/hero-portrait-tall.jpg", alt: "Doctor with a stethoscope, smiling in soft light" },
+    image: { src: "/marketing/hero-portrait.jpg", srcPhone: "/marketing/hero-portrait-tall.jpg" },
     placeholder: true,
   },
   /** The scroll-driven toggle that follows the hero. */
   trust: {
     label: "Verified",
     before: {
-      title: "Healthcare is complex. Finding your way through it shouldn’t be.",
+      title: "Healthcare is complex.\nFinding your way through it shouldn’t be.",
       lines: ["Orovion brings people, professionals, knowledge and care into one connected healthcare network."],
     },
     after: {
@@ -172,9 +172,9 @@ export const HOME = {
     tap: { text: "Learn, share and get care on the go.", cta: "Get the app" },
   },
   community: {
-    eyebrow: "From the community",
-    title: "Insights for sharper thinking and better care.",
-    text: "Cases, explainers and research from verified clinicians — one clear idea at a time.",
+    eyebrow: "BUILT FOR EVERYONE IN HEALTHCARE",
+    title: "One network,\ndifferent ways to use it.",
+    text: "Whether you’re a healthcare professional, medical student or general user, Orovion gives you a place to connect, learn, share and access healthcare.",
     /** Journal cards — "Read more" opens the article (src/lib/journal.ts). */
     posts: JOURNAL.map((a) => ({ tag: a.tag, title: a.title, text: a.excerpt, image: a.image.src, href: `/journal/${a.slug}` })),
   },
@@ -187,9 +187,8 @@ export const HOME = {
 
 /* ── About page (/about) ──────────────────────────────────────────────
    Section order mirrors the reference about page: hero (long threads) → the
-   way we help (scroll-lit text over a photo) → founders (story) → team
-   cards → statement → ready → big quote → story → FAQ.
-   The founders and team cards read from src/lib/team.ts. Everything marked
+   way we help (scroll-lit text over a photo) → team cards → ready → big
+   quote → FAQ. The team cards read from src/lib/team.ts. Everything marked
    `placeholder: true` is illustrative copy to replace. */
 
 export const ABOUT = {
@@ -205,7 +204,6 @@ export const ABOUT = {
     image: { src: "/marketing/about-help.jpg", alt: "" },
     text: "We start with trust, verifying the professionals who join and giving every contribution a clear voice. From there, we build a space where healthcare knowledge can be shared, questions can be explored and meaningful connections can happen with greater confidence.",
   },
-  
   team: {
     eyebrow: "Our team",
     title: "The People Building Orovion.",
@@ -217,7 +215,6 @@ export const ABOUT = {
     author: "THE OROVION TEAM",
     image: { src: "/marketing/about-quote.jpg", alt: "Dark clouds lit by warm light" },
   },
-  
 };
 
 /* ── Services page (/services) ────────────────────────────────────────

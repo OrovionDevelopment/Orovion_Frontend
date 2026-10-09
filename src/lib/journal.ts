@@ -18,49 +18,38 @@ export type JournalArticle = {
   excerpt: string;
   /** Opening paragraph under the title. */
   lede: string;
-  /** ISO date (YYYY-MM-DD). */
-  date: string;
   image: { src: string; alt: string };
   sections: JournalSection[];
-  /** Pull quote, set after the first section. */
-  quote: string;
-  author: string;
 };
 
 export const JOURNAL: JournalArticle[] = [
   {
     slug: "reading-a-paediatric-ecg",
     tag: "Pulse",
-    title: "Reading a paediatric ECG in 60 seconds",
+    title: "HEALTHCARE PROFESSIONAL",
     excerpt: "Rate, rhythm, axis — a quick, structured routine for the night shift.",
     lede: "A paediatric ECG can look intimidating at 3 a.m. — small complexes, fast rates and normal values that change with age. A short, repeatable routine turns it from a puzzle into a checklist.",
-    date: "2026-09-18",
     image: { src: "/marketing/journal-heart.jpg", alt: "An anatomical model of the human heart" },
     sections: [
       {
-        heading: "Start with the patient, not the paper.",
+        heading: "Build your professional presence.",
         paragraphs: [
-          "Before reading a single wave, note the child’s age, how they look and why the ECG was taken. Normal heart rates, axis and wave patterns change considerably from newborn to teenager, so the same tracing can be normal at one age and abnormal at another.",
-          "Keep an age-specific reference chart within reach. Reading against the right ranges prevents most false alarms — and most missed findings.",
+          "Create a profile that reflects your qualifications, experience, specialties and professional interests. Verified credentials help establish your professional identity across the network."
         ],
       },
       {
-        heading: "Rate, rhythm, axis — in that order.",
+        heading: "Connect beyond your workplace.",
         paragraphs: [
-          "Rate first: children’s hearts run faster than adults’, so judge the number against the age band, not the adult range. Then rhythm: look for a P wave before every QRS complex and a steady relationship between them.",
-          "Axis comes third. A right-leaning axis is expected in newborns and shifts gradually leftward through childhood — another reason the age on the request matters so much.",
+          "Discover healthcare professionals and medical students across the network. Build meaningful professional connections, exchange messages and stay connected with people working and learning across healthcare.",
         ],
       },
       {
-        heading: "Know when to ask for a second look.",
+        heading: "Share what you know.",
         paragraphs: [
-          "If the tracing doesn’t fit the clinical picture, or something sits outside the age range, ask early. On Orovion you can share a de-identified tracing with verified paediatric cardiologists and get a structured opinion — with their credentials beside every reply.",
-          "Speed matters at night. So does knowing when to slow down and check.",
+          "Publish Posts, Pulses, Case Studies and Research Summaries to share your knowledge, experiences and perspectives with the Orovion community.",
         ],
       },
     ],
-    quote: "A routine you trust at 3 a.m. is worth more than a rare finding you remember from a textbook.",
-    author: "The Orovion editorial team",
   },
   {
     slug: "what-makes-a-case-discussion-useful",
@@ -68,7 +57,6 @@ export const JOURNAL: JournalArticle[] = [
     title: "What makes a case discussion useful?",
     excerpt: "The details that turn a post into a better decision.",
     lede: "The best case discussions don’t start with a diagnosis — they start with a clear question. A few habits make the difference between a post that collects reactions and one that changes a plan.",
-    date: "2026-09-04",
     image: { src: "/marketing/journal-brain.jpg", alt: "An anatomical model of the human brain" },
     sections: [
       {
@@ -93,8 +81,6 @@ export const JOURNAL: JournalArticle[] = [
         ],
       },
     ],
-    quote: "A clear question and an honest timeline are the two most useful things you can give a colleague.",
-    author: "The Orovion editorial team",
   },
   {
     slug: "biomarkers-without-the-jargon",
@@ -102,7 +88,6 @@ export const JOURNAL: JournalArticle[] = [
     title: "Biomarkers, without the jargon",
     excerpt: "Which results change management — and which don’t.",
     lede: "A lab report can list dozens of values. The useful question isn’t “is anything abnormal?” — it’s “will this result change what we do next?”",
-    date: "2026-08-21",
     image: { src: "/marketing/journal-lab.jpg", alt: "Blood sample tubes in a laboratory rack" },
     sections: [
       {
@@ -127,8 +112,6 @@ export const JOURNAL: JournalArticle[] = [
         ],
       },
     ],
-    quote: "The right test answers a question you have already asked.",
-    author: "The Orovion editorial team",
   },
 ];
 
@@ -144,16 +127,8 @@ export function relatedArticles(slug: string): JournalArticle[] {
 }
 
 /** Reading time in whole minutes at ~200 words a minute, rounded up (at least 1). */
-export function readingMinutes(a: Pick<JournalArticle, "lede" | "sections" | "quote">): number {
-  const text = [a.lede, a.quote, ...a.sections.flatMap((s) => [s.heading, ...s.paragraphs])].join(" ");
+export function readingMinutes(a: Pick<JournalArticle, "lede" | "sections">): number {
+  const text = [a.lede, ...a.sections.flatMap((s) => [s.heading, ...s.paragraphs])].join(" ");
   const words = text.split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 200));
-}
-
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-/** "2026-09-18" → "18 September 2026" (no Intl, so server and browser always agree). */
-export function formatArticleDate(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  return `${d} ${MONTHS[m - 1]} ${y}`;
 }

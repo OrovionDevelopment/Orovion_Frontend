@@ -42,10 +42,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly" as const,
       priority: 0.5,
     })),
-    // Journal articles carry their own publication date.
     ...JOURNAL.map((a) => ({
       url: absoluteUrl(`/journal/${a.slug}`),
-      lastModified: new Date(`${a.date}T00:00:00Z`),
+      lastModified,
       changeFrequency: "yearly" as const,
       priority: 0.5,
     })),

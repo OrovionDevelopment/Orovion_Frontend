@@ -127,7 +127,7 @@ export default function HeroSequence() {
           <div className="mk-container grid items-end gap-10 tab:grid-cols-[4fr_1fr_3fr] tab:gap-0 desk:grid-cols-[7fr_1fr_4fr]">
             <h1 className="mk-hero-title text-white text-balance"><BlurWords text={hero.title} startDelay={0.3} step={0.08} fill /></h1>
             <div ref={copy} className="flex flex-col items-start gap-8 tab:col-start-3">
-              <p className={cn("mk-indent max-w-[460px] t-body text-white", e.text.className)} style={e.text.style}>{hero.text}</p>
+              <p className={cn("max-w-[460px] t-body text-white", e.text.className)} style={e.text.style}>{hero.text}</p>
               <div className={e.cta.className} style={e.cta.style}>
                 <PillButton to={hero.cta.to}>{hero.cta.label}</PillButton>
               </div>
@@ -148,12 +148,12 @@ export default function HeroSequence() {
             <span className="mk-toggle__knob" />
           </a>
           <div className="relative w-full max-w-[1200px]">
-            <div className={cn("mk-swap-after mx-auto flex max-w-[800px] flex-col items-center gap-8", on && "is-on")}>
-              <h2 className="t-display-sm text-ink-900 text-balance"><FillText>{trust.after.title} <Accent>{trust.after.accent}</Accent></FillText></h2>
-              <p className="max-w-[440px] t-body text-ink-600">{trust.after.text}</p>
+            <div className={cn("mk-swap-after mx-auto flex max-w-[800px] desk:max-w-[1100px] flex-col items-center gap-8", on && "is-on")}>
+              <h2 className="t-display-sm text-ink-900 text-balance desk:whitespace-nowrap"><FillText>{trust.after.title}<br /><Accent>{trust.after.accent}</Accent></FillText></h2>
+              <p className="max-w-[640px] t-body text-ink-600 text-balance">{trust.after.text}</p>
             </div>
-            <div className={cn("mk-swap-before absolute inset-x-0 top-0 mx-auto flex max-w-[800px] flex-col items-center gap-8", on && "is-on")} aria-hidden={on}>
-              <p className="t-display-sm text-white text-balance"><FillText>{trust.before.title}</FillText></p>
+            <div className={cn("mk-swap-before absolute inset-x-0 top-0 mx-auto flex max-w-[800px] desk:max-w-[1100px] flex-col items-center gap-8", on && "is-on")} aria-hidden={on}>
+              <p className="t-display-sm text-white text-balance desk:whitespace-nowrap"><FillText>{trust.before.title.split("\n").map((line, i) => (i ? [<br key={i} />, line] : line))}</FillText></p>
               <p className="max-w-[440px] t-body text-white">{trust.before.lines[0]}<br />{trust.before.lines[1]}</p>
             </div>
           </div>
