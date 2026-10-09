@@ -83,27 +83,27 @@ export const STEPS = [
  */
 export const SERVICES = [
   {
-    slug: "clinical-cases",
+    slug: "Clinical-Cases",
     title: "Clinical Cases",
-    text: "De-identified cases discussed by verified specialists — real perspectives you can trust.",
+    text: "Explore real clinical cases shared by healthcare professionals, with insights into presentation, diagnosis, management and outcomes.",
     image: "/marketing/service-cases.jpg",
   },
   {
-    slug: "medical-pulses",
+    slug: "Medical-Pulses",
     title: "Medical Pulses",
-    text: "Short clinical explainers and procedures, made by the people who perform them.",
+    text: "Discover concise healthcare insights, updates and perspectives shared by professionals across the network.",
     image: "/marketing/service-pulses.jpg",
   },
   {
-    slug: "research-thesis",
+    slug: "Research-Thesis",
     title: "Research & Thesis",
-    text: "Papers, theses and new findings, shared and discussed with their authors.",
+    text: "Discover concise summaries of research, findings and academic work shared by the healthcare community.",
     image: "/marketing/service-research.jpg",
   },
   {
-    slug: "private-consults",
+    slug: "Private-Consults",
     title: "Private Consults",
-    text: "Secure video consultations with license-verified doctors, booked in minutes.",
+    text: "Connect with verified healthcare professionals and request a private consultation based on your needs.",
     image: "/marketing/service-consults.jpg",
   },
 ];
@@ -111,7 +111,7 @@ export const SERVICES = [
 export const HOME = {
   hero: {
     title: "Where Healthcare Comes Together.",
-    text: "Orovion brings verified healthcare professionals, medical students and people into one trusted network — to share knowledge, discuss real cases and book private consultations, at your own pace.",
+    text: "Orovion brings healthcare professionals, medical students and people to connect, share knowledge, explore real cases and access private consultations in one place.",
     cta: { label: "Join Orovion", to: "/login" },
     image: { src: "/marketing/hero-portrait.jpg", srcPhone: "/marketing/hero-portrait-tall.jpg", alt: "Doctor with a stethoscope, smiling in soft light" },
     placeholder: true,
@@ -120,44 +120,44 @@ export const HOME = {
   trust: {
     label: "Verified",
     before: {
-      title: "If only finding care you can trust were as simple as flipping a switch.",
-      lines: ["It’s closer than you think.", "And every verified profile makes it clearer."],
+      title: "Healthcare is complex. Finding your way through it shouldn’t be.",
+      lines: ["Orovion brings people, professionals, knowledge and care into one connected healthcare network."],
     },
     after: {
-      title: "There may not be a single switch,",
-      accent: "but there is a verified network.",
-      text: "Every clinician on Orovion passes license verification. These are the ways we help people learn, connect and get care with confidence.",
+      title: "One network.",
+      accent: "Four ways to connect with healthcare",
+      text: "Discover clinical knowledge, connect with healthcare professionals, explore research and access private consultations.",
     },
   },
   /** Service cards — "Read more" opens the service's section on /services. */
   services: SERVICES.map((s) => ({ title: s.title, text: s.text, image: s.image, href: `/services#${s.slug}` })),
   philosophy: {
     eyebrow: "Our philosophy",
-    text: "At Orovion, we don’t ask you to take trust on faith — we verify it. Through licensed professionals, transparent authorship and real conversations, we help medical knowledge move safely between the people who need it.",
+    text: "Healthcare works better when people, knowledge and care are connected. Orovion brings verified healthcare professionals, medical students and people into one network where knowledge can be shared, conversations can happen and care can be accessed with greater confidence.",
     cta: { label: "Meet the team", to: "/about" },
   },
   how: {
-    title: { lead: "How", accent: "It Works" },
-    text: "Getting care doesn’t have to be complicated. Our process is simple, verified at every step, and designed around your time — from the first search to the follow-up.",
+    title: { lead: "How", accent: "Orovion Works" },
+    text: "A simple way to discover, connect and engage with healthcare. Orovion brings people, professionals, knowledge and consultations together in one connected experience.",
     steps: STEPS,
   },
   ready: {
-    title: "Ready to join",
+    title: "Ready to join ",
     accent: "the network?",
-    text: "Whether you practise, study or are looking for guidance, Orovion meets you where you are. Create your profile in minutes — verification takes a couple of days.",
+    text: "Whether you’re a healthcare professional, a medical student or someone looking for trusted healthcare knowledge and guidance, Orovion gives you a place to connect, learn, share and access care.",
     cta: { label: "Join Orovion", to: "/login" },
   },
   statement: {
-    title: "Knowledge grounded in evidence, shared by verified people, and",
-    accent: "built for better care.",
-    text: "Every post on Orovion shows who wrote it, what they are licensed for and where they practise. Learn more about",
-    link: { label: "how verification works", to: "/help#verification" },
-    tail: "and what to expect.",
+    title: "Know who you’re connecting with.",
+    accent: "",
+    text: "Orovion is designed to make professional identity and shared knowledge more transparent. Healthcare professionals can verify their credentials, while content remains connected to the people who share it. This gives the network a clearer foundation for meaningful conversations and informed connections.",
+    link: { label: "", to: "" },
+    tail: "",
   },
   quote: {
     placeholder: true,
-    text: "Medicine moves forward when knowledge moves freely — between people you can trust.",
-    author: "Dr. Arjun Malhotra · Consultant Pediatrician",
+    text: "Healthcare has always been about people. Orovion simply gives those connections a place to happen.",
+    author: "OROVION",
     image: { src: "/marketing/quote-theatre.jpg", alt: "Surgeons working under operating-theatre lights" },
   },
   /** "Get the app" band above the FAQ: a thread draws a phone; desktop shows a QR inside, touch screens a button. */
@@ -194,53 +194,30 @@ export const HOME = {
 
 export const ABOUT = {
   hero: {
-    lead: "Your Health,",
-    title: "Our Purpose.",
+    lead: "Healthcare,",
+    title: "connected.",
     side: "Find out who we are, what we stand for, and how we bring trusted care closer to everyone.",
     eyebrow: "About",
-    intro: "At Orovion, we believe every question about health deserves an answer you can trust. Our role is to bring verified clinicians, medical students and patients together — with clarity, accountability and care.",
+    intro: "Orovion is a healthcare platform built to bring professionals, students and people together around the knowledge, connections and care that shape better healthcare.",
   },
   help: {
-    eyebrow: "The way we help",
+    eyebrow: "THE WAY WE BUILD",
     image: { src: "/marketing/about-help.jpg", alt: "" },
-    text: "We start by verifying — really verifying — every clinician who joins. From there, we build a space that is honest, useful and safe: cases shared with consent, knowledge shared with authorship, and consultations booked with confidence.",
+    text: "We start with trust, verifying the professionals who join and giving every contribution a clear voice. From there, we build a space where healthcare knowledge can be shared, questions can be explored and meaningful connections can happen with greater confidence.",
   },
-  founders: {
-    placeholder: true,
-    title: { lead: "Meet Our", accent: "Founders" },
-    lead: { before: "Orovion was started by ", strong: "Pawan Gupta, Adarsh Singh and Ayush Sachan, engineers from MMMUT Gorakhpur", after: " who believed finding trusted medical knowledge and care should be far simpler than it is." },
-    text: "They built Orovion to be a calm, verified space where healthcare professionals can share what they know, and where anyone can find guidance with confidence.",
-  },
+  
   team: {
     eyebrow: "Our team",
     title: "The People Building Orovion.",
-    text: "Orovion is more than a platform — each member of our team works to make trusted healthcare easier to find, understand and act on.",
-  },
-  statement: {
-    placeholder: true,
-    title: "Care grounded in evidence, guided by verification, and",
-    accent: "built for lasting trust.",
-    text: "Our platform creates room for that trust to grow. We check credentials, keep authorship visible and protect every conversation. Learn more about",
-    link: { label: "how verification works", to: "/help#verification" },
-    tail: "and what to expect from us.",
+    text: "Orovion is more than a platform, each member of our team brings a different perspective to building a more connected, trusted and useful healthcare experience.",
   },
   quote: {
     placeholder: true,
-    text: "Every verified answer makes the next decision a little easier — for the doctor and for the patient.",
-    author: "The Orovion team",
+    text: "Healthcare works better when the right people, knowledge and conversations are connected.",
+    author: "THE OROVION TEAM",
     image: { src: "/marketing/about-quote.jpg", alt: "Dark clouds lit by warm light" },
   },
-  story: {
-    placeholder: true,
-    eyebrow: "Real people. Real care.",
-    title: "Care that found its way home.",
-    text: "When Ravi’s mother moved back to their village, her cardiologist was a six-hour journey away. On Orovion, a verified specialist reviewed her reports, met them on video and stayed in touch — and Ravi finally stopped worrying between visits.",
-    cta: { label: "Start your journey", to: "/login" },
-    images: [
-      { src: "/marketing/about-story-main.jpg", alt: "A doctor talking with a patient in a clinic" },
-      { src: "/marketing/about-story-detail.jpg", alt: "A smiling nurse with a stethoscope" },
-    ],
-  },
+  
 };
 
 /* ── Services page (/services) ────────────────────────────────────────
@@ -250,11 +227,11 @@ export const ABOUT = {
 
 export const SERVICES_PAGE = {
   hero: {
-    lead: "Every Step",
-    title: "of Your Care.",
-    side: "Explore how Orovion helps you learn, share and get care — tailored to your goals, pace and needs.",
-    eyebrow: "Services",
-    intro: "Knowledge and care designed entirely around you — your questions, your pace and your needs. We help you move forward with verified answers, real conversations and lasting confidence.",
+    lead: "Healthcare,",
+    title: "connected through knowledge and care.",
+    side: "Explore how Orovion brings people, professionals, knowledge and care together through one connected healthcare network.",
+    eyebrow: "",
+    intro: "Orovion brings the healthcare experience together in one place, from learning and sharing knowledge to connecting with healthcare professionals and accessing consultations.",
   },
   /**
    * One story per service, in the home card order; the page alternates the
@@ -264,11 +241,11 @@ export const SERVICES_PAGE = {
   stories: [
     {
       placeholder: true,
-      slug: "clinical-cases",
-      eyebrow: "Real clinicians. Real cases.",
-      title: "A clearer plan by sunrise.",
-      text: "Dr. Ananya Mehra posted a puzzling set of scans at 2 a.m. — de-identified, with one question. By sunrise, three verified specialists in other cities had weighed in, and her patient’s plan was clearer for it.",
-      cta: { label: "Explore cases", to: "/login" },
+      slug: "Clinical-Cases",
+      eyebrow: "CASE STUDIES",
+      title: "Understand healthcare through real cases.",
+      text: "Case Studies allow healthcare professionals and medical students to share de identified clinical experiences in a structured format. Explore the clinical presentation, investigations, diagnosis, management and outcomes, and learn from how different cases are approached.",
+      cta: { label: "", to: "" },
       images: [
         { src: "/marketing/svc-story-cases-main.jpg", alt: "A surgical team in masks looking down into the camera" },
         { src: "/marketing/svc-story-cases-detail.jpg", alt: "A doctor reviewing scans on a lightbox" },
@@ -276,11 +253,11 @@ export const SERVICES_PAGE = {
     },
     {
       placeholder: true,
-      slug: "medical-pulses",
-      eyebrow: "Real learners. Real progress.",
-      title: "From textbook to bedside.",
-      text: "Final-year student Priya used to freeze on complex scans. A month of Pulses and case discussions with verified radiologists later, she walked her own patient through the findings — calmly, and correctly.",
-      cta: { label: "Start learning", to: "/login" },
+      slug: "Medical-Pulses",
+      eyebrow: "MEDICAL PULSES",
+      title: "Share and discover healthcare insights.",
+      text: "Pulses are a way to share concise thoughts, knowledge, observations and professional perspectives with the Orovion community.Follow conversations across healthcare and discover insights from the people working and learning within it.",
+      cta: { label: "", to: "" },
       images: [
         { src: "/marketing/svc-story-main.jpg", alt: "A medical student in a mask holding up an X-ray" },
         { src: "/marketing/svc-story-detail.jpg", alt: "A doctor reviewing brain scans" },
@@ -288,11 +265,11 @@ export const SERVICES_PAGE = {
     },
     {
       placeholder: true,
-      slug: "research-thesis",
-      eyebrow: "Real research. Real impact.",
-      title: "From thesis to practice.",
-      text: "Second-year resident Arjun had the data but no one to sharpen it with. Through Research & Thesis he found a verified mentor, tightened his methods over three rounds of review, and presented his study at his department’s grand rounds.",
-      cta: { label: "Share your research", to: "/login" },
+      slug: "Research-Thesis",
+      eyebrow: "RESEARCH SUMMARY",
+      title: "Make healthcare research easier to understand.",
+      text: "Explore concise summaries of research, findings and academic work shared on Orovion. Understand the key ideas, findings and relevance without having to navigate through lengthy research papers.",
+      cta: { label: "", to: "" },
       images: [
         { src: "/marketing/svc-story-research-main.jpg", alt: "Two clinicians reviewing data on a monitor" },
         { src: "/marketing/svc-story-research-detail.jpg", alt: "A researcher in a mask examining a sample in a flask" },
@@ -300,11 +277,11 @@ export const SERVICES_PAGE = {
     },
     {
       placeholder: true,
-      slug: "private-consults",
-      eyebrow: "Real patients. Real answers.",
-      title: "A second opinion, without the wait.",
-      text: "When Meera’s father was advised spine surgery, the family wanted to be sure. A private consult with a verified orthopaedic surgeon — reports reviewed, every question answered on video — gave them a clear plan within two days.",
-      cta: { label: "Book a consult", to: "/login" },
+      slug: "Private-Consults",
+      eyebrow: "PRIVATE CONSULTS",
+      title: "Connect with a verified healthcare professional.",
+      text: "Private Consults give people a direct way to request time with healthcare professionals on Orovion. Find the right professional, send a consultation request, receive a suitable time and connect privately when the consultation begins.",
+      cta: { label: "", to: "" },
       images: [
         { src: "/marketing/svc-story-consult-main.jpg", alt: "A doctor in a white coat with a stethoscope" },
         { src: "/marketing/svc-story-consult-detail.jpg", alt: "Typing on a laptop beside a stethoscope" },
