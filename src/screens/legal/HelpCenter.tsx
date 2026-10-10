@@ -1,5 +1,5 @@
 "use client";
-import { Rocket, BadgeCheck, Newspaper, Stethoscope, ShieldAlert } from "lucide-react";
+import { Rocket, Users, Newspaper, Stethoscope, BadgeCheck, ShieldAlert, UserCog, LifeBuoy } from "lucide-react";
 import LegalShell from "@/components/legal/LegalShell";
 import Accordion from "@/components/marketing/Accordion";
 import PillButton from "@/components/marketing/PillButton";
@@ -10,10 +10,13 @@ import { FAQ_SECTIONS } from "@/lib/faq";
     copy can never disagree. The accordion keeps closed answers in the DOM. */
 const ICONS: Record<string, any> = {
   "getting-started": Rocket,
-  verification: BadgeCheck,
-  "posts-feed": Newspaper,
+  network: Users,
+  "content-sharing": Newspaper,
   consultations: Stethoscope,
+  verification: BadgeCheck,
   safety: ShieldAlert,
+  "profile-settings": UserCog,
+  "account-recovery": LifeBuoy,
 };
 
 const SECTIONS = FAQ_SECTIONS.map((s, i) => ({
@@ -29,7 +32,7 @@ export default function HelpCenter() {
       eyebrow="Support"
       title="Help center"
       updated={undefined}
-      intro={<p>Answers about accounts, verification, the home feed, consultations and safety. Can’t find what you need? Our team is one message away.</p>}
+      intro={<p>Answers about getting started, connections, sharing, consultations, verification, safety, your profile and account recovery. Can’t find what you need? Our team is one message away.</p>}
       sections={SECTIONS}
       contact={false}
     >

@@ -9,10 +9,11 @@ import SiteFooter from "./SiteFooter";
 /**
  * Page frame for every public marketing page: motion runtime (Lenis + scroll
  * reveals), the custom cursor, the progressive blur strip, the fixed nav, the
- * page content and the parallax footer. Pages start their first section with `mk-top`, whose
+ * page content and the parallax footer. `navArrows={false}` drops the floating
+ * back/forward pill (the landing page). Pages start their first section with `mk-top`, whose
  * 160px top padding clears the fixed nav.
  */
-export default function MarketingShell({ children }: { children: ReactNode }) {
+export default function MarketingShell({ children, navArrows = true }: { children: ReactNode; navArrows?: boolean }) {
   return (
     // `isolate` makes this the stacking context, so fixed background layers
     // with a negative z-index (the home page's thread waves) paint above the
@@ -24,7 +25,7 @@ export default function MarketingShell({ children }: { children: ReactNode }) {
       <MotionRoot />
       <Cursor />
       <BlurGradient />
-      <NavArrows variant="floating" />
+      {navArrows && <NavArrows variant="floating" />}
       <SiteNav />
       <main id="main">{children}</main>
       <SiteFooter />

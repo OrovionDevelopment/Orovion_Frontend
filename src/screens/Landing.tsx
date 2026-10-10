@@ -48,7 +48,7 @@ export default function Landing() {
     );
   }
   return (
-    <MarketingShell>
+    <MarketingShell navArrows={false}>
       <ThreadWaves enterId="how-it-works" exitId="big-quote" />
       <HeroSequence />
       <Services />

@@ -77,8 +77,4 @@ describe("journal links", () => {
     const anchors = SITEMAP.flat().map((l) => l.href).filter((h) => h.startsWith("/#"));
     for (const h of anchors) expect(["/#how-it-works", "/#community", "/#features", "/#contact", "/#get-the-app"]).toContain(h);
   });
-
-  it("lists the journal in the footer sitemap", () => {
-    expect(SITEMAP.flat().some((l) => l.href === "/journal")).toBe(true);
-  });
 });

@@ -19,9 +19,8 @@ export type NavLinkItem = { label: string; href: string };
 
 /** Primary nav (desktop bar + mobile menu). Section anchors are absolute so they work from every page. */
 export const NAV_LINKS: NavLinkItem[] = [
-  { label: "About", href: "/about" },
-  { label: "Services", href: "/services" },
-  { label: "Team", href: "/team" },
+  { label: "About us", href: "/about" },
+  { label: "Features", href: "/services" },
   { label: "Get the app", href: "/mobile-app" },
   { label: "Help", href: "/help" },
   { label: "Contact", href: "/contact" },
@@ -32,10 +31,8 @@ export const SITEMAP: NavLinkItem[][] = [
   [
     { label: "Home", href: "/" },
     { label: "About us", href: "/about" },
-    { label: "Services", href: "/services" },
-    { label: "Journal", href: "/journal" },
-    { label: "How consults work", href: "/#how-it-works" },
-    { label: "Meet the team", href: "/team" },
+    { label: "Features", href: "/services" },
+    { label: "How Orovion works", href: "/#how-it-works" },
   ],
   [
     { label: "Get the app", href: "/mobile-app" },
@@ -114,7 +111,7 @@ export const HOME = {
     title: "Where Healthcare Comes Together.",
     text: "Orovion brings healthcare professionals, medical students and people to connect, share knowledge, explore real cases and access private consultations in one place.",
     cta: { label: "Join Orovion", to: "/login" },
-    image: { src: "/marketing/hero-portrait.jpg", srcPhone: "/marketing/hero-portrait-tall.jpg" },
+    image: { src: "/marketing/a.jpeg", srcPhone: "/marketing/a.jpeg" },
     placeholder: true,
   },
   /** The scroll-driven toggle that follows the hero. */
@@ -317,7 +314,7 @@ export const ABOUT_FAQ: readonly FaqItem[] = [
 /** FAQ on /services — how the services and consultations work. */
 export const SERVICES_FAQ: readonly FaqItem[] = [
   ...faqSection("consultations").slice(0, 3),
-  ...faqSection("posts-feed").slice(0, 2),
+  ...faqSection("content-sharing").slice(0, 2),
   ...faqSection("verification").slice(0, 1),
 ];
 
@@ -334,7 +331,7 @@ export const JOURNAL_PAGE = {
 
 /** FAQ on journal articles — how posts and discussions work, and how they stay safe. */
 export const JOURNAL_FAQ: readonly FaqItem[] = [
-  ...faqSection("posts-feed").slice(0, 3),
+  ...faqSection("content-sharing").slice(0, 3),
   ...faqSection("safety").slice(0, 2),
   ...faqSection("verification").slice(0, 1),
 ];

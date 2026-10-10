@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "@/lib/router";
+import { Link, usePathname } from "@/lib/router";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { NAV_LINKS } from "@/lib/marketing";
@@ -36,6 +36,8 @@ export default function SiteNav() {
   const [onDark, setOnDark] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // The home page has no theme switch; the other marketing pages keep theirs.
+  const showTheme = usePathname() !== "/";
 
   const evaluate = useCallback(() => {
     let dark = false;
@@ -83,14 +85,14 @@ export default function SiteNav() {
               })}
             </ul>
             <div className={cn("flex items-center gap-3", enter(0.8).className)} style={enter(0.8).style}>
-              <ThemeToggle className={cn("mk-snap transition-colors duration-500", onDark && "!text-white hover:!bg-white/10")} />
+              {showTheme && <ThemeToggle className={cn("mk-snap transition-colors duration-500", onDark && "!text-white hover:!bg-white/10")} />}
               <PillButton to="/login" size="sm" variant={onDark ? "light" : "brand"}>Join Orovion</PillButton>
             </div>
           </nav>
 
           {/* tablet + phone */}
           <div className="flex items-center gap-2 desk:hidden">
-            <ThemeToggle className="mk-snap" />
+            {showTheme && <ThemeToggle className="mk-snap" />}
             <button
               type="button"
               onClick={() => setMenuOpen((o) => !o)}

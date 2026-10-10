@@ -7,7 +7,7 @@ import { ALL_FAQ_ITEMS } from "@/lib/faq";
 export const metadata = pageMetadata({
   title: "Help center",
   description:
-    "Answers about Orovion accounts, verification, the home feed, posts and comments, consultations, payments, and safety tools.",
+    "Answers about getting started on Orovion, connections, sharing, consultations, verification, safety, your profile and account recovery.",
   path: "/help",
 });
 

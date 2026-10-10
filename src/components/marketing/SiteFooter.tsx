@@ -31,7 +31,6 @@ export default function SiteFooter() {
             </div>
             <div className="mk-reveal flex flex-wrap items-center gap-x-8 gap-y-5">
               <PillButton to="/login" variant="light">Join Orovion</PillButton>
-              <Link to="/app" className="link-u text-sm font-semibold text-white">Explore as guest</Link>
             </div>
             <div className="mk-reveal flex flex-wrap gap-3">
               <Link to="/mobile-app" data-cursor="snap" className="rounded-xl" aria-label="Orovion on the App Store — learn more"><StoreBadge store="apple" size="sm" /></Link>
@@ -70,7 +69,7 @@ export default function SiteFooter() {
           </div>
           <div className="mk-reveal flex flex-col items-start gap-4 desk:col-start-3">
             <Logo light size={26} />
-            <p className="t-small text-white/65">Built for the healthcare community.<br />© {new Date().getFullYear()} Orovion. All rights reserved.</p>
+            <p className="t-small text-white/65">Where Healthcare Comes Together.<br />© {new Date().getFullYear()} Orovion. All rights reserved.</p>
           </div>
         </div>
       </div>
