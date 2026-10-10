@@ -11,8 +11,6 @@ export type JournalSection = { heading: string; paragraphs: string[] };
 
 export type JournalArticle = {
   slug: string;
-  /** Card label and article kicker. */
-  tag: "Pulse" | "Case study" | "Research";
   title: string;
   /** One line for cards and search snippets. */
   excerpt: string;
@@ -25,10 +23,9 @@ export type JournalArticle = {
 export const JOURNAL: JournalArticle[] = [
   {
     slug: "reading-a-paediatric-ecg",
-    tag: "Pulse",
-    title: "HEALTHCARE PROFESSIONAL",
+    title: "HealthCare Professional",
     excerpt: "Rate, rhythm, axis — a quick, structured routine for the night shift.",
-    lede: "A paediatric ECG can look intimidating at 3 a.m. — small complexes, fast rates and normal values that change with age. A short, repeatable routine turns it from a puzzle into a checklist.",
+    lede: "A professional network built around your practice. Orovion gives healthcare professionals a dedicated space to build their professional presence, connect with peers, share knowledge and engage with the wider healthcare community.",
     image: { src: "/marketing/journal-heart.jpg", alt: "An anatomical model of the human heart" },
     sections: [
       {
@@ -53,9 +50,8 @@ export const JOURNAL: JournalArticle[] = [
   },
   {
     slug: "what-makes-a-case-discussion-useful",
-    tag: "Case study",
-    title: "What makes a case discussion useful?",
-    excerpt: "The details that turn a post into a better decision.",
+    title: "Medical Student",
+    excerpt: "Connect with healthcare professionals, explore Case Studies, Pulses and Research Summaries, and share your own academic work.",
     lede: "The best case discussions don’t start with a diagnosis — they start with a clear question. A few habits make the difference between a post that collects reactions and one that changes a plan.",
     image: { src: "/marketing/journal-brain.jpg", alt: "An anatomical model of the human brain" },
     sections: [
@@ -84,9 +80,8 @@ export const JOURNAL: JournalArticle[] = [
   },
   {
     slug: "biomarkers-without-the-jargon",
-    tag: "Research",
-    title: "Biomarkers, without the jargon",
-    excerpt: "Which results change management — and which don’t.",
+    title: "General User",
+    excerpt: "Discover healthcare professionals, explore healthcare knowledge and request private consultations when you need them.",
     lede: "A lab report can list dozens of values. The useful question isn’t “is anything abnormal?” — it’s “will this result change what we do next?”",
     image: { src: "/marketing/journal-lab.jpg", alt: "Blood sample tubes in a laboratory rack" },
     sections: [
@@ -124,11 +119,4 @@ export function relatedArticles(slug: string): JournalArticle[] {
   const i = JOURNAL.findIndex((a) => a.slug === slug);
   const rest = [...JOURNAL.slice(i + 1), ...JOURNAL.slice(0, Math.max(0, i))].filter((a) => a.slug !== slug);
   return rest.slice(0, 2);
-}
-
-/** Reading time in whole minutes at ~200 words a minute, rounded up (at least 1). */
-export function readingMinutes(a: Pick<JournalArticle, "lede" | "sections">): number {
-  const text = [a.lede, ...a.sections.flatMap((s) => [s.heading, ...s.paragraphs])].join(" ");
-  const words = text.split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.ceil(words / 200));
 }

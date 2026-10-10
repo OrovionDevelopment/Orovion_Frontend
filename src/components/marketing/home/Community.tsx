@@ -28,7 +28,6 @@ export default function Community() {
             <Link to={p.href} data-cursor="Read" className="mk-reveal mk-lift group flex flex-col items-center gap-8 text-center">
               <BlobPhoto src={p.image} index={i} sizes="(min-width: 810px) 30vw, 90vw" />
               <div className="flex max-w-[340px] flex-col items-center gap-3">
-                <Eyebrow>{p.tag}</Eyebrow>
                 <h3 className="t-title !text-[22px] text-ink-900">{p.title}</h3>
                 <p className="t-small text-ink-600">{p.text}</p>
                 <span className="ul-wipe mt-2 t-eyebrow">Read more</span>

@@ -1,10 +1,7 @@
-import { Activity, FlaskConical, Stethoscope } from "lucide-react";
-import { readingMinutes, type JournalArticle, type JournalSection } from "@/lib/journal";
-import { Display, Eyebrow, FillText, rise } from "../Type";
+import type { JournalArticle, JournalSection } from "@/lib/journal";
+import { Display, FillText, rise } from "../Type";
 import { LongThreads } from "../ThreadHero";
 import BlobPhoto from "../home/BlobPhoto";
-
-const ICONS = { Pulse: Activity, "Case study": Stethoscope, Research: FlaskConical } as const;
 
 function ArticleSection({ section: s }: { section: JournalSection }) {
   return (
@@ -21,13 +18,9 @@ function ArticleSection({ section: s }: { section: JournalSection }) {
  * Journal article (reference "Article"): the photo sits in a large organic
  * blob, pinned on the left while the article scrolls past on the right
  * (tablet + desktop), with the long threads drawn in behind. The right column:
- * icon, title (word fill), lede and reading time, then the sections and the
- * education disclaimer.
+ * title (word fill) and lede, then the sections.
  */
 export default function ArticleBody({ article: a }: { article: JournalArticle }) {
-  const Icon = ICONS[a.tag];
-  const minutes = readingMinutes(a);
-
   return (
     // depth frame: the pinned photo drifts across the whole read, not its own (fixed) box
     <article data-depth-frame className="relative overflow-x-clip pb-20 pt-36 tab:pb-[120px] tab:pt-[170px] desk:pb-40">
@@ -42,21 +35,11 @@ export default function ArticleBody({ article: a }: { article: JournalArticle })
         {/* article */}
         <div className="flex max-w-[560px] flex-col gap-12 tab:pl-[6%] desk:pl-[10%]">
           <header className="flex flex-col gap-8">
-            <div className={`flex items-center gap-4 ${rise(0.2).className}`} style={rise(0.2).style}>
-              <Icon aria-hidden size={40} strokeWidth={1.4} className="text-brand-600" />
-              <Eyebrow as="span">{a.tag} · {minutes} min read</Eyebrow>
-            </div>
             <Display as="h1" className={rise(0.3).className} style={rise(0.3).style}>{a.title}</Display>
             <p className={`t-body-lg text-ink-700 ${rise(0.45).className}`} style={rise(0.45).style}>{a.lede}</p>
           </header>
 
           {a.sections.map((s) => <ArticleSection key={s.heading} section={s} />)}
-
-          <footer>
-            <p className="mk-reveal rounded-2xl bg-ink-50 px-5 py-4 t-small text-ink-500">
-              This article is for general education and does not replace individual medical advice.
-            </p>
-          </footer>
         </div>
       </div>
     </article>

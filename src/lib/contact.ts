@@ -7,8 +7,8 @@
  */
 
 export const CONTACT_EMAIL = "hello@orovion.com";
-export const CONTACT_PHONE = "+91 80042 27370";
-export const CONTACT_PHONE_HREF = "tel:+918004227370";
+export const CONTACT_PHONE = "+91 89485 79486";
+export const CONTACT_PHONE_HREF = "tel:+918948579486";
 export const CONTACT_ADDRESS = "Varanasi, Uttar Pradesh, India, 221010";
 
 export const CONTACT_ROLES = [

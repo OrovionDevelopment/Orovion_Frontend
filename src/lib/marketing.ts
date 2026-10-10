@@ -71,9 +71,10 @@ export const STATS = [
    `placeholder: true` is illustrative copy to replace. */
 
 export const STEPS = [
-  { title: "Find a verified specialist", text: "Search by name, specialty or condition. Every clinician carries a license-verified badge before they can consult — no guesswork about who you are talking to." },
-  { title: "Request a consultation", text: "Pick a slot from the doctor's live availability, share what is going on and attach your reports. Payment confirms the booking." },
-  { title: "Meet on secure video", text: "Join the call inside Orovion. Prescriptions and summaries stay in your consultation history — only you and your doctor can open them." },
+  { title: "Create your profile", text: "Set up your Orovion profile and share the information that helps others understand who you are and how you engage with healthcare." },
+  { title: "Discover", text: "Find healthcare professionals, medical students, knowledge and insights that are relevant to your interests, learning or healthcare needs." },
+  { title: "Connect & Share", text: "Build meaningful professional connections, exchange messages and contribute through Posts, Pulses, Case Studies and Research Summaries" },
+  { title: "Consult", text: "Find a verified healthcare professional, request a private consultation and schedule a suitable time to connect." },
 ];
 
 /**
@@ -176,7 +177,7 @@ export const HOME = {
     title: "One network,\ndifferent ways to use it.",
     text: "Whether you’re a healthcare professional, medical student or general user, Orovion gives you a place to connect, learn, share and access healthcare.",
     /** Journal cards — "Read more" opens the article (src/lib/journal.ts). */
-    posts: JOURNAL.map((a) => ({ tag: a.tag, title: a.title, text: a.excerpt, image: a.image.src, href: `/journal/${a.slug}` })),
+    posts: JOURNAL.map((a) => ({ title: a.title, text: a.excerpt, image: a.image.src, href: `/journal/${a.slug}` })),
   },
   numbers: {
     title: "From the first case to lasting change,",

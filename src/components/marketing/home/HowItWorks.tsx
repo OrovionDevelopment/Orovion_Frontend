@@ -7,7 +7,7 @@ import { Accent, FillText } from "../Type";
 /**
  * "How it works" (reference): an oversized two-tone title, an indented intro,
  * then the steps scrolling past a pinned odometer number that rolls 01 → 02 →
- * 03 (0.8s, cubic-bezier(.6,0,.4,1)) as each step crosses 60% of the screen.
+ * 03 → 04 (0.8s, cubic-bezier(.6,0,.4,1)) as each step crosses 60% of the screen.
  * The page's fixed thread waves (ThreadWaves) fade in behind this section.
  * Tablet/phone show the number inline with each step instead.
  */

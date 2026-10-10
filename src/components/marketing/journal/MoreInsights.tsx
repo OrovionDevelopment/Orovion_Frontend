@@ -10,10 +10,10 @@ export default function MoreInsights({ articles }: { articles: JournalArticle[] 
   return (
     <section aria-label="More insights" className="relative mk-section">
       <div className="mk-container flex flex-col items-center gap-6 text-center">
-        <Eyebrow className="mk-reveal">Our journal</Eyebrow>
-        <Display size="sm" className="mk-reveal">More insights <Accent>for you.</Accent></Display>
+        <Eyebrow className="mk-reveal">EXPLORE OROVION</Eyebrow>
+        <Display size="sm" className="mk-reveal">More ways to be part of <Accent>the network..</Accent></Display>
         <p className="mk-reveal max-w-[460px] t-body text-ink-600">
-          More cases, explainers and research from verified clinicians — practical ideas for sharper thinking and better care.
+          Orovion is built for healthcare professionals, medical students and people. Explore how each role can connect, learn, share and engage with healthcare.
         </p>
       </div>
 

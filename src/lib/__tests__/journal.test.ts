@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { JOURNAL, findArticle, relatedArticles, readingMinutes } from "../journal";
+import { JOURNAL, findArticle, relatedArticles } from "../journal";
 import { HOME } from "../marketing";
 
 describe("journal articles", () => {
@@ -28,13 +28,5 @@ describe("journal articles", () => {
       expect(more).not.toContain(a);
       expect(more).toHaveLength(Math.min(2, JOURNAL.length - 1));
     }
-  });
-
-  it("estimates reading time at ~200 words a minute, at least 1", () => {
-    const words = (n: number) => Array.from({ length: n }, () => "word").join(" ");
-    const art = (n: number) => ({ ...JOURNAL[0], lede: words(n), sections: [{ heading: "", paragraphs: [""] }] });
-    expect(readingMinutes(art(10))).toBe(1);
-    expect(readingMinutes(art(450))).toBe(3);
-    for (const a of JOURNAL) expect(readingMinutes(a)).toBeGreaterThanOrEqual(1);
   });
 });
