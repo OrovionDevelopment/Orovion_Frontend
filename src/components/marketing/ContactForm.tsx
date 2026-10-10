@@ -59,7 +59,7 @@ export default function ContactForm() {
 
       <Group title="How can we help?">
         <Field label="Your message" required>
-          <textarea name="message" required rows={4} placeholder="Share anything that helps us understand what you need — the more context, the faster we can help." className="mk-field" />
+          <textarea name="message" required rows={4} placeholder="Tell us a little about what you need help with. Any details you share will help us understand your situation and respond more effectively." className="mk-field" />
         </Field>
       </Group>
 
@@ -86,10 +86,6 @@ export default function ContactForm() {
           <input type="checkbox" name="updates" className="mk-check" />
           <span className="select-none">Send me occasional product updates by email</span>
         </label>
-        <p className="max-w-[480px] t-small text-ink-500">
-          One email a month at most — new features, clinical content highlights and community
-          news. Every email contains an unsubscribe link.
-        </p>
       </div>
 
       {/* honeypot — hidden from people, irresistible to bots */}

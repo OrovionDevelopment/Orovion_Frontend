@@ -293,14 +293,18 @@ export const SERVICES_PAGE = {
 const faqSection = (id: string) => FAQ_SECTIONS.find((s) => s.id === id)?.items ?? [];
 
 /**
- * FAQ shown on the landing page — picked from the Help center source
- * (src/lib/faq.ts) so the answers never drift from /help.
+ * FAQ shown on the landing page. Unlike the other pages' FAQs below, this one
+ * is written here and is NOT drawn from the Help center (src/lib/faq.ts), so
+ * edits to it do not change /help.
  */
 export const LANDING_FAQ: readonly FaqItem[] = [
-  ...faqSection("getting-started").slice(0, 2),
-  ...faqSection("verification").slice(0, 2),
-  ...faqSection("consultations").slice(0, 1),
-  ...faqSection("safety").slice(2, 3),
+  ["How do I create an account?", "Sign in with Google, Apple, phone number or QR code, choose your role as a healthcare professional, medical student or general user, and complete the onboarding process."],
+  ["What can I do on Orovion?", "Connect with people across healthcare, discover professionals, share knowledge through Posts, Pulses, Case Studies and Research Summaries, and access private consultations."],
+  ["What’s the difference between the three roles?", "Healthcare professionals can build their professional presence, connect with peers, share knowledge and offer consultations. Medical students can learn, connect, explore healthcare knowledge and share academic work. General users can discover professionals, explore healthcare knowledge and request consultations."],
+  ["How does professional verification work?", "Healthcare professionals can submit their professional registration details, identification and liveness verification. Orovion reviews the submitted information before awarding a verification badge."],
+  ["How do I request a consultation?", "Open the Consult section, choose a healthcare professional and select Book Consultation. Submit your request and wait for the professional to review and schedule a suitable time."],
+  ["What happens after a consultation?", "Once a consultation is completed, you and the healthcare professional become connected on Orovion, allowing you to continue the conversation through messages."],
+  ["Who can I message on Orovion?", "You can message profiles you’re connected with. Messaging is available after a connection is established."],
 ];
 
 /** FAQ on /about — what people ask before trusting a new platform. */

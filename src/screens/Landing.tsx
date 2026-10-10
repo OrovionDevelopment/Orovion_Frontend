@@ -61,8 +61,10 @@ export default function Landing() {
       <GetApp />
       <FaqSection
         title={<>Your questions.<br /><Accent>Answered.</Accent></>}
-        subtitle="Not sure where to start? These answers cover what most people ask before joining Orovion."
+        subtitle="Not sure where to start? Here are answers to some of the most common questions about Orovion."
         items={LANDING_FAQ}
+        prompt={null}
+        cta={null}
       />
       <ContactSection id="contact" />
     </MarketingShell>

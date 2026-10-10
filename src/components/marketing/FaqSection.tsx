@@ -21,13 +21,15 @@ export default function FaqSection({
   title: ReactNode;
   subtitle: string;
   items: readonly FaqItem[];
-  cta?: { label: string; to: string };
-  prompt?: string;
+  /** `null` hides the button (the defaults only apply when left undefined). */
+  cta?: { label: string; to: string } | null;
+  /** `null` hides the line above the button. */
+  prompt?: string | null;
 }) {
-  const bottom = (
+  const bottom = (prompt || cta) && (
     <div className="flex flex-col items-center gap-8 text-center tab:items-start tab:text-left">
-      <p className="mk-reveal max-w-[480px] t-small text-ink-600">{prompt}</p>
-      <div className="mk-reveal"><PillButton to={cta.to}>{cta.label}</PillButton></div>
+      {prompt && <p className="mk-reveal max-w-[480px] t-small text-ink-600">{prompt}</p>}
+      {cta && <div className="mk-reveal"><PillButton to={cta.to}>{cta.label}</PillButton></div>}
     </div>
   );
 

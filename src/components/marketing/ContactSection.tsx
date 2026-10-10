@@ -34,10 +34,10 @@ export default function ContactSection({ page = false, id }: { page?: boolean; i
                 Every question deserves <Accent>a&nbsp;real answer.</Accent>
               </Display>
               <p className={cn("max-w-[480px] t-body text-ink-600", e.intro.className)} style={e.intro.style}>
-                Whether you’re a clinician exploring verification, a hospital planning a
-                partnership, or a patient with a question about consultations — a real person
-                on our team reads every message. Use the form and we’ll reply within two
-                business days.
+                Whether you’re a healthcare professional with questions about verification,
+                an institution interested in partnering with Orovion, or someone seeking help
+                with consultations, we’re here to help. Send us a message through the form,
+                and our team will get back to you within two business days.
               </p>
             </div>
             <div className={cn("sticky top-40 z-[1] hidden flex-col gap-20 tab:flex", e.reach.className)} style={e.reach.style}>
