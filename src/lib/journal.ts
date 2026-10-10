@@ -24,7 +24,7 @@ export const JOURNAL: JournalArticle[] = [
   {
     slug: "reading-a-paediatric-ecg",
     title: "HealthCare Professional",
-    excerpt: "Rate, rhythm, axis — a quick, structured routine for the night shift.",
+    excerpt: "Build your professional presence, connect with peers, share clinical knowledge and access private consultations.",
     lede: "A professional network built around your practice. Orovion gives healthcare professionals a dedicated space to build their professional presence, connect with peers, share knowledge and engage with the wider healthcare community.",
     image: { src: "/marketing/journal-heart.jpg", alt: "An anatomical model of the human heart" },
     sections: [
@@ -49,31 +49,28 @@ export const JOURNAL: JournalArticle[] = [
     ],
   },
   {
-    slug: "what-makes-a-case-discussion-useful",
+    slug: "Medical Student",
     title: "Medical Student",
     excerpt: "Connect with healthcare professionals, explore Case Studies, Pulses and Research Summaries, and share your own academic work.",
-    lede: "The best case discussions don’t start with a diagnosis — they start with a clear question. A few habits make the difference between a post that collects reactions and one that changes a plan.",
+    lede: "Learn beyond the classroom. Orovion connects medical students with healthcare professionals, clinical knowledge, case discussions and research in one professional healthcare network.",
     image: { src: "/marketing/journal-brain.jpg", alt: "An anatomical model of the human brain" },
     sections: [
       {
-        heading: "Lead with the question.",
+        heading: "Learn from the healthcare community.",
         paragraphs: [
-          "Say what you need in the first line: a differential, the next investigation, an opinion on management. Specialists can answer a specific question in minutes; a vague one tends to get general advice.",
-          "Then give just enough context — age, key history, timeline and what has already been tried.",
+          "Explore Case Studies, Pulses and Research Summaries to discover clinical perspectives and knowledge beyond textbooks and lectures.",
         ],
       },
       {
-        heading: "Show the timeline.",
+        heading: "Build connections that matter.",
         paragraphs: [
-          "Clinical reasoning depends on sequence: what came first, what changed and how fast. A short, dated timeline is often more useful than a long narrative.",
-          "Attach the relevant results and images — de-identified, and shared with consent — and say clearly what is still pending.",
+          "Connect with healthcare professionals and fellow students, follow their work and continue conversations through your professional network.",
         ],
       },
       {
-        heading: "Close the loop.",
+        heading: "Share your own work.",
         paragraphs: [
-          "When the case resolves, come back and share the outcome. Follow-ups turn a single answer into shared learning, for the specialists who replied and for every student reading along.",
-          "On Orovion every reply shows its author’s verified credentials, so you always know whose reasoning you are weighing.",
+          "Contribute Research Summaries, Posts and other knowledge to build your presence and participate in meaningful healthcare discussions.",
         ],
       },
     ],
@@ -82,28 +79,25 @@ export const JOURNAL: JournalArticle[] = [
     slug: "biomarkers-without-the-jargon",
     title: "General User",
     excerpt: "Discover healthcare professionals, explore healthcare knowledge and request private consultations when you need them.",
-    lede: "A lab report can list dozens of values. The useful question isn’t “is anything abnormal?” — it’s “will this result change what we do next?”",
+    lede: "A simpler way to navigate healthcare. Orovion helps you discover healthcare professionals, explore healthcare knowledge and connect with the people you need, all within one healthcare network.",
     image: { src: "/marketing/journal-lab.jpg", alt: "Blood sample tubes in a laboratory rack" },
     sections: [
       {
-        heading: "A marker is only as useful as the decision it informs.",
+        heading: "Discover the right professionals.",
         paragraphs: [
-          "Before ordering a test, it helps to know what you would do with each possible result. If no result would change the plan, the test may add cost and worry without adding care.",
-          "That is why the same marker can be essential in one setting and noise in another.",
+          "Explore healthcare professional profiles, their expertise and professional information to better understand who you are connecting with.",
         ],
       },
       {
-        heading: "Specific, or sensitive?",
+        heading: "Understand healthcare knowledge.",
         paragraphs: [
-          "Some markers point to one process — troponin, for example, signals injury to heart muscle. Others, like C-reactive protein, rise with inflammation from many causes and need context to interpret.",
-          "Neither kind is better; they answer different questions. Knowing which kind you are reading keeps the interpretation honest.",
+          "Explore Case Studies, Pulses and Research Summaries to learn more about healthcare topics and perspectives shared across the network.",
         ],
       },
       {
-        heading: "Trends beat single values.",
+        heading: "Access private consultations.",
         paragraphs: [
-          "One result is a snapshot. Repeated measurements — HbA1c over months for long-term glucose control, for instance — often say more than any single number.",
-          "When you share results for discussion on Orovion, include earlier values and their dates. Verified specialists can then read the trend, not just the latest point.",
+          "When you need professional guidance, find a verified healthcare professional, request a private consultation and schedule a suitable time through Orovion.",
         ],
       },
     ],
