@@ -107,7 +107,6 @@ export default function SiteNav() {
                 <span className="pill__roll">Menu</span>
                 <span className="pill__roll pill__roll--in">Close</span>
               </span>
-              <span className="pill__dot pill__dot--a" aria-hidden />
             </button>
           </div>
         </div>

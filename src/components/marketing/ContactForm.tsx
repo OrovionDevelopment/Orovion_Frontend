@@ -93,7 +93,7 @@ export default function ContactForm() {
 
       <div className="flex flex-col gap-4">
         <div className="w-max">
-          <PillButton type="submit" state={state} className="min-w-[192px]">
+          <PillButton type="submit" state={state} className="min-w-[192px] justify-center">
             {state === "success" ? "Email ready" : "Send message"}
           </PillButton>
         </div>

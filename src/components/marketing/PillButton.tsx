@@ -32,7 +32,6 @@ export default function PillButton(props: AsLink | AsButton) {
         <span className="pill__roll">{children}</span>
         <span className="pill__roll pill__roll--in" aria-hidden>{children}</span>
       </span>
-      <span className="pill__dot pill__dot--a" aria-hidden />
       <span className="pill__loader" aria-hidden><span className="pill__spinner" /></span>
     </>
   );

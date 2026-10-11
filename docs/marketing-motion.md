@@ -1,6 +1,6 @@
 # Marketing pages: layout & motion system
 
-Applies to the public site only: `/`, `/about`, `/services`, `/journal`, `/journal/[slug]`, `/contact`, `/team`, `/team/[slug]`,
+Applies to the public site only: `/`, `/about`, `/features`, `/journal`, `/journal/[slug]`, `/contact`, `/team`, `/team/[slug]`,
 `/mobile-app`, `/help`, `/privacy`, `/terms`. The logged-in app (`/app/*`) keeps
 its own 150–340ms motion rules from `DESIGN.md`/`PRODUCT.md`.
 
@@ -126,7 +126,7 @@ services → philosophy → how it works → ready → statement + big quote
 
 > The **numbers** section is currently switched off everywhere: commented out
 > in `src/screens/Landing.tsx` (import and element) and removed from
-> `/services`. Uncomment both lines on the home page to bring it back.
+> `/features`. Uncomment both lines on the home page to bring it back.
 
 Scroll-linked values are written straight to the DOM from one rAF-throttled
 scroll frame (`useScrollFrame`). React never re-renders per frame; only the
@@ -242,7 +242,7 @@ reuse the home components (`Statement` / `QuoteDome` from
 
 Every big heading and quote has the letter fill.
 
-## Services page (`/services`)
+## Services page (`/features`)
 
 The section order follows the reference services page:
 
@@ -251,7 +251,7 @@ The section order follows the reference services page:
    Medical Pulses, Research & Thesis, Private Consults), photos alternating
    right → left → right → left (`flip` on every second; the shared `Story`
    section, as on /about). Each story's id is its service slug, so a home
-   card's "Read more" (`/services#clinical-cases` …) lands right on it.
+   card's "Read more" (`/features#clinical-cases` …) lands right on it.
 3. FAQ
 4. Contact
 

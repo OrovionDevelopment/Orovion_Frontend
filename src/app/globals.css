@@ -492,16 +492,20 @@ html.lenis { scroll-behavior: auto !important; }
   /* ── pill button (text roll) ────────────────────────────────────────── */
   .pill {
     --pill-bg: rgb(var(--brand-600)); --pill-fg: #fff; --pill-fg-hover: #fff; --pill-dot: #fff;
-    position: relative; isolation: isolate; display: inline-flex; align-items: center; height: 40px; padding: 1px 48px 0 20px;
+    position: relative; isolation: isolate; display: inline-flex; align-items: center; height: 40px; padding: 1px 24px 0;
     border-radius: 999px; overflow: hidden; background: var(--pill-bg); color: var(--pill-fg);
     font-family: "Inter", system-ui, sans-serif; font-size: 12px; font-weight: 600; line-height: 1.4; letter-spacing: .11em; text-transform: uppercase;
     white-space: nowrap; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
     --pill-roll: 40px; /* how far the label rolls: the pill's height */
-    transition: background-color .5s var(--ease-reveal), color .5s var(--ease-reveal), opacity .3s, transform .2s var(--ease-premium);
+    transition: background-color .5s var(--ease-reveal), color .5s var(--ease-reveal), opacity .3s, transform .2s var(--ease-premium), padding .3s var(--ease-reveal);
   }
   /* A quick, small press on click. */
   .pill:active { transform: scale(.97); transition-duration: .5s, .5s, .3s, .12s; }
   .pill--sm { height: 39px; --pill-roll: 39px; }
+  /* The Menu/Close toggle has a fixed width: centre its label. */
+  .pill--toggle { justify-content: center; padding-inline: 0; }
+  /* Room for the spinner disc while loading / confirming. */
+  .pill[data-state="loading"], .pill[data-state="success"] { padding-right: 48px; }
   /* For dark backdrops (footer, nav over the footer) — literal white is fine on solid brand color. */
   .pill--light { --pill-bg: #fff; --pill-fg: #0e1213; --pill-fg-hover: rgb(var(--brand-600)); --pill-dot: #0e1213; }
   /* Text roll (Althea reference): on hover or keyboard focus the label slides
@@ -523,8 +527,6 @@ html.lenis { scroll-behavior: auto !important; }
   .pill--toggle.is-open .pill__roll--in { transform: none; opacity: 1; }
   /* Reduced motion: no travel — the two copies simply crossfade in place. */
   @media (prefers-reduced-motion: reduce) { .pill, .pill--sm { --pill-roll: 0px; } }
-  .pill__dot { position: absolute; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 999px; background: var(--pill-dot); transition: opacity .25s; }
-  .pill__dot--a { right: 16px; }
   .pill:focus-visible { outline: 2px solid rgb(var(--brand-600)); outline-offset: 3px; }
   .pill--light:focus-visible { outline-color: #fff; }
   .pill:disabled, .pill[aria-disabled="true"] { opacity: .5; pointer-events: none; }
@@ -532,7 +534,6 @@ html.lenis { scroll-behavior: auto !important; }
   .pill[data-state="loading"] .pill__label, .pill[data-state="success"] .pill__label { color: var(--pill-fg); }
   .pill[data-state="loading"] .pill__roll:not(.pill__roll--in), .pill[data-state="success"] .pill__roll:not(.pill__roll--in) { transform: none; opacity: 1; }
   .pill[data-state="loading"] .pill__roll--in, .pill[data-state="success"] .pill__roll--in { transform: translateY(var(--pill-roll)); opacity: 0; }
-  .pill[data-state="loading"] .pill__dot--a { opacity: 0; }
   /* Loading: the right-hand dot swells into a 31px disc with a spinning ring. */
   .pill__loader { position: absolute; right: 5px; top: 50%; width: 31px; height: 31px; margin-top: -15.5px; border-radius: 999px; display: grid; place-items: center; background: var(--pill-dot); opacity: 0; transform: scale(.13); transition: transform .6s var(--ease-spring), opacity .2s; }
   .pill[data-state="loading"] .pill__loader { opacity: 1; transform: scale(1); }

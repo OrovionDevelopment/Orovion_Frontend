@@ -56,7 +56,7 @@ path in `src/lib/marketing.ts`.
 | `about-quote.jpg` | about: big quote (dark clouds, warm light) | 1504608524841-42fe6f032b4b |
 | `about-story-main.jpg` | about: story, large photo | 1631217868264-e5b90bb7e133 |
 | `about-story-detail.jpg` | about: story, inset photo | 1622253692010-333f2da6031d |
-| `svc-cases.jpg`, `svc-pulses.jpg`, `svc-research.jpg`, `svc-consults.jpg` | **unused** since the /services full-bleed sections were removed — safe to delete | same ids as `service-*.jpg` |
+| `svc-cases.jpg`, `svc-pulses.jpg`, `svc-research.jpg`, `svc-consults.jpg` | **unused** since the /features full-bleed sections were removed — safe to delete | same ids as `service-*.jpg` |
 | `svc-story-main.jpg` | services story 2 (Pulses), large photo | 1527613426441-4da17471b66d |
 | `svc-story-detail.jpg` | services story 2, inset photo | 1581595219315-a187dd40c322 |
 | `svc-story-research-main.jpg` | services story 3 (research), large photo — cropped to the two faces | 1666214280391-8ff5bd3c0bf0 |

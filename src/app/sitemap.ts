@@ -16,7 +16,7 @@ import { JOURNAL } from "@/lib/journal";
 const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/about", changeFrequency: "monthly", priority: 0.8 },
-  { path: "/services", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/features", changeFrequency: "monthly", priority: 0.8 },
   { path: "/journal", changeFrequency: "weekly", priority: 0.7 },
   { path: "/team", changeFrequency: "monthly", priority: 0.8 },
   { path: "/mobile-app", changeFrequency: "monthly", priority: 0.8 },

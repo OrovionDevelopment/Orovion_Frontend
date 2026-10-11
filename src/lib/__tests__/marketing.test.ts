@@ -44,11 +44,11 @@ describe("services", () => {
     for (const s of slugs) expect(s).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
   });
 
-  it("links each landing card's Read more to its own story on /services", () => {
-    expect(HOME.services.map((c) => c.href)).toEqual(SERVICES.map((s) => `/services#${s.slug}`));
+  it("links each landing card's Read more to its own story on /features", () => {
+    expect(HOME.services.map((c) => c.href)).toEqual(SERVICES.map((s) => `/features#${s.slug}`));
   });
 
-  it("has one /services story per service, so no card lands on a missing anchor", () => {
+  it("has one /features story per service, so no card lands on a missing anchor", () => {
     expect(SERVICES_PAGE.stories.map((s) => s.slug)).toEqual(SERVICES.map((s) => s.slug));
   });
 });

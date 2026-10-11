@@ -37,6 +37,13 @@ const nextConfig = {
       // The in-app route was renamed to match the product name. Bookmarks, old
       // notification deep links and links sitting in chats still point at /app/reels.
       { source: "/app/reels", destination: "/app/pulse", permanent: true },
+      // The Services page was renamed Features; keep old links working.
+      { source: "/services", destination: "/features", permanent: true },
+      // Journal article re-slugged; keep the link that was already shared working.
+      { source: "/journal/reading-a-paediatric-ecg", destination: "/journal/healthcareprofessional", permanent: true },
+      { source: "/journal/what-makes-a-case-discussion-useful", destination: "/journal/medicalstudent", permanent: true },
+      { source: "/journal/medical-student", destination: "/journal/medicalstudent", permanent: true },
+      { source: "/journal/biomarkers-without-the-jargon", destination: "/journal/generaluser", permanent: true },
     ];
   },
   // Android App Links / iOS Universal Links verification. Both files must come

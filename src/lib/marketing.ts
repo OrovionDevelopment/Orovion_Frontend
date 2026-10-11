@@ -20,7 +20,7 @@ export type NavLinkItem = { label: string; href: string };
 /** Primary nav (desktop bar + mobile menu). Section anchors are absolute so they work from every page. */
 export const NAV_LINKS: NavLinkItem[] = [
   { label: "About us", href: "/about" },
-  { label: "Features", href: "/services" },
+  { label: "Features", href: "/features" },
   { label: "Get the app", href: "/mobile-app" },
   { label: "Help", href: "/help" },
   { label: "Contact", href: "/contact" },
@@ -31,7 +31,7 @@ export const SITEMAP: NavLinkItem[][] = [
   [
     { label: "Home", href: "/" },
     { label: "About us", href: "/about" },
-    { label: "Features", href: "/services" },
+    { label: "Features", href: "/features" },
     { label: "How Orovion works", href: "/#how-it-works" },
   ],
   [
@@ -76,7 +76,7 @@ export const STEPS = [
 
 /**
  * The four services, shown as the home page's card wheel (`title`, `text`,
- * `image`); each card's "Read more" opens its story on /services (`#slug`).
+ * `image`); each card's "Read more" opens its story on /features (`#slug`).
  * Copy is product description — adjust to taste.
  */
 export const SERVICES = [
@@ -127,8 +127,8 @@ export const HOME = {
       text: "Discover clinical knowledge, connect with healthcare professionals, explore research and access private consultations.",
     },
   },
-  /** Service cards — "Read more" opens the service's section on /services. */
-  services: SERVICES.map((s) => ({ title: s.title, text: s.text, image: s.image, href: `/services#${s.slug}` })),
+  /** Service cards — "Read more" opens the service's section on /features. */
+  services: SERVICES.map((s) => ({ title: s.title, text: s.text, image: s.image, href: `/features#${s.slug}` })),
   philosophy: {
     eyebrow: "Our philosophy",
     text: "Healthcare works better when people, knowledge and care are connected. Orovion brings verified healthcare professionals, medical students and people into one network where knowledge can be shared, conversations can happen and care can be accessed with greater confidence.",
@@ -161,9 +161,9 @@ export const HOME = {
   /** "Get the app" band above the FAQ: a thread draws a phone; desktop shows a QR inside, touch screens a button. */
   app: {
     eyebrow: "Get the app",
-    title: "Your verified network,",
-    accent: "in your pocket.",
-    text: "Follow cases, catch a Pulse between rounds and book a consult from anywhere — the same verified Orovion, made for one hand.",
+    title: "Your healthcare network,",
+    accent: "wherever you go.",
+    text: "Explore Case Studies, stay updated with Medical Pulses, connect with healthcare professionals, and request consultations, all from one place. Take your Orovion network wherever your work and life lead you.",
     facts: ["Free to join", "iOS & Android", "Verified clinicians only"],
     to: "/mobile-app",
     /** Phone screenshot for the Get the app banner, e.g. "/marketing/app-screen.png"; empty shows the built-in sample screen. */
@@ -217,7 +217,7 @@ export const ABOUT = {
   },
 };
 
-/* ── Services page (/services) ────────────────────────────────────────
+/* ── Services page (/features) ────────────────────────────────────────
    After the reference services page: hero (long threads) → four stories, one
    per service (alternating sides; each is its home card's "Read more"
    target) → FAQ → contact. */
@@ -313,7 +313,7 @@ export const ABOUT_FAQ: readonly FaqItem[] = [
   ...faqSection("safety").slice(0, 1),
 ];
 
-/** FAQ on /services — how the services and consultations work. */
+/** FAQ on /features — how the services and consultations work. */
 export const SERVICES_FAQ: readonly FaqItem[] = [
   ...faqSection("consultations").slice(0, 3),
   ...faqSection("content-sharing").slice(0, 2),

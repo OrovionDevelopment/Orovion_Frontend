@@ -23,7 +23,7 @@ Building blocks for the public marketing pages. Motion spec and inventory:
 
 ### Inner pages
 
-`ThreadHero` is the shared hero of `/about` and `/services`: a two-line
+`ThreadHero` is the shared hero of `/about` and `/features`: a two-line
 headline, side note and indented intro, with two long threads that draw in
 on load and drift on scroll (`flip` mirrors them). The threads alone are
 `LongThreads` (also behind journal articles).
@@ -39,7 +39,7 @@ on load and drift on scroll (`flip` mirrors them). The threads alone are
 The rest of the page reuses `Statement` / `QuoteDome` (from `home/BigQuote`),
 `Ready`, `Story` and `FaqSection`.
 
-### `services/` — the `/services` page
+### `services/` — the `/features` page
 
 | Component | Role |
 |---|---|
@@ -67,7 +67,7 @@ its card on the home page and its sitemap entry.
 |---|---|
 | `ThreadWaves` | Fixed background thread layer; fades in/out between two section ids. |
 | `HeroSequence` | Hero + trust toggle: pinned stage, portrait fade, scroll-drawn thread, word-by-word headline, the dot → switch → on sequence. |
-| `Services` | `#features` — four photo cards with parallax and a hover "Read more" that opens the service's section on `/services`. Desktop: they ride a scroll-driven wheel (pinned stage); tablet/phone: a snap carousel with dots; every card tilts toward the pointer (Althea reference; math in `motion.ts` `WHEEL`, `wheelRotation`, `cardTilt`). |
+| `Services` | `#features` — four photo cards with parallax and a hover "Read more" that opens the service's section on `/features`. Desktop: they ride a scroll-driven wheel (pinned stage); tablet/phone: a snap carousel with dots; every card tilts toward the pointer (Althea reference; math in `motion.ts` `WHEEL`, `wheelRotation`, `cardTilt`). |
 | `Philosophy` | Scroll-lit statement (`ScrollWords`). |
 | `Story` | Text + two overlapping parallax photos; `flip` mirrors it. |
 | `HowItWorks` | `#how-it-works` — big title, steps, sticky odometer number. |

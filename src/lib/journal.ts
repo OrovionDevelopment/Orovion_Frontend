@@ -22,7 +22,7 @@ export type JournalArticle = {
 
 export const JOURNAL: JournalArticle[] = [
   {
-    slug: "reading-a-paediatric-ecg",
+    slug: "healthcareprofessional",
     title: "HealthCare Professional",
     excerpt: "Build your professional presence, connect with peers, share clinical knowledge and access private consultations.",
     lede: "A professional network built around your practice. Orovion gives healthcare professionals a dedicated space to build their professional presence, connect with peers, share knowledge and engage with the wider healthcare community.",
@@ -49,7 +49,7 @@ export const JOURNAL: JournalArticle[] = [
     ],
   },
   {
-    slug: "medical-student",
+    slug: "medicalstudent",
     title: "Medical Student",
     excerpt: "Connect with healthcare professionals, explore Case Studies, Pulses and Research Summaries, and share your own academic work.",
     lede: "Learn beyond the classroom. Orovion connects medical students with healthcare professionals, clinical knowledge, case discussions and research in one professional healthcare network.",
@@ -76,7 +76,7 @@ export const JOURNAL: JournalArticle[] = [
     ],
   },
   {
-    slug: "biomarkers-without-the-jargon",
+    slug: "generaluser",
     title: "General User",
     excerpt: "Discover healthcare professionals, explore healthcare knowledge and request private consultations when you need them.",
     lede: "A simpler way to navigate healthcare. Orovion helps you discover healthcare professionals, explore healthcare knowledge and connect with the people you need, all within one healthcare network.",

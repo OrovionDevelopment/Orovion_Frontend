@@ -8,7 +8,7 @@ import { Accent } from "@/components/marketing/Type";
 import Story from "@/components/marketing/home/Story";
 
 /**
- * /services — laid out and animated after the reference services page: hero
+ * /features — laid out and animated after the reference services page: hero
  * with long threads → four stories, one per service (photos right, left,
  * right, left) → FAQ → contact. Each home service card's "Read more" lands on
  * its story (`#slug`). Copy lives in `SERVICES_PAGE` (src/lib/marketing.ts).
