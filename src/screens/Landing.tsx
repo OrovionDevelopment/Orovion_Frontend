@@ -14,7 +14,9 @@ import HowItWorks from "@/components/marketing/home/HowItWorks";
 import Ready from "@/components/marketing/home/Ready";
 import BigQuote from "@/components/marketing/home/BigQuote";
 import Community from "@/components/marketing/home/Community";
-import GetApp from "@/components/marketing/home/GetApp";
+import AppBanner from "@/components/marketing/home/AppBanner";
+// The older thread-and-QR "Get the app" section is kept in GetApp.tsx; to use it
+// again, import it here and swap it for <AppBanner /> below.
 // Numbers section is switched off for now — to enable it again, uncomment this
 // import and <Numbers /> below (between <Community /> and the FAQ).
 // import Numbers from "@/components/marketing/home/Numbers";
@@ -58,7 +60,7 @@ export default function Landing() {
       <BigQuote />
       <Community />
       {/* <Numbers /> — disabled for now; see the import note above */}
-      <GetApp />
+      <AppBanner />
       <FaqSection
         title={<>Your questions.<br /><Accent>Answered.</Accent></>}
         subtitle="Not sure where to start? Here are answers to some of the most common questions about Orovion."

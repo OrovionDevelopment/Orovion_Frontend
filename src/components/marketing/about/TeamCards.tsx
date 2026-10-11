@@ -9,7 +9,7 @@ import BlobPhoto from "../home/BlobPhoto";
 /**
  * Team cards (reference "Team"): centered header, then one card per team
  * member — photo in an organic blob with a faint outline, name in the brand
- * color, focus areas and a "Read more" link to their page. The middle card
+ * color and focus areas; the card opens their page. The middle card
  * sits lower; cards lift and the photo eases in on hover.
  */
 export default function TeamCards() {
@@ -38,7 +38,6 @@ export default function TeamCards() {
                   <FillText>{m.name}</FillText>
                 </h3>
                 <p className="t-small text-ink-600">{m.focus.join(" · ")}</p>
-                <span className="ul-wipe mt-2 t-eyebrow">Read more</span>
               </div>
             </Link>
           </div>

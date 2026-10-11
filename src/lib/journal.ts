@@ -49,7 +49,7 @@ export const JOURNAL: JournalArticle[] = [
     ],
   },
   {
-    slug: "Medical Student",
+    slug: "medical-student",
     title: "Medical Student",
     excerpt: "Connect with healthcare professionals, explore Case Studies, Pulses and Research Summaries, and share your own academic work.",
     lede: "Learn beyond the classroom. Orovion connects medical students with healthcare professionals, clinical knowledge, case discussions and research in one professional healthcare network.",
