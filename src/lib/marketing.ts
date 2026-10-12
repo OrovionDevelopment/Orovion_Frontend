@@ -167,7 +167,7 @@ export const HOME = {
     facts: ["Free to join", "iOS & Android", "Verified clinicians only"],
     to: "/mobile-app",
     /** Phone screenshot for the Get the app banner, e.g. "/marketing/app-screen.png"; empty shows the built-in sample screen. */
-    screenshot: "",
+    screenshot: "/marketing/Research 1.png",
     scan: { title: "Scan to get Orovion", hint: "Point your phone’s camera at the code" },
     tap: { text: "Learn, share and get care on the go.", cta: "Get the app" },
   },

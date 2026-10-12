@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Bell, Bookmark, Heart, Home, MessageCircle, Plus, Stethoscope, User, Users } from "lucide-react";
 import { Link } from "@/lib/router";
 import { HOME } from "@/lib/marketing";
@@ -84,12 +85,17 @@ export default function AppBanner() {
         <div className="mk-reveal relative rounded-[28px] bg-brand-800 text-white tab:rounded-[40px]">
           {/* phone — decorative, so hidden from assistive tech; DOM-first so it stacks on top on phones */}
           <div aria-hidden data-depth={40} className="relative mx-auto -mt-28 w-[230px] tab:absolute tab:-top-24 tab:right-[6%] tab:mx-0 tab:mt-0 tab:w-[250px] desk:w-[290px]">
-            <div className="rounded-[40px] bg-ink-950 p-[9px] shadow-[0_34px_60px_-24px_rgba(0,0,0,.55)] ring-1 ring-white/10">
-              <div className="relative aspect-[9/18.5] overflow-hidden rounded-[32px] bg-surface">
-                <span className="absolute left-1/2 top-2 z-10 h-[18px] w-24 -translate-x-1/2 rounded-full bg-ink-950" />
-                {a.screenshot ? <img src={a.screenshot} alt="" className="h-full w-full object-cover object-top" /> : <MockScreen />}
+            {a.screenshot ? (
+              /* A ready-made phone picture (its own frame, transparent corners): shown whole, at its own proportions. */
+              <Image src={a.screenshot} alt="" width={0} height={0} sizes="(min-width: 1200px) 290px, 250px" className="h-auto w-full drop-shadow-[0_30px_35px_rgba(0,0,0,.4)]" />
+            ) : (
+              <div className="rounded-[40px] bg-ink-950 p-[9px] shadow-[0_34px_60px_-24px_rgba(0,0,0,.55)] ring-1 ring-white/10">
+                <div className="relative aspect-[9/18.5] overflow-hidden rounded-[32px] bg-surface">
+                  <span className="absolute left-1/2 top-2 z-10 h-[18px] w-24 -translate-x-1/2 rounded-full bg-ink-950" />
+                  <MockScreen />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="flex flex-col items-start gap-6 px-6 pb-10 pt-8 tab:max-w-[56%] tab:px-12 tab:py-16 desk:px-16 desk:py-20">
