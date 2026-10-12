@@ -68,7 +68,7 @@ function MockScreen() {
  * badges on the left and a phone that pokes
  * out above the banner on the right. On phones the phone sits on top, centred.
  * Store badges point to /mobile-app until the store
- * listings are live. The older thread-and-QR version is still in GetApp.tsx.
+ * listings are live.
  */
 export default function AppBanner() {
   const a = HOME.app;

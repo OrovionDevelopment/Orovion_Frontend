@@ -160,16 +160,12 @@ export const HOME = {
   },
   /** "Get the app" band above the FAQ: a thread draws a phone; desktop shows a QR inside, touch screens a button. */
   app: {
-    eyebrow: "Get the app",
     title: "Your healthcare network,",
     accent: "wherever you go.",
     text: "Explore Case Studies, stay updated with Medical Pulses, connect with healthcare professionals, and request consultations, all from one place. Take your Orovion network wherever your work and life lead you.",
-    facts: ["Free to join", "iOS & Android", "Verified clinicians only"],
     to: "/mobile-app",
     /** Phone screenshot for the Get the app banner, e.g. "/marketing/app-screen.png"; empty shows the built-in sample screen. */
     screenshot: "/marketing/Research 1.png",
-    scan: { title: "Scan to get Orovion", hint: "Point your phone’s camera at the code" },
-    tap: { text: "Learn, share and get care on the go.", cta: "Get the app" },
   },
   community: {
     eyebrow: "BUILT FOR EVERYONE IN HEALTHCARE",

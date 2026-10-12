@@ -1,14 +1,13 @@
 import type { ReactNode } from "react";
 import NavArrows from "@/components/ui/NavArrows";
 import MotionRoot from "./MotionRoot";
-import Cursor from "./Cursor";
 import BlurGradient from "./BlurGradient";
 import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 
 /**
  * Page frame for every public marketing page: motion runtime (Lenis + scroll
- * reveals), the custom cursor, the progressive blur strip, the fixed nav, the
+ * reveals), the progressive blur strip, the fixed nav, the
  * page content and the parallax footer. `navArrows={false}` drops the floating
  * back/forward pill (the landing page). Pages start their first section with `mk-top`, whose
  * 160px top padding clears the fixed nav.
@@ -23,7 +22,6 @@ export default function MarketingShell({ children, navArrows = true }: { childre
         Skip to content
       </a>
       <MotionRoot />
-      <Cursor />
       <BlurGradient />
       {navArrows && <NavArrows variant="floating" />}
       <SiteNav />

@@ -54,15 +54,12 @@ describe("services", () => {
 });
 
 describe("home: get the app", () => {
-  it("sends the QR, badges and button to the mobile-app page", () => {
+  it("sends the store badges to the mobile-app page", () => {
     expect(HOME.app.to).toBe("/mobile-app");
   });
-  it("has a headline, a line of copy, facts and both device prompts", () => {
+  it("has a headline and a line of copy", () => {
     expect(HOME.app.title.length).toBeGreaterThan(0);
     expect(HOME.app.accent.length).toBeGreaterThan(0);
-    expect(HOME.app.facts.length).toBe(3);
-    expect(HOME.app.scan.title).toMatch(/scan/i);
-    expect(HOME.app.tap.cta.length).toBeGreaterThan(0);
   });
 });
 

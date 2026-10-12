@@ -33,8 +33,7 @@ on load and drift on scroll (`flip` mirrors them). The threads alone are
 | Component | Role |
 |---|---|
 | `HowWeHelp` | Full-bleed sky photo with a scroll-lit statement. |
-| `Founders` | "Meet our founders" story in a narrow column (the reference portrait + quote is left out). |
-| `TeamCards` | One blob-photo card per team member with focus areas and "Read more" → `/team/[slug]`. |
+| `TeamCards` | One blob-photo card per team member with focus areas (not linked). |
 
 The rest of the page reuses `Statement` / `QuoteDome` (from `home/BigQuote`),
 `Ready`, `Story` and `FaqSection`.
@@ -75,7 +74,6 @@ its card on the home page and its sitemap entry.
 | `BigQuote` | Statement band, then the full-bleed quote with the dome reveal and a thread. Exports `Statement` and `QuoteDome` separately (content as props) for other pages. |
 | `Community` | `#community` — three blob-shaped journal cards; "Read more" opens the article at `/journal/[slug]`. |
 | `Numbers` | Statement + count-up `STATS` on the soft band. Not shown anywhere right now (commented out on the home page). |
-| `GetApp` | `#get-the-app` (above the FAQ) — copy + store badges on the left; on the right a scroll-drawn double thread traces a phone, which then fills in and shows a QR to `/mobile-app` (mouse/trackpad) or the app icon + a "Get the app" pill (touch). Depth parallax: rings behind lag, the phone rises faster, both lean with the mouse. |
 | `ScrollThread` | SVG strokes that draw themselves on scroll (`pathLength=1` + dash offset, smoothed). |
 | `ParallaxImage` | Image that drifts inside its frame on scroll (`intensity` px), optional grain. |
 | `BlobPhoto` | Photo in an organic blob shape with a faint rotated outline (community posts, team cards, journal cards, article photo). Depth: the photo drifts `drift` px (default 24) inside the blob while the outline drifts the other way; `drift={0}` keeps it still. Wrap staggered cards in a `data-depth` div (see `MotionRoot`). |

@@ -66,25 +66,6 @@ export function webSiteSchema() {
   };
 }
 
-export function personSchema(m: TeamMember) {
-  const sameAs = [m.socials.linkedin, m.socials.instagram].filter(Boolean);
-  return {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "@id": personId(m.slug),
-    name: m.name,
-    url: absoluteUrl(`/team/${m.slug}`),
-    ...(m.role ? { jobTitle: m.role } : {}),
-    description: m.tagline,
-    ...(m.photo ? { image: absoluteUrl(m.photo) } : {}),
-    ...(sameAs.length ? { sameAs } : {}),
-    ...(m.education ? { alumniOf: { "@type": "EducationalOrganization", name: m.education } } : {}),
-    ...(m.location ? { homeLocation: { "@type": "Place", name: m.location } } : {}),
-    knowsAbout: m.focus,
-    worksFor: { "@id": ORG_ID },
-  };
-}
-
 export function faqPageSchema(items: readonly (readonly [string, string])[]) {
   return {
     "@context": "https://schema.org",

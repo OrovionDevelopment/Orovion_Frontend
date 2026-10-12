@@ -105,7 +105,7 @@ attribute.
 `Search.tsx`, `Messages.tsx`, `Notifications.tsx`, `Network.tsx`,
 `Connections.tsx`, `Saved.tsx`, `Insights.tsx`, `Settings.tsx`, `EditProfile.tsx`,
 `Onboarding.tsx`, `Login.tsx`, `Landing.tsx`, `Admin.tsx`, `HashtagWorkspace.tsx`,
-`MobileAppPage.tsx`, `TeamPage.tsx`, `TeamMemberPage.tsx`, `CallDebug.tsx`,
+`MobileAppPage.tsx`, `CallDebug.tsx`,
 plus `consults/` and `legal/`.
 
 ## Feed session handling (`Feed.tsx`, `Explore.tsx`)

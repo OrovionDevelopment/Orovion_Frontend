@@ -39,6 +39,9 @@ const nextConfig = {
       { source: "/app/reels", destination: "/app/pulse", permanent: true },
       // The Services page was renamed Features; keep old links working.
       { source: "/services", destination: "/features", permanent: true },
+      // The Team pages were removed (the About page still shows the team); keep old links working.
+      { source: "/team", destination: "/about", permanent: true },
+      { source: "/team/:slug", destination: "/about", permanent: true },
       // Journal article re-slugged; keep the link that was already shared working.
       { source: "/journal/reading-a-paediatric-ecg", destination: "/journal/healthcareprofessional", permanent: true },
       { source: "/journal/what-makes-a-case-discussion-useful", destination: "/journal/medicalstudent", permanent: true },
