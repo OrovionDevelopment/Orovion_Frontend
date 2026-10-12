@@ -7,8 +7,17 @@ const FINE = "(hover: hover) and (pointer: fine)";
 const REDUCED = "(prefers-reduced-motion: reduce)";
 /** Interactive elements: the cursor grows over them (or snaps, see SNAP). */
 const HIT = "a, button, [role=button], label, summary, select";
-/** Orovion's text-link and button styles snap by default; `data-cursor` overrides. */
-const SNAP = ".pill, .ul-wipe, .link-u, .soc, .chip, .mk-snap";
+/** Orovion's text-link and button styles (marketing pills and the app's .btn-*) snap by default; `data-cursor` overrides. */
+const SNAP = ".pill, .ul-wipe, .link-u, .soc, .chip, .mk-snap, .btn, .btn-primary, .btn-ghost, .btn-outline, .press";
+/** Any other control of button size (icon buttons, nav items, tabs) gets the frame too; big clickable cards just grow the cursor. */
+const CONTROL = "a, button, [role=button], summary";
+const SNAP_MAX = { w: 360, h: 72 };
+function snappable(el: HTMLElement): boolean {
+  if (el.matches(SNAP)) return true;
+  if (!el.matches(CONTROL)) return false;
+  const r = el.getBoundingClientRect();
+  return r.width <= SNAP_MAX.w && r.height <= SNAP_MAX.h;
+}
 /** Text entry keeps the native I-beam; the custom cursor steps aside. */
 const NATIVE = "input:not([type=checkbox],[type=radio],[type=button],[type=submit],[type=reset],[type=range],[type=color],[type=file]), textarea, [contenteditable=''], [contenteditable='true']";
 /** Always-dark blocks (hero stage, big quote, footer) — the follower stays plain white there. */
@@ -180,12 +189,12 @@ function CursorLayer() {
       f.classList.toggle("is-on-dark", !!el?.closest(DARK_ZONE));
       const hit = el?.closest<HTMLElement>(HIT) ?? null;
       const tagged = el?.closest<HTMLElement>("[data-cursor]") ?? null;
-      const target = hit && hit.matches(SNAP) && (!tagged || tagged.contains(hit)) ? hit : tagged ?? hit;
+      const target = hit && snappable(hit) && (!tagged || tagged.contains(hit)) ? hit : tagged ?? hit;
       const want = target?.dataset.cursor;
       let snapTo: HTMLElement | null = null;
       if (el?.closest(NATIVE) || want === "native") mode = { kind: "hidden" };
       else if (!target) mode = { kind: "idle" };
-      else if (want === "snap" || (!want && target.matches(SNAP))) {
+      else if (want === "snap" || (!want && snappable(target))) {
         snapTo = target;
         snapRadius = parseFloat(getComputedStyle(target).borderTopLeftRadius) || 0;
         mode = { kind: "snap", ...snapFrame(target.getBoundingClientRect(), snapRadius) };
