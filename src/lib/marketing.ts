@@ -175,8 +175,8 @@ export const HOME = {
     eyebrow: "BUILT FOR EVERYONE IN HEALTHCARE",
     title: "One network,\ndifferent ways to use it.",
     text: "Whether you’re a healthcare professional, medical student or general user, Orovion gives you a place to connect, learn, share and access healthcare.",
-    /** Highlight cards (not linked), written in src/lib/journal.ts. */
-    posts: JOURNAL.map((a) => ({ title: a.title, text: a.excerpt, image: a.image.src })),
+    /** Journal cards — "Read more" opens the article (src/lib/journal.ts). */
+    posts: JOURNAL.map((a) => ({ title: a.title, text: a.excerpt, image: a.image.src, href: `/journal/${a.slug}` })),
   },
   numbers: {
     title: "From the first case to lasting change,",

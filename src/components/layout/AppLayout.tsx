@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Avatar, Logo, Verified, Spinner } from "@/components/ui/Primitives";
 import NavArrows from "@/components/ui/NavArrows";
+import Cursor from "@/components/marketing/Cursor";
 import NotificationBell from "@/components/ui/NotificationBell";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
@@ -38,6 +39,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-ink-50">
       <RouteProgress trigger={location.pathname} />
+      {/* The same animated cursor as the public pages (mouse/trackpad only). */}
+      <Cursor />
       {/* Topbar */}
       <header className="sticky top-0 z-40 border-b border-ink-900/[.06] glass">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
