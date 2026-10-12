@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useEffect, useRef, useState } from "react";
 import {
   User, Bell, Lock, Smartphone, Palette, ChevronRight,
@@ -133,7 +134,7 @@ function Account() {
       <Card title="Profile">
         <div className="flex items-center gap-4">
           <Avatar user={user} size={64} />
-          <button onClick={() => nav("/app/profile/edit")} className="btn-outline px-4 py-2 text-sm">Edit full profile <ArrowUpRight size={15} /></button>
+          <button onClick={() => nav("/app/profile/edit")} className="btn-outline px-4 py-2 text-sm"><Roll>Edit full profile</Roll> <ArrowUpRight size={15} /></button>
         </div>
         <Field label="Full name" value={f.fullName} onChange={set("fullName")} />
         <Field label="Professional headline" value={f.professionalHeadline} onChange={set("professionalHeadline")} />
@@ -141,7 +142,7 @@ function Account() {
         <Field label="Work email" type="email" value={f.workEmail} onChange={set("workEmail")} />
         {msg && <p className={cn("text-sm", msg.includes("✓") ? "text-emerald-600" : "text-rose-600")}>{msg}</p>}
         <div className="flex justify-end">
-          <button onClick={save} disabled={saving || demo} className="btn-primary px-5 py-2.5 text-sm">{saving ? "Saving…" : "Save changes"}</button>
+          <button onClick={save} disabled={saving || demo} className="btn-primary px-5 py-2.5 text-sm"><Roll>{saving ? "Saving…" : "Save changes"}</Roll></button>
         </div>
       </Card>
       <UsernameCard />
@@ -229,7 +230,7 @@ function UsernameCard() {
       {saved && <p className="text-sm text-emerald-600">Username updated ✓ — mentions and your profile link now use @{value}</p>}
       <p className="text-xs text-ink-400">3–30 characters · lowercase letters, numbers, periods and underscores.</p>
       <div className="flex justify-end">
-        <button onClick={save} disabled={!canSave} className="btn-primary px-5 py-2.5 text-sm">{saving ? "Saving…" : "Save username"}</button>
+        <button onClick={save} disabled={!canSave} className="btn-primary px-5 py-2.5 text-sm"><Roll>{saving ? "Saving…" : "Save username"}</Roll></button>
       </div>
     </Card>
   );
@@ -321,7 +322,7 @@ function Devices() {
           </div>
         </div>
         <button onClick={async () => { await logout(); nav("/"); }} className="btn-outline w-full py-2.5 text-sm">
-          <LogOut size={16} /> Log out this device
+          <LogOut size={16} /> <Roll>Log out this device</Roll>
         </button>
       </Card>
     );
@@ -331,7 +332,7 @@ function Devices() {
     return (
       <Card title="Logged-in devices">
         <p className="text-sm text-ink-500">We couldn't load your devices just now.</p>
-        <button onClick={() => { setStatus("loading"); load(); }} className="btn-outline w-full py-2.5 text-sm">Try again</button>
+        <button onClick={() => { setStatus("loading"); load(); }} className="btn-outline w-full py-2.5 text-sm"><Roll>Try again</Roll></button>
       </Card>
     );
   }
@@ -350,7 +351,7 @@ function Devices() {
         </div>
       ))}
       {list.length > 0 && (
-        <button onClick={logoutAll} disabled={busy} className="btn-outline w-full py-2.5 text-sm"><ShieldOff size={16} /> Log out all devices</button>
+        <button onClick={logoutAll} disabled={busy} className="btn-outline w-full py-2.5 text-sm"><ShieldOff size={16} /> <Roll>Log out all devices</Roll></button>
       )}
     </Card>
   );

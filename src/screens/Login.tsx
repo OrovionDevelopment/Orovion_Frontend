@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, Navigate } from "@/lib/router";
 import { Stethoscope, GraduationCap, User, ArrowRight, ArrowLeft, ShieldCheck, Lock, BadgeCheck, Check, QrCode, RefreshCw } from "lucide-react";
@@ -216,7 +217,7 @@ export default function Login() {
                     );
                   })}
                 </div>
-                <button onClick={() => setStep(1)} className="btn-primary mt-7 w-full py-3.5 text-base">Continue <ArrowRight size={18} /></button>
+                <button onClick={() => setStep(1)} className="btn-primary mt-7 w-full py-3.5 text-base"><Roll>Continue</Roll> <ArrowRight size={18} /></button>
               </>
             )}
 
@@ -234,17 +235,17 @@ export default function Login() {
 
                 {err && <p className="mt-3 text-sm font-medium text-danger-700">{err}</p>}
 
-                <button onClick={sendOtp} disabled={busy || phone.length < 6} className="btn-primary mt-6 w-full py-3.5 text-base">{busy ? "Sending…" : <>Send OTP <ArrowRight size={18} /></>}</button>
+                <button onClick={sendOtp} disabled={busy || phone.length < 6} className="btn-primary mt-6 w-full py-3.5 text-base"><Roll>{busy ? "Sending…" : "Send OTP"}</Roll>{!busy && <ArrowRight size={18} />}</button>
 
                 <div className="my-5 flex items-center gap-3 text-xs font-medium text-ink-400"><span className="h-px flex-1 bg-ink-900/10" /> or <span className="h-px flex-1 bg-ink-900/10" /></div>
 
-                <button onClick={googleSignIn} disabled={busy} className="btn-outline w-full py-3.5 text-base"><GoogleIcon /> {busy ? "Please wait…" : "Continue with Google"}</button>
+                <button onClick={googleSignIn} disabled={busy} className="btn-outline w-full py-3.5 text-base"><GoogleIcon /> <Roll>{busy ? "Please wait…" : "Continue with Google"}</Roll></button>
 
-                <button onClick={appleSignIn} disabled={busy} className="btn-outline mt-3 w-full py-3.5 text-base"><AppleIcon /> {busy ? "Please wait…" : "Continue with Apple"}</button>
+                <button onClick={appleSignIn} disabled={busy} className="btn-outline mt-3 w-full py-3.5 text-base"><AppleIcon /> <Roll>{busy ? "Please wait…" : "Continue with Apple"}</Roll></button>
 
                 {/* Already signed in on the phone? Skip the whole flow. Styled to
                     match the Google / Apple buttons above. */}
-                <button type="button" onClick={() => { setErr(""); setMode("qr"); }} disabled={busy} className="btn-outline mt-3 w-full py-3.5 text-base"><QrCode size={18} /> Log in with a QR code</button>
+                <button type="button" onClick={() => { setErr(""); setMode("qr"); }} disabled={busy} className="btn-outline mt-3 w-full py-3.5 text-base"><QrCode size={18} /> <Roll>Log in with a QR code</Roll></button>
 
                 <p className="mt-7 text-center text-xs leading-relaxed text-ink-400">
                   By continuing you agree to our{" "}
@@ -516,7 +517,7 @@ function QrLogin({ onAuthed, onBack }) {
 
         {(phase === "expired" || phase === "error") && (
           <button onClick={regenerate} className="btn-primary w-full py-3.5 text-base">
-            <RefreshCw size={17} /> {phase === "error" ? "Try again" : "Show a new code"}
+            <RefreshCw size={17} /> <Roll>{phase === "error" ? "Try again" : "Show a new code"}</Roll>
           </button>
         )}
 
@@ -645,7 +646,7 @@ function Otp({ dial, phone, onVerify, onResend, onBack }) {
 
       {err && <p className="mt-3 text-sm font-medium text-danger-700">{err}</p>}
 
-      <button onClick={verify} disabled={busy} className="btn-primary mt-7 w-full py-3.5 text-base">{busy ? "Verifying…" : <>Verify &amp; continue <ArrowRight size={18} /></>}</button>
+      <button onClick={verify} disabled={busy} className="btn-primary mt-7 w-full py-3.5 text-base"><Roll>{busy ? "Verifying…" : "Verify & continue"}</Roll>{!busy && <ArrowRight size={18} />}</button>
 
       <p className="mt-4 text-center text-sm text-ink-400">
         Didn't receive a code?{" "}

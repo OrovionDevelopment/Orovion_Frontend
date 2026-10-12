@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useEffect, useState } from "react";
 import { Check, X, Loader2, Users } from "lucide-react";
 import { useNavigate, useSearchParams } from "@/lib/router";
@@ -97,7 +98,7 @@ export default function Network() {
                   <p className="truncate text-xs text-ink-500">{u.professionalHeadline || roleLabel(u.role)}</p>
                 </button>
                 <button onClick={() => resolve(req, "accept")} disabled={Boolean(busy)} className="btn-primary px-3 py-2 text-xs">
-                  {busy === "accept" ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />} Accept
+                  {busy === "accept" ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />} <Roll>Accept</Roll>
                 </button>
                 <button onClick={() => resolve(req, "reject")} disabled={Boolean(busy)} aria-label="Ignore request" className="btn-outline px-2.5 py-2 text-xs">
                   {busy === "reject" ? <Loader2 size={15} className="animate-spin" /> : <X size={15} />}

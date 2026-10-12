@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@/lib/router";
 import { FileText, Stethoscope, Clapperboard, PenLine, Loader2, Sparkles, Search as SearchIcon } from "lucide-react";
@@ -242,7 +243,7 @@ export default function Feed() {
               </button>
             ))}
             <div className="flex-1" />
-            <button onClick={() => nav("/app/create")} className="btn-primary px-5 py-2 text-sm">Post</button>
+            <button onClick={() => nav("/app/create")} className="btn-primary px-5 py-2 text-sm"><Roll>Post</Roll></button>
           </div>
         </div>
 
@@ -412,7 +413,7 @@ function Empty({ filter, onReset }) {
           : "Be the first to publish here, or check another specialty."}
       </p>
       {filter.kind !== "all" && (
-        <button onClick={onReset} className="btn-ghost px-5 py-2 text-sm">Back to All</button>
+        <button onClick={onReset} className="btn-ghost px-5 py-2 text-sm"><Roll>Back to All</Roll></button>
       )}
     </div>
   );

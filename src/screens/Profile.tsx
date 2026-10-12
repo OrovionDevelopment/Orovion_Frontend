@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useEffect, useState } from "react";
 import { MapPin, Briefcase, GraduationCap, Building2, Share2, ArrowLeft, Settings as SettingsIcon, Stethoscope, Activity, CalendarDays, Mail, Phone, Globe, Award, ExternalLink, Play, Heart, Eye, Clapperboard } from "lucide-react";
 import { useNavigate, Link } from "@/lib/router";
@@ -142,8 +143,8 @@ export default function Profile() {
               )}
             </div>
             <div className="relative z-10 mb-1 flex gap-2">
-              <button type="button" onClick={() => setShare(true)} className="btn-outline press px-4 py-2 text-sm"><Share2 size={15} /> Share</button>
-              <Link to="/app/profile/edit" className="btn-primary press px-4 py-2 text-sm"><SettingsIcon size={15} /> Edit profile</Link>
+              <button type="button" onClick={() => setShare(true)} className="btn-outline press px-4 py-2 text-sm"><Share2 size={15} /> <Roll>Share</Roll></button>
+              <Link to="/app/profile/edit" className="btn-primary press px-4 py-2 text-sm"><SettingsIcon size={15} /> <Roll>Edit profile</Roll></Link>
             </div>
           </div>
 

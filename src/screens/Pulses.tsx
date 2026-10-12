@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Play, Loader2, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
 import { TileGridSkeleton } from "@/components/ui/Skeletons";
@@ -266,7 +267,7 @@ export default function Pulses() {
                     <p className="text-lg font-semibold text-ink-900">That's every Pulse for now</p>
                     <p className="max-w-xs text-sm text-ink-500">Refresh to start a new discovery session.</p>
                     <button onClick={reload} disabled={refreshing} className="btn-primary mt-1 px-4 py-2 text-sm">
-                      <RefreshCw size={15} className={refreshing ? "animate-spin" : undefined} /> Refresh
+                      <RefreshCw size={15} className={refreshing ? "animate-spin" : undefined} /> <Roll>Refresh</Roll>
                     </button>
                   </>
                 )}

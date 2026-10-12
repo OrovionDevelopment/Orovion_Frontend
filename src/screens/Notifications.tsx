@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useEffect, useState } from "react";
 import { Heart, MessageCircle, UserPlus, AtSign, Bell, Check, X, Loader2, ShieldCheck, Trash2 } from "lucide-react";
 import { useNavigate } from "@/lib/router";
@@ -226,15 +227,15 @@ function Row({ n, onOpen, onAct, acted, busy }) {
               <span className="text-xs text-ink-400">Ignored</span>
             ) : canFollowBack ? (
               <button onClick={() => onAct(n, "followedback")} disabled={busy} className="btn-outline h-[30px] flex items-center gap-1 px-3 text-xs">
-                {busy === "followedback" ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />} Follow back
+                {busy === "followedback" ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />} <Roll>Follow back</Roll>
               </button>
             ) : (
               <>
                 <button onClick={() => onAct(n, "accepted")} disabled={busy} className="btn-primary h-[30px] flex items-center gap-1 px-3.5 text-xs">
-                  {busy === "accepted" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Accept
+                  {busy === "accepted" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} <Roll>Accept</Roll>
                 </button>
                 <button onClick={() => onAct(n, "ignored")} disabled={busy} className="btn-outline h-[30px] flex items-center gap-1 px-3 text-xs">
-                  {busy === "ignored" ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />} Ignore
+                  {busy === "ignored" ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />} <Roll>Ignore</Roll>
                 </button>
               </>
             )}

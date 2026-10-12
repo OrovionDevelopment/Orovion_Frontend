@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Navigate } from "@/lib/router";
 import { ArrowLeft, MapPin, Share2, UserX, MoreHorizontal, ShieldOff, UserMinus, Mail, Phone, Languages as LangIcon, Briefcase, GraduationCap, Activity, CalendarDays, Award, UserPlus, UserCheck, Clock, Link2, Loader2, MessageSquare } from "lucide-react";
@@ -79,7 +80,7 @@ export default function UserProfile() {
           {/* "private" is no longer a reason a profile can be unreachable — the
               remaining causes are deactivation, removal, or a block either way. */}
           <p className="text-sm text-ink-500">This account has been deactivated or removed, or one of you has blocked the other.</p>
-          <button onClick={() => nav(-1)} className="btn-ghost px-5 py-2 text-sm">Go back</button>
+          <button onClick={() => nav(-1)} className="btn-ghost px-5 py-2 text-sm"><Roll>Go back</Roll></button>
         </div>
       </div>
     );
@@ -386,7 +387,7 @@ function ProfileActions({ user, demo }) {
       disabled={followAction.busy}
       className="btn-primary flex-1 py-2.5 text-sm"
     >
-      {followAction.busy ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />} Follow
+      {followAction.busy ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />} <Roll>Follow</Roll>
     </button>
   );
 

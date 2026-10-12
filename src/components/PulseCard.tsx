@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@/lib/router";
 import {
@@ -273,7 +274,7 @@ export default function PulseCard({
           <h3 className="font-display text-lg font-extrabold text-ink-900">Delete this Pulse forever?</h3>
           <p className="text-sm text-ink-500">It will be permanently removed for everyone, along with its reactions and replies. This can't be undone.</p>
           <div className="mt-2 flex w-full gap-2">
-            <button onClick={() => setConfirmDelete(false)} className="btn-outline flex-1 py-2.5 text-sm">Keep Pulse</button>
+            <button onClick={() => setConfirmDelete(false)} className="btn-outline flex-1 py-2.5 text-sm"><Roll>Keep Pulse</Roll></button>
             <button onClick={deletePulse} disabled={deleting} className="btn flex-1 bg-danger-500 py-2.5 text-sm text-white hover:bg-danger-700">
               {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />} Delete forever
             </button>

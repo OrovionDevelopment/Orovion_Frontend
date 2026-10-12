@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@/lib/router";
@@ -315,7 +316,7 @@ export default function Create() {
           <div className="flex items-center gap-3">
             {err && <span className="text-xs text-rose-600">{err}</span>}
             <button disabled={busy || (!text.trim() && !media.length)} onClick={publish} className="btn-primary px-6 py-2 text-sm">
-              {busy ? "Publishing…" : "Publish"}
+              <Roll>{busy ? "Publishing…" : "Publish"}</Roll>
             </button>
           </div>
         </div>

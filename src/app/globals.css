@@ -173,6 +173,17 @@ body {
   .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700 active:scale-[.98] shadow-glow; }
   .btn-ghost { @apply btn bg-brand-50 text-brand-700 hover:bg-brand-100; }
   .btn-outline { @apply btn border border-ink-900/[.12] text-ink-900 hover:border-brand-300 hover:text-brand-700 bg-surface; }
+  /* Text roll for app buttons (same motion as the marketing pill): wrap the label in <Roll>. */
+  .roll { position: relative; display: inline-block; overflow: hidden; vertical-align: bottom; }
+  .roll__a, .roll__b { display: block; transition: transform .7s var(--ease-premium), opacity .55s var(--ease-reveal); }
+  .roll__b { position: absolute; left: 0; top: 0; width: 100%; transform: translateY(100%); opacity: 0; }
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    :is(.btn, .btn-primary, .btn-ghost, .btn-outline):hover:not(:disabled) .roll__a { transform: translateY(-100%); opacity: 0; }
+    :is(.btn, .btn-primary, .btn-ghost, .btn-outline):hover:not(:disabled) .roll__b { transform: none; opacity: 1; }
+  }
+  :is(.btn, .btn-primary, .btn-ghost, .btn-outline):focus-visible .roll__a { transform: translateY(-100%); opacity: 0; }
+  :is(.btn, .btn-primary, .btn-ghost, .btn-outline):focus-visible .roll__b { transform: none; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .roll__a, .roll__b { transition: none; } .roll__b { display: none; } }
   .chip { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold; }
   .card { @apply rounded-2xl border border-ink-900/[.06] bg-surface shadow-card; }
   .input { @apply w-full rounded-xl border border-ink-900/[.12] bg-surface px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100; }

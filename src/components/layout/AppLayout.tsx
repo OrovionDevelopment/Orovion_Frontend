@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { NavLink, useNavigate, Link, useLocation, Navigate } from "@/lib/router";
 import {
   Home, Clapperboard, Users, MessageSquare,
@@ -52,7 +53,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </form>
           <div className="flex-1 sm:hidden" />
           <button onClick={() => nav("/app/create")} className="btn-primary hidden px-4 py-2 text-sm sm:inline-flex">
-            <Plus size={17} /> Create
+            <Plus size={17} /> <Roll>Create</Roll>
           </button>
           {/* Same control as the landing navbar, so the switch sits in the same place
               before and after login. Settings -> Appearance still has the full

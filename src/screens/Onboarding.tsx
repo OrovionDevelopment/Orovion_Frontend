@@ -1,4 +1,5 @@
 "use client";
+import Roll from "@/components/ui/Roll";
 import { useEffect, useState } from "react";
 import { useNavigate, Navigate } from "@/lib/router";
 import { ArrowRight, CheckCircle2, Home, UserCog, Stethoscope, GraduationCap, User, Check } from "lucide-react";
@@ -148,7 +149,7 @@ export default function Onboarding() {
           {err && <p className="mt-4 text-sm font-medium text-danger-700">{err}</p>}
 
           <button onClick={submit} disabled={busy} className="btn-primary mt-7 w-full py-3.5 text-base">
-            {busy ? "Saving…" : <>Enter Orovion <ArrowRight size={18} /></>}
+            <Roll>{busy ? "Saving…" : "Enter Orovion"}</Roll>{!busy && <ArrowRight size={18} />}
           </button>
         </div>
 
@@ -172,8 +173,8 @@ function SuccessScreen({ name, onHome, onProfile }) {
           </div>
           <h1 className="mt-6 font-display text-3xl font-extrabold tracking-tight text-ink-900 text-balance">You're all set, {first}!</h1>
           <p className="mx-auto mt-2 max-w-sm text-ink-500">Your account is ready. Jump straight in, or finish your full profile so colleagues can find and trust you.</p>
-          <button onClick={onHome} className="btn-primary mt-7 w-full py-3.5 text-base"><Home size={18} /> Enter home</button>
-          <button onClick={onProfile} className="btn-outline mt-3 w-full py-3.5 text-base"><UserCog size={18} /> Complete profile</button>
+          <button onClick={onHome} className="btn-primary mt-7 w-full py-3.5 text-base"><Home size={18} /> <Roll>Enter home</Roll></button>
+          <button onClick={onProfile} className="btn-outline mt-3 w-full py-3.5 text-base"><UserCog size={18} /> <Roll>Complete profile</Roll></button>
         </div>
       </div>
     </div>
