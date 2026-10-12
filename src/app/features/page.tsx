@@ -6,7 +6,7 @@ import { breadcrumbSchema } from "@/lib/schema";
 export const metadata = pageMetadata({
   title: "Features",
   description:
-    "Clinical cases, Medical Pulses, research and private consultations with license-verified doctors — everything Orovion offers, and the plans that fit your needs.",
+    "Explore Clinical Cases, Medical Pulses, Research Summaries and Private Consults — everything you can do on Orovion, in one connected healthcare network.",
   path: "/features",
 });
 

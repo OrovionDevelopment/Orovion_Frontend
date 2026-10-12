@@ -1,14 +1,15 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo";
-import { TEAM } from "@/lib/team";
 import { JOURNAL } from "@/lib/journal";
 
 /**
  * Served at /sitemap.xml — the URL submitted to Google Search Console.
  *
- * Public pages only; it must agree with robots.txt (listing a disallowed URL is
- * a Search Console warning). Team member pages are derived from `TEAM`, so
- * adding a founder to `src/lib/team.ts` publishes their page automatically.
+ * Public pages only, and only pages the site links to: the navbar, footer and home
+ * page cards. The Team pages and the Journal list are not linked from anywhere, so
+ * they are left out. It must agree with robots.txt (listing a disallowed URL is
+ * a Search Console warning). Journal articles are derived from `JOURNAL`, so
+ * adding an article to `src/lib/journal.ts` lists its page automatically.
  *
  * `lastModified` uses build time. That is honest for a statically generated
  * marketing site: every deploy is the last time this content could have changed.
@@ -17,8 +18,6 @@ const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[numb
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/about", changeFrequency: "monthly", priority: 0.8 },
   { path: "/features", changeFrequency: "monthly", priority: 0.8 },
-  { path: "/journal", changeFrequency: "weekly", priority: 0.7 },
-  { path: "/team", changeFrequency: "monthly", priority: 0.8 },
   { path: "/mobile-app", changeFrequency: "monthly", priority: 0.8 },
   { path: "/help", changeFrequency: "monthly", priority: 0.6 },
   { path: "/contact", changeFrequency: "monthly", priority: 0.6 },
@@ -35,12 +34,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: r.changeFrequency,
       priority: r.priority,
-    })),
-    ...TEAM.map((m) => ({
-      url: absoluteUrl(`/team/${m.slug}`),
-      lastModified,
-      changeFrequency: "yearly" as const,
-      priority: 0.5,
     })),
     ...JOURNAL.map((a) => ({
       url: absoluteUrl(`/journal/${a.slug}`),

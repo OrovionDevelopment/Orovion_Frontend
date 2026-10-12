@@ -6,7 +6,7 @@ import { breadcrumbSchema } from "@/lib/schema";
 export const metadata = pageMetadata({
   title: "Contact us",
   description:
-    "Talk to the Orovion team about verification, consultations, partnerships or press. A real person reads every message, and we reply within two business days.",
+    "Talk to the Orovion team about verification, consultations or partnerships. Send us a message and our team will get back to you within two business days.",
   path: "/contact",
 });
 
