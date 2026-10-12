@@ -4,14 +4,7 @@ import { Link } from "@/lib/router";
 import { HOME } from "@/lib/marketing";
 import { Verified } from "@/components/ui/Primitives";
 import StoreBadge from "@/components/ui/StoreBadge";
-import ScrollThread, { type ThreadLine } from "./ScrollThread";
 import { FillText } from "../Type";
-
-/** Hand-drawn curl + arrowhead (200×70 box) that draws itself beside the store badges. */
-const ARROW: ThreadLine[] = [
-  { d: "M 4 58 C 52 70, 104 60, 132 40 C 150 27, 136 10, 118 20 C 100 31, 116 54, 146 46 C 168 40, 184 26, 194 10", width: 3 },
-  { d: "M 172 8 L 195 8 L 192 31", width: 3 },
-];
 
 /**
  * Placeholder app screen — a small Orovion feed. Replace it with a real
@@ -72,9 +65,9 @@ function MockScreen() {
 /**
  * "Get the app" (home, above the FAQ), after the QuickMFB download banner: a
  * large rounded brand-colour banner with the headline, one line and the store
- * badges on the left, a curly arrow drawing itself towards a phone that pokes
- * out above the banner on the right. On phones the phone sits on top, centred,
- * and the arrow is left out. Store badges point to /mobile-app until the store
+ * badges on the left and a phone that pokes
+ * out above the banner on the right. On phones the phone sits on top, centred.
+ * Store badges point to /mobile-app until the store
  * listings are live. The older thread-and-QR version is still in GetApp.tsx.
  */
 export default function AppBanner() {
@@ -104,14 +97,6 @@ export default function AppBanner() {
             <div className="mk-reveal flex items-center gap-4 pt-2">
               <Link to={a.to} data-cursor="snap" className="group rounded-xl" aria-label="Orovion on the App Store — learn more"><StoreBadge store="apple" /></Link>
               <Link to={a.to} data-cursor="snap" className="group rounded-xl" aria-label="Orovion on Google Play — learn more"><StoreBadge store="google" /></Link>
-              <ScrollThread
-                lines={ARROW}
-                viewBox="0 0 200 70"
-                stroke="rgb(var(--brand-400))"
-                startAt={0.95}
-                endAt={0.75}
-                className="hidden h-[70px] w-[200px] shrink-0 -translate-y-3 desk:block"
-              />
             </div>
           </div>
         </div>

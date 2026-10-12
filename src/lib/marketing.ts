@@ -21,7 +21,7 @@ export type NavLinkItem = { label: string; href: string };
 export const NAV_LINKS: NavLinkItem[] = [
   { label: "About us", href: "/about" },
   { label: "Features", href: "/features" },
-  { label: "Get the app", href: "/mobile-app" },
+  { label: "Get the app", href: "/#get-the-app" },
   { label: "Help", href: "/help" },
   { label: "Contact", href: "/contact" },
 ];
@@ -35,7 +35,7 @@ export const SITEMAP: NavLinkItem[][] = [
     { label: "How Orovion works", href: "/#how-it-works" },
   ],
   [
-    { label: "Get the app", href: "/mobile-app" },
+    { label: "Get the app", href: "/#get-the-app" },
     { label: "Help center", href: "/help" },
     { label: "Contact us", href: "/contact" },
     { label: "Privacy policy", href: "/privacy" },

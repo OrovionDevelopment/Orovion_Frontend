@@ -22,7 +22,7 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.orovio
 export const SITE_NAME = "Orovion";
 
 /** Title of the home page, and the fallback for anything that doesn't set one. */
-export const DEFAULT_TITLE = "Orovion — A trusted network of clinicians";
+export const DEFAULT_TITLE = "Orovion";
 
 /** `<meta name="description">` fallback for every page without its own. */
 export const DEFAULT_DESCRIPTION =
