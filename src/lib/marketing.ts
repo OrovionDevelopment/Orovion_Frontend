@@ -175,8 +175,8 @@ export const HOME = {
     eyebrow: "BUILT FOR EVERYONE IN HEALTHCARE",
     title: "One network,\ndifferent ways to use it.",
     text: "Whether you’re a healthcare professional, medical student or general user, Orovion gives you a place to connect, learn, share and access healthcare.",
-    /** Journal cards — "Read more" opens the article (src/lib/journal.ts). */
-    posts: JOURNAL.map((a) => ({ title: a.title, text: a.excerpt, image: a.image.src, href: `/journal/${a.slug}` })),
+    /** Highlight cards (not linked), written in src/lib/journal.ts. */
+    posts: JOURNAL.map((a) => ({ title: a.title, text: a.excerpt, image: a.image.src })),
   },
   numbers: {
     title: "From the first case to lasting change,",
@@ -242,10 +242,9 @@ export const SERVICES_PAGE = {
       eyebrow: "CASE STUDIES",
       title: "Understand healthcare through real cases.",
       text: "Case Studies allow healthcare professionals and medical students to share de identified clinical experiences in a structured format. Explore the clinical presentation, investigations, diagnosis, management and outcomes, and learn from how different cases are approached.",
-      cta: { label: "", to: "" },
       images: [
-        { src: "/marketing/svc-story-cases-main.jpg", alt: "A surgical team in masks looking down into the camera" },
-        { src: "/marketing/svc-story-cases-detail.jpg", alt: "A doctor reviewing scans on a lightbox" },
+        { src: "/marketing/Case study 1.png", alt: "A surgical team in masks looking down into the camera" },
+        { src: "/marketing/Case study 2.png", alt: "A doctor reviewing scans on a lightbox" },
       ],
     },
     {
@@ -254,10 +253,9 @@ export const SERVICES_PAGE = {
       eyebrow: "MEDICAL PULSES",
       title: "Share and discover healthcare insights.",
       text: "Pulses are a way to share concise thoughts, knowledge, observations and professional perspectives with the Orovion community.Follow conversations across healthcare and discover insights from the people working and learning within it.",
-      cta: { label: "", to: "" },
       images: [
-        { src: "/marketing/svc-story-main.jpg", alt: "A medical student in a mask holding up an X-ray" },
-        { src: "/marketing/svc-story-detail.jpg", alt: "A doctor reviewing brain scans" },
+        { src: "/marketing/Pulse 2.png", alt: "A medical student in a mask holding up an X-ray" },
+        { src: "/marketing/Pulse 1.png", alt: "A doctor reviewing brain scans" },
       ],
     },
     {
@@ -266,10 +264,9 @@ export const SERVICES_PAGE = {
       eyebrow: "RESEARCH SUMMARY",
       title: "Make healthcare research easier to understand.",
       text: "Explore concise summaries of research, findings and academic work shared on Orovion. Understand the key ideas, findings and relevance without having to navigate through lengthy research papers.",
-      cta: { label: "", to: "" },
       images: [
-        { src: "/marketing/svc-story-research-main.jpg", alt: "Two clinicians reviewing data on a monitor" },
-        { src: "/marketing/svc-story-research-detail.jpg", alt: "A researcher in a mask examining a sample in a flask" },
+        { src: "/marketing/Research 1.png", alt: "Two clinicians reviewing data on a monitor" },
+        { src: "/marketing/Research 2.png", alt: "A researcher in a mask examining a sample in a flask" },
       ],
     },
     {
@@ -278,10 +275,9 @@ export const SERVICES_PAGE = {
       eyebrow: "PRIVATE CONSULTS",
       title: "Connect with a verified healthcare professional.",
       text: "Private Consults give people a direct way to request time with healthcare professionals on Orovion. Find the right professional, send a consultation request, receive a suitable time and connect privately when the consultation begins.",
-      cta: { label: "", to: "" },
       images: [
-        { src: "/marketing/svc-story-consult-main.jpg", alt: "A doctor in a white coat with a stethoscope" },
-        { src: "/marketing/svc-story-consult-detail.jpg", alt: "Typing on a laptop beside a stethoscope" },
+        { src: "/marketing/Consult 2.png", alt: "A doctor in a white coat with a stethoscope" },
+        { src: "/marketing/Consult 1.png", alt: "Typing on a laptop beside a stethoscope" },
       ],
     },
   ],

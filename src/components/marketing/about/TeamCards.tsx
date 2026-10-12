@@ -1,5 +1,4 @@
 import { UsersRound } from "lucide-react";
-import { Link } from "@/lib/router";
 import { ABOUT } from "@/lib/marketing";
 import { TEAM } from "@/lib/team";
 import { cn } from "@/lib/utils";
@@ -9,8 +8,8 @@ import BlobPhoto from "../home/BlobPhoto";
 /**
  * Team cards (reference "Team"): centered header, then one card per team
  * member — photo in an organic blob with a faint outline, name in the brand
- * color and focus areas; the card opens their page. The middle card
- * sits lower; cards lift and the photo eases in on hover.
+ * color and focus areas (not linked). The middle card
+ * sits lower.
  */
 export default function TeamCards() {
   const t = ABOUT.team;
@@ -27,11 +26,7 @@ export default function TeamCards() {
         {TEAM.map((m, i) => (
           // depth wrapper (reveals own the card's `translate`): the lower middle card rises faster
           <div key={m.slug} data-depth={i === 1 ? 40 : undefined} className={cn(i === 1 && "tab:mt-28")}>
-            <Link
-              to={`/team/${m.slug}`}
-              data-cursor="View"
-              className="mk-reveal mk-lift group flex flex-col items-center gap-6 text-center"
-            >
+            <div className="mk-reveal flex flex-col items-center gap-6 text-center">
               <BlobPhoto src={m.photo ?? "/team/Cover.png"} alt={m.name} index={i} position="50% 28%" sizes="(min-width: 810px) 30vw, 90vw" />
               <div className="flex max-w-[340px] flex-col items-center gap-3">
                 <h3 className="mk-accent font-display text-[30px] font-medium leading-[1.1] tracking-[-.03em] text-brand-600 desk:text-[34px]">
@@ -39,7 +34,7 @@ export default function TeamCards() {
                 </h3>
                 <p className="t-small text-ink-600">{m.focus.join(" · ")}</p>
               </div>
-            </Link>
+            </div>
           </div>
         ))}
       </div>

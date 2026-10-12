@@ -695,6 +695,10 @@ html.lenis { scroll-behavior: auto !important; }
     background-image: linear-gradient(var(--mk-fill-ink), var(--mk-fill-ink)), linear-gradient(currentColor, currentColor);
     background-repeat: no-repeat; background-position: 0 100%, 0 0; background-size: 100% 0%, 100% 100%;
     -webkit-background-clip: text; background-clip: text;
+    /* The text clip only paints inside the span box, so glyph edges that overhang it (tight
+       letter-spacing on big headlines, W/y/f/T…) were cut off. Pad the box outwards and pull
+       it back with an equal negative margin so spacing is unchanged. */
+    padding-inline: .09em; margin-inline: -.09em; padding-block: .14em;
     transition: background-size .45s cubic-bezier(.22, 1, .36, 1);
   }
   .mk-fill:hover { background-size: 100% 100%, 100% 100%; }

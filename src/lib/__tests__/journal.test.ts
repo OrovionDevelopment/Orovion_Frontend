@@ -13,8 +13,8 @@ describe("journal articles", () => {
     }
   });
 
-  it("are what the home page's community cards open on Read more", () => {
-    expect(HOME.community.posts.map((p) => p.href)).toEqual(JOURNAL.map((a) => `/journal/${a.slug}`));
+  it("are what the home page's community cards show", () => {
+    expect(HOME.community.posts.map((p) => p.title)).toEqual(JOURNAL.map((a) => a.title));
   });
 
   it("finds an article by slug, or nothing", () => {

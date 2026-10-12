@@ -66,12 +66,7 @@ describe("home: get the app", () => {
   });
 });
 
-describe("journal links", () => {
-  it("opens a journal article from every home community card", () => {
-    expect(HOME.community.posts.length).toBeGreaterThan(0);
-    for (const p of HOME.community.posts) expect(p.href.startsWith("/journal/")).toBe(true);
-  });
-
+describe("footer links", () => {
   it("keeps footer anchors to home sections that still exist", () => {
     // in-page anchors only — the removed home stories took #stories with them
     const anchors = SITEMAP.flat().map((l) => l.href).filter((h) => h.startsWith("/#"));
