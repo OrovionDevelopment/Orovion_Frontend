@@ -13,10 +13,10 @@ const rid = (r) => r?._id || r?.id;
 const PAGE = 10;
 
 /**
- * Pulse tab — a vertical, one-reel-at-a-time discovery feed.
+ * Pulse tab — a vertical, one-pulse-at-a-time discovery feed.
  *
  * Layout: a snap-scrolling column where every slide fills the content viewport, so
- * exactly one reel is ever on screen. Snapping is native (`snap-y snap-mandatory`),
+ * exactly one pulse is ever on screen. Snapping is native (`snap-y snap-mandatory`),
  * which gives correct trackpad/touch/keyboard behaviour without a custom gesture
  * lock. Only the slide the user is looking at mounts a player (`active`) — the rest
  * stay posters, so a long feed never spawns a stack of <video>/hls.js instances.
@@ -68,7 +68,7 @@ export default function Pulses() {
     // A refresh that landed while this was in flight owns the session now —
     // never let a superseded page overwrite its cursor or end-of-feed state.
     if (g !== gen.current) return [];
-    if (!(d.reels || []).length) {
+    if (!(d.pulses || []).length) {
       logFeedEmpty("pulse", fresh ? "fresh session" : "continuation page", {
         sessionId: d.sessionId, nextCursor: d.nextCursor ?? null, exhausted: Boolean(d.exhausted),
       });
@@ -77,7 +77,7 @@ export default function Pulses() {
     cursor.current = d.nextCursor ?? null;
     setAtEnd(!d.nextCursor);
     setExhausted(Boolean(d.exhausted));
-    return d.reels || [];
+    return d.pulses || [];
   }, []);
 
   // Both touch refs only, so they are stable for the effects/callbacks below.
@@ -138,12 +138,12 @@ export default function Pulses() {
     finally { setRefreshing(false); }
   }, [fetchPage, take, resetSession]);
 
-  // Only auto-refresh on tab return when the user is still on the first reel —
+  // Only auto-refresh on tab return when the user is still on the first pulse —
   // otherwise returning to the tab would yank them out of a deep scroll position.
   const autoReload = useCallback(() => { if (activeRef.current === 0) reload(); }, [reload]);
   useAutoRefresh(autoReload);
 
-  // Pull-to-refresh competes with the vertical swipe between reels, so it is only
+  // Pull-to-refresh competes with the vertical swipe between pulses, so it is only
   // armed at the very top of the first slide.
   const { pull, refreshing: pulling } = usePullToRefresh(reload, { disabled: !(atTop && active === 0) });
 
@@ -155,7 +155,7 @@ export default function Pulses() {
     node?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  // The visible slide drives `active` (which reel plays and counts a view).
+  // The visible slide drives `active` (which pulse plays and counts a view).
   useEffect(() => {
     const root = scroller.current;
     if (!root || !list.length) return;
@@ -173,7 +173,7 @@ export default function Pulses() {
     return () => io.disconnect();
   }, [list.length]);
 
-  // Arrow keys step one reel, unless a sheet or a text field owns the keyboard.
+  // Arrow keys step one pulse, unless a sheet or a text field owns the keyboard.
   useEffect(() => {
     const onKey = (e) => {
       if (document.body.style.overflow === "hidden") return; // a sheet/modal is open
@@ -197,7 +197,7 @@ export default function Pulses() {
     setOver((o) => ({ ...o, [pulseId]: { ...o[pulseId], ...p } }));
   }, []);
 
-  // The id stays in `seenIds` on purpose: a deleted / "not interested" reel must
+  // The id stays in `seenIds` on purpose: a deleted / "not interested" pulse must
   // not reappear if a later page still carries it.
   const removePulse = (id: string) => setPulses((rs) => (rs || []).filter((r) => rid(r) !== id));
 
@@ -243,7 +243,7 @@ export default function Pulses() {
                 className={`flex ${slide} w-full snap-start snap-always items-center justify-center`}
               >
                 <PulseCard
-                  reel={r}
+                  pulse={r}
                   active={idx === active}
                   over={over[rid(r)] || {}}
                   onPatch={patch}

@@ -1,7 +1,7 @@
 # Search — `/api/search`
 
 The **Global Search Discovery Engine**: fault-tolerant fuzzy search across profiles
-and content (posts + clinical cases + reels), predictive typeahead, trending hashtags,
+and content (posts + clinical cases + pulses), predictive typeahead, trending hashtags,
 and a dedicated hashtag workspace. Optional auth (logged-in callers get `isFollowing`
 on user rows + regional zero-results fallback). See [index.md](index.md).
 
@@ -23,7 +23,7 @@ on user rows + regional zero-results fallback). See [index.md](index.md).
 | GET | `/?q=` | 🔓 | Global home preview (users + posts + hashtags) |
 | GET | `/users?q=` | 🔓 | Profiles tab (fuzzy + filters + zero-results fallback) |
 | GET | `/posts?q=` | 🔓 | Posts-only search (fuzzy + filters) |
-| GET | `/content?q=` | 🔓 | **Unified** content: posts + cases + reels |
+| GET | `/content?q=` | 🔓 | **Unified** content: posts + cases + pulses |
 | GET | `/hashtags?q=` | 🔓 | Hashtag suggestions |
 | GET | `/trending` | — | Trending hashtags (48h velocity) |
 | GET | `/hashtag/:tag` | 🔓 | Hashtag workspace feed (tabbed) |
@@ -39,7 +39,7 @@ on user rows + regional zero-results fallback). See [index.md](index.md).
 `country`, `headline`, `education` (college/university name), `workplace` (hospital/
 clinic name).
 
-**Content (`/posts`, `/content`):** `type` (post·research·thesis·case_study·case·reel·all),
+**Content (`/posts`, `/content`):** `type` (post·research·thesis·case_study·case·pulse·all),
 `time` (`24h`·`week`·`month`), `sort` (`recent` default · `trending`), `specialty`,
 `affiliation` (author's current/past workplace or education institution).
 
@@ -66,7 +66,7 @@ clinic name).
 //   (sort=trending returns a bounded top set: hasMore=false, nextCursor=null)
 
 // GET /content?q=carditis&type=all&time=month&sort=recent&cursor=<token>
-// → data: { items: [ { kind:"post"|"case"|"reel", subType:"research"|"case_study"|"reel"|...,
+// → data: { items: [ { kind:"post"|"case"|"pulse", subType:"research"|"case_study"|"pulse"|...,
 //                      id, authorId, text, specialties, hashtags, likesCount, commentsCount,
 //                      savesCount, thumbnailUrl, createdAt, author:{...} } ],
 //           hasMore, nextCursor }
@@ -78,7 +78,7 @@ clinic name).
 // → data: { hashtags: [ { tag:"#cardiology", count: 42, score: 318 } ] }   // ordered by 48h velocity
 
 // GET /hashtag/cardiology?type=all&cursor=<token>&limit=12
-//   type ∈ all | case_study | research | reel
+//   type ∈ all | case_study | research | pulse
 // → data: { tag:"#cardiology", tab:"all", totalCount: 540,
 //           items: [ { kind, subType, id, text, hashtags, author:{...}, createdAt } ],
 //           hasMore, nextCursor }
@@ -90,7 +90,7 @@ clinic name).
 // POST /history   (🔒) — call when the user COMMITS a search (enter / open results /
 //                 tap a result), NOT on typeahead. Deduped per query; keeps last 50.
 { "q": "cardiology", "type": "users", "entityId": "clxUser1", "entityType": "user" }
-//   type ∈ all|users|posts|content|hashtag   entityType ∈ user|post|reel|case|hashtag (optional)
+//   type ∈ all|users|posts|content|hashtag   entityType ∈ user|post|pulse|case|hashtag (optional)
 // → data: { recorded: { query, queryRaw, searchType, entityId, entityType } }
 
 // GET /history?limit=20   (🔒)
@@ -128,7 +128,7 @@ async function loadContent(reset) {
   const url = `/search/content?q=${q}&type=all&sort=recent${cursor && !reset ? `&cursor=${cursor}` : ''}`;
   const { items, nextCursor } = await api.get(url);
   cursor = nextCursor;                                   // null = end
-  return items;                                          // each item.kind: post | case | reel
+  return items;                                          // each item.kind: post | case | pulse
 }
 
 // Trending grid → tap a tag → workspace

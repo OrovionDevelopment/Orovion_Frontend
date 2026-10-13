@@ -1,4 +1,4 @@
-# Reels — `/api/reels`
+# Pulses — `/api/pulses`
 
 Short videos with async HLS transcoding (handled by media-service). Like/comment
 mirror posts. See [index.md](index.md).
@@ -20,7 +20,7 @@ mirror posts. See [index.md](index.md).
 | GET | `/:id/likes` | 🔓 | Likers list (rows carry `isFollowing`/`isSelf`) |
 | POST | `/:id/save` · `/:id/not-interested` | 🔒 | Toggle save / suppress |
 | POST | `/:id/comments` · GET `/:id/comments` · `.../replies` | mixed | Comments (`@username` → notify) |
-| DELETE | `/:id/comments/:commentId` · POST `.../like` | 🔒 | Comment ops (delete by author **or reel owner**) |
+| DELETE | `/:id/comments/:commentId` · POST `.../like` | 🔒 | Comment ops (delete by author **or pulse owner**) |
 | PUT | `/:id/cover` | 🔒 | Replace thumbnail `multipart: cover` |
 
 ## JSON
@@ -31,13 +31,13 @@ mirror posts. See [index.md](index.md).
   "visibility": "public",
   "specialties": ["Interventional Cardiology"],   // drives the specialty filter
   "hashtags": ["IntervCard"],                      // DEDICATED field (not parsed); stored as #intervcard
-  "mentions": ["@drbob"] }                         // DEDICATED field: @username / ids → resolved + notified ("mentioned you in a reel")
-// 201 → data: { reel: { id, caption, hashtags, mentions, processingStatus: "PENDING", hlsUrl: null, ... } }
+  "mentions": ["@drbob"] }                         // DEDICATED field: @username / ids → resolved + notified ("mentioned you in a pulse")
+// 201 → data: { pulse: { id, caption, hashtags, mentions, processingStatus: "PENDING", hlsUrl: null, ... } }
 
 // PUT /:id   (≤24h) — caption/visibility/specialties/hashtags/mentions editable; the VIDEO is locked.
 //   403 after 24h → data: { code: "MODIFICATION_LEASE_EXPIRED" }
 
-// GET /:id → data: { reel: { id, caption, hlsUrl, thumbnailUrl, processingStatus,
+// GET /:id → data: { pulse: { id, caption, hlsUrl, thumbnailUrl, processingStatus,
 //   likesCount, commentsCount, viewsCount, isLiked, isSaved,
 //   author: { id, fullName, uniqueUsername, profilePhoto, isVerified, role,
 //             specialization, isFollowing, connectionStatus } } }
@@ -47,14 +47,14 @@ mirror posts. See [index.md](index.md).
 
 // PUT /:id   (within 24 h of creation)
 { "caption": "Updated caption #cardio", "specialties": ["Cardiology"], "visibility": "public" }
-// → data: { reel: { ... } }   (hashtags re-extracted from caption)
+// → data: { pulse: { ... } }   (hashtags re-extracted from caption)
 
 // GET /:id/likes?limit=20  (who liked — same shape as posts)
 // → data: { users: [ { id, fullName, uniqueUsername, professionalHeadline, profilePhoto,
 //                      isVerified, isFollowing, isSelf } ], hasMore, nextCursor }
 
 // POST /:id/comments  — { content, parentId? }; @uniqueusername → mention_comment
-//   notification with meta { reelId, commentId } for deep-link.
+//   notification with meta { pulseId, commentId } for deep-link.
 
 // POST /:id/analytics
 { "watchDuration": 12.4, "watchPercent": 78, "didReplay": false, "didMute": true }
@@ -65,9 +65,9 @@ mirror posts. See [index.md](index.md).
 ```js
 // upload, then poll for HLS
 const fd = new FormData(); fd.append("video", file); fd.append("caption", caption);
-const { reel } = await api.upload("/reels", fd);
+const { pulse } = await api.upload("/pulses", fd);
 const poll = setInterval(async () => {
-  const { reel: r } = await api.get(`/reels/${reel.id}`);
+  const { pulse: r } = await api.get(`/pulses/${pulse.id}`);
   if (r.processingStatus === "COMPLETED") { clearInterval(poll); play(r.hlsUrl); }
   if (r.processingStatus === "FAILED")    { clearInterval(poll); toast("Transcode failed"); }
 }, 4000);
@@ -76,23 +76,23 @@ const poll = setInterval(async () => {
 // ⚠️ `cursor` is REQUIRED on continuations. The server only slices the frozen
 // ranked list when BOTH sessionId and a non-zero cursor arrive; sessionId alone
 // makes it rebuild the session and re-serve page 1 (feedSession.service.js).
-let reelSession, reelCursor;
-async function loadReels({ fresh = false } = {}) {
+let pulseSession, pulseCursor;
+async function loadPulses({ fresh = false } = {}) {
   const q = new URLSearchParams({ limit: "10" });
-  if (!fresh && reelSession && reelCursor) {
-    q.set("sessionId", reelSession);
-    q.set("cursor", reelCursor);       // numeric OFFSET into the ranked session
+  if (!fresh && pulseSession && pulseCursor) {
+    q.set("sessionId", pulseSession);
+    q.set("cursor", pulseCursor);       // numeric OFFSET into the ranked session
   }
-  const d = await api.get(`/reels/feed?${q}`);
-  reelSession = d.sessionId;
-  reelCursor  = d.nextCursor ?? null;  // null → genuine end of feed
-  return d;                            // d.exhausted → "replaying top reels" (NOT a stop signal)
+  const d = await api.get(`/pulses/feed?${q}`);
+  pulseSession = d.sessionId;
+  pulseCursor  = d.nextCursor ?? null;  // null → genuine end of feed
+  return d;                            // d.exhausted → "replaying top pulses" (NOT a stop signal)
 }
-function enterReelTab() { reelSession = reelCursor = undefined; return loadReels({ fresh: true }); }
-await api.post(`/reels/${id}/view`);                       // view ping
-await api.post(`/reels/${id}/watched`);                    // when watched >50% or >10s
+function enterPulseTab() { pulseSession = pulseCursor = undefined; return loadPulses({ fresh: true }); }
+await api.post(`/pulses/${id}/view`);                       // view ping
+await api.post(`/pulses/${id}/watched`);                    // when watched >50% or >10s
 ```
 
 > **Recommendation model** (true-random, 48h watch lockout, exhaustion loop) →
 > [recommendation.md](recommendation.md). Redis holds a per-session "served" set
-> (`reels:served:…`); everything falls back to the DB if Redis is down.
+> (`pulses:served:…`); everything falls back to the DB if Redis is down.

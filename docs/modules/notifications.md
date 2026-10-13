@@ -20,9 +20,9 @@ is also via **FCM push** (register the device token through
 
 | Type | Category | Example title |
 |---|---|---|
-| `post_like` · `reel_like` · `comment_like` | contentActivity | "Liked your post" |
-| `post_comment` · `reel_comment` · `comment_reply` | contentActivity | "Commented on your post" |
-| `mention_post` · `mention_reel` · `mention_comment` | contentActivity | "[user] tagged you in a comment" |
+| `post_like` · `pulse_like` · `comment_like` | contentActivity | "Liked your post" |
+| `post_comment` · `pulse_comment` · `comment_reply` | contentActivity | "Commented on your post" |
+| `mention_post` · `mention_pulse` · `mention_comment` | contentActivity | "[user] tagged you in a comment" |
 | `follow` · `follow_request` · `follow_request_accepted` | connections | "requested to follow you" |
 | `connection_request` · `connection_accepted` | connections | "Connection request" |
 | `message` | messages | "New message" |

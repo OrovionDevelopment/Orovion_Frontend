@@ -9,7 +9,7 @@
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Posts, Reels & Sharing|Posts, Reels & Sharing]]
+- [[_COMMUNITY_Posts, Pulses & Sharing|Posts, Pulses & Sharing]]
 - [[_COMMUNITY_UI Primitives & Profile|UI Primitives & Profile]]
 - [[_COMMUNITY_App Shell & Routing|App Shell & Routing]]
 - [[_COMMUNITY_Home Feed & Settings|Home Feed & Settings]]
@@ -49,9 +49,9 @@
 
 ## Communities (13 total, 1 thin omitted)
 
-### Community 0 - "Posts, Reels & Sharing"
+### Community 0 - "Posts, Pulses & Sharing"
 Cohesion: 0.07
-Nodes (36): canEditPost(), EditPostModal(), LikesSheet(), PostCard(), renderContent(), Rail(), ReelViewer(), rid() (+28 more)
+Nodes (36): canEditPost(), EditPostModal(), LikesSheet(), PostCard(), renderContent(), Rail(), PulseViewer(), rid() (+28 more)
 
 ### Community 1 - "UI Primitives & Profile"
 Cohesion: 0.07
@@ -105,15 +105,15 @@ Nodes (7): cid(), CommentNode(), CommentThread(), Composer, normalize(), renderR
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `Posts, Reels & Sharing` to `UI Primitives & Profile`, `App Shell & Routing`, `Home Feed & Settings`, `Profile Edit Forms`, `API Layer & Admin`, `Auth & Login`, `Notifications`, `Media Editor`, `Comments`, `Network & Connections`?**
+- **Why does `cn()` connect `Posts, Pulses & Sharing` to `UI Primitives & Profile`, `App Shell & Routing`, `Home Feed & Settings`, `Profile Edit Forms`, `API Layer & Admin`, `Auth & Login`, `Notifications`, `Media Editor`, `Comments`, `Network & Connections`?**
   _High betweenness centrality (0.206) - this node is a cross-community bridge._
-- **Why does `useAuth()` connect `Home Feed & Settings` to `Posts, Reels & Sharing`, `UI Primitives & Profile`, `App Shell & Routing`, `Profile Edit Forms`, `API Layer & Admin`, `Auth & Login`, `Auth Context & Sockets`, `Notifications`, `Comments`, `Network & Connections`?**
+- **Why does `useAuth()` connect `Home Feed & Settings` to `Posts, Pulses & Sharing`, `UI Primitives & Profile`, `App Shell & Routing`, `Profile Edit Forms`, `API Layer & Admin`, `Auth & Login`, `Auth Context & Sockets`, `Notifications`, `Comments`, `Network & Connections`?**
   _High betweenness centrality (0.073) - this node is a cross-community bridge._
-- **Why does `useNavigate()` connect `Home Feed & Settings` to `Posts, Reels & Sharing`, `UI Primitives & Profile`, `App Shell & Routing`, `Profile Edit Forms`, `API Layer & Admin`, `Auth & Login`, `Notifications`, `Comments`, `Network & Connections`?**
+- **Why does `useNavigate()` connect `Home Feed & Settings` to `Posts, Pulses & Sharing`, `UI Primitives & Profile`, `App Shell & Routing`, `Profile Edit Forms`, `API Layer & Admin`, `Auth & Login`, `Notifications`, `Comments`, `Network & Connections`?**
   _High betweenness centrality (0.051) - this node is a cross-community bridge._
 - **What connects `metadata`, `viewport`, `metadata` to the rest of the system?**
   _64 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Posts, Reels & Sharing` be split into smaller, more focused modules?**
+- **Should `Posts, Pulses & Sharing` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `UI Primitives & Profile` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._

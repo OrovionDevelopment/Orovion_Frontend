@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { Loader2, VideoOff } from "lucide-react";
 
 /**
- * HLS reel player (docs/modules/reels.md). Plays `hlsUrl` via the browser's
+ * HLS pulse player (docs/modules/pulses.md). Plays `hlsUrl` via the browser's
  * native HLS (Safari/iOS) when available, otherwise lazy-loads hls.js
  * (Chrome/Firefox/Edge). While the upload is still transcoding
  * (processingStatus !== "COMPLETED") or has no stream yet, it shows the

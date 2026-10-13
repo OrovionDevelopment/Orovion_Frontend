@@ -10,17 +10,17 @@ import { cn, compact, pulsePoster } from "@/lib/utils";
 
 /**
  * Dedicated hashtag workspace (PRD §4B) — deep-linked from any #tag chip.
- * Header (# + cumulative post volume) + tabbed feed: All / Case Studies / Research / Reels.
+ * Header (# + cumulative post volume) + tabbed feed: All / Case Studies / Research / Pulses.
  * Shows only assets whose metadata carries the tag token.
  */
 const TABS = [
   { key: "all", label: "All" },
   { key: "case_study", label: "Case studies" },
   { key: "research", label: "Research" },
-  { key: "reel", label: "Reels" },
+  { key: "pulse", label: "Pulses" },
 ];
 const rid = (x) => x?._id || x?.id;
-const isPulse = (x) => x?.kind === "reel" || x?.postType === "REEL" || x?.type === "reel" || Boolean(x?.videoUrl);
+const isPulse = (x) => x?.kind === "pulse" || x?.postType === "PULSE" || x?.type === "pulse" || Boolean(x?.videoUrl);
 
 export default function HashtagWorkspace() {
   const { demo } = useAuth();
@@ -89,7 +89,7 @@ export default function HashtagWorkspace() {
         ) : (
           <div className="space-y-5">
             {list.map((x) => isPulse(x)
-              ? <PulseRow key={rid(x)} reel={{ ...x, caption: x.caption ?? x.text }} onOpen={() => nav("/app/pulse")} />
+              ? <PulseRow key={rid(x)} pulse={{ ...x, caption: x.caption ?? x.text }} onOpen={() => nav("/app/pulse")} />
               : <PostCard key={rid(x)} post={{ ...x, content: x.content ?? x.text }} demo={demo} />
             )}
           </div>
@@ -99,7 +99,7 @@ export default function HashtagWorkspace() {
   );
 }
 
-function PulseRow({ reel: pulse, onOpen }) {
+function PulseRow({ pulse: pulse, onOpen }) {
   const poster = pulsePoster(pulse);
   return (
     <button onClick={onOpen} className="card lift flex w-full items-center gap-3 p-3 text-left">

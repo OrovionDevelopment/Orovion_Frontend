@@ -73,17 +73,17 @@ export const roleLabel = (r) =>
 const isImageUrl = (u) => /\.(jpe?g|png|webp|gif|avif)(\?|#|$)/i.test(u || "");
 
 /**
- * Poster frame for a reel/Pulse, or `undefined` when there is no real image.
+ * Poster frame for a pulse/Pulse, or `undefined` when there is no real image.
  *
  * This used to derive a poster by swapping the video's extension to `.jpg`,
  * which worked on Cloudinary because it renders a JPEG frame on demand. Storage
  * moved to S3 + CloudFront, which serves only objects that actually exist, so
  * that swap produced a URL for a file nobody ever uploaded: S3 404s, CloudFront
  * reports it as 403 AccessDenied (the reader has no s3:ListBucket to reveal the
- * difference), and the browser logs a failed image load for every reel on screen.
+ * difference), and the browser logs a failed image load for every pulse on screen.
  *
  * Callers must handle `undefined` by rendering a placeholder rather than an <img>
- * with no src. Reels created through POST /api/reels carry no thumbnail at all
+ * with no src. Pulses created through POST /api/pulses carry no thumbnail at all
  * today — api's S3 upload returns no thumbnail_url, so media stores null — so
  * `undefined` is the common case, not the exception.
  */

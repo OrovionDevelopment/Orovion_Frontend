@@ -30,7 +30,7 @@ require auth. See [index.md](index.md).
 // PUT /email-preferences   (partial; same data as /api/email — see email.md)
 { "productUpdates": false }
 
-// POST /feedback      { "category": "bug", "message": "Reels feed stutters." }
+// POST /feedback      { "category": "bug", "message": "Pulses feed stutters." }
 // POST /support       { "subject": "Cannot upload license", "description": "...", "category": "verification" }
 
 // PUT /call-settings  (doctor)

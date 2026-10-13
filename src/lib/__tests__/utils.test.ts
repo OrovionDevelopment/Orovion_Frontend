@@ -83,13 +83,13 @@ describe("avatarColor", () => {
  * which Cloudinary renders on demand. Storage moved to S3 + CloudFront, which
  * serves only real objects, so that swap pointed at a file nobody uploaded:
  * verified in production as a 404 on the .jpg beside a 200 on the .mp4, surfaced
- * to the browser as CloudFront 403 AccessDenied on every reel on screen.
+ * to the browser as CloudFront 403 AccessDenied on every pulse on screen.
  *
  * It now returns a poster ONLY when one genuinely exists. Callers render a
  * placeholder for undefined instead of an <img> with no src.
  */
 describe("pulsePoster", () => {
-  const mp4 = "https://cdn.example.net/orovion/users/u1/reels/a.mp4";
+  const mp4 = "https://cdn.example.net/orovion/users/u1/pulses/a.mp4";
 
   it("never invents a .jpg from a video url — the object does not exist on S3", () => {
     expect(pulsePoster({ videoUrl: mp4 })).toBeUndefined();
@@ -97,7 +97,7 @@ describe("pulsePoster", () => {
 
   it("returns undefined when every media field is the same video file", () => {
     // api's S3 upload returns no thumbnail_url, so media stores null and the
-    // client sees only video URLs. This is the COMMON case for reels today.
+    // client sees only video URLs. This is the COMMON case for pulses today.
     expect(pulsePoster({ videoUrl: mp4, thumbnailUrl: mp4, posterUrl: mp4 })).toBeUndefined();
   });
 

@@ -1,4 +1,5 @@
 "use client";
+import SiteThreads from "@/components/ui/SiteThreads";
 import Roll from "@/components/ui/Roll";
 import { NavLink, useNavigate, Link, useLocation, Navigate } from "@/lib/router";
 import {
@@ -37,7 +38,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!demo && !isProfileComplete) return <Navigate to="/onboarding" replace />;
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="isolate min-h-screen bg-ink-50">
+      <SiteThreads />
       <RouteProgress trigger={location.pathname} />
       {/* Topbar */}
       <header className="sticky top-0 z-40 border-b border-ink-900/[.06] glass">

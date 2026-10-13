@@ -1,4 +1,5 @@
 "use client";
+import SiteThreads from "@/components/ui/SiteThreads";
 import Roll from "@/components/ui/Roll";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, Navigate } from "@/lib/router";
@@ -133,7 +134,8 @@ export default function Login() {
     // phone, OTP and QR-login challenge. Masking is enforced HERE rather than via
     // Clarity's dashboard masking mode, which a teammate could flip. Clicks and
     // scroll still register, so heatmaps are unaffected — only content is hidden.
-    <div data-clarity-mask="true" className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+    <div data-clarity-mask="true" className="relative isolate grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+      <SiteThreads />
       <NavArrows variant="floating" />
 
       {/* Brand panel */}

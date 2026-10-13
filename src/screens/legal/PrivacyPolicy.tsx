@@ -45,7 +45,7 @@ const SECTIONS = [
           "Degree or program information (Medical Students)",
         ]} />
         <p><strong className="font-semibold text-ink-900">Profile information.</strong> Depending on your role, you may provide a profile photograph, cover image, professional headline, biography, languages, education details, workplace information, professional interests, research and publication information, certifications, availability preferences, consultation preferences, and skills or areas of expertise.</p>
-        <p><strong className="font-semibold text-ink-900">Content you create.</strong> Information may be collected when you create, upload, publish, or share posts, reels, case studies, research summaries, comments, reactions, messages, feedback submissions, support requests, and uploaded files or media.</p>
+        <p><strong className="font-semibold text-ink-900">Content you create.</strong> Information may be collected when you create, upload, publish, or share posts, pulses, case studies, research summaries, comments, reactions, messages, feedback submissions, support requests, and uploaded files or media.</p>
 
         <H3>2.2 Professional verification information</H3>
         <p>Healthcare professionals may voluntarily submit information for verification, which may include:</p>

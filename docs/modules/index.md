@@ -12,14 +12,14 @@ module call depends on (base URL, auth, the response envelope, pagination, error
 | Users | [users.md](users.md) | Onboarding, public profile, user search |
 | Profile | [profile.md](profile.md) | Edit profile, lists, **username**, verification, photos |
 | Posts | [posts.md](posts.md) | Create/edit, like, comment, save, report, share |
-| Likes | [likes.md](likes.md) | Universal like engine (posts / comments / reels / reel-comments) |
+| Likes | [likes.md](likes.md) | Universal like engine (posts / comments / pulses / pulse-comments) |
 | Feed | [feed.md](feed.md) | Home / explore / saved, specialty filter, not-interested, mute |
-| Recommendation | [recommendation.md](recommendation.md) | Home-feed & reel ranking: sessions, seen/watch de-dup, exhaustion |
+| Recommendation | [recommendation.md](recommendation.md) | Home-feed & pulse ranking: sessions, seen/watch de-dup, exhaustion |
 | Follows | [follows.md](follows.md) | Follow state machine + private follow requests |
 | Network | [network.md](network.md) | Connections (accept/reject), discover |
 | Notifications | [notifications.md](notifications.md) | Activity feed, unread count, preferences |
 | Search | [search.md](search.md) | **Discovery engine**: fuzzy profiles + unified content, typeahead, trending, hashtag workspace |
-| Reels | [reels.md](reels.md) | Pulse feed, upload (HLS), like/comment/analytics |
+| Pulses | [pulses.md](pulses.md) | Pulse feed, upload (HLS), like/comment/analytics |
 | Cases | [cases.md](cases.md) | Case-study CRUD, helpful, follow |
 | Consultations | [consultations.md](consultations.md) | Booking, pay, approve/decline, refund |
 | Account | [account.md](account.md) | Settings, privacy, deactivate/delete/restore |

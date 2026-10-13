@@ -14,7 +14,7 @@ export const EMPTY_POST = { time: "", type: "", affiliation: "" };
 
 const ROLES = [["", "Any"], ["doctor", "Doctor"], ["student", "Student"], ["general_user", "General"]];
 const WINDOWS = [["", "Any time"], ["24h", "Past 24h"], ["week", "Past week"], ["month", "Past month"]];
-// /search/posts is posts-only (reels live in /search/content + the hashtag workspace).
+// /search/posts is posts-only (pulses live in /search/content + the hashtag workspace).
 const TYPES = [["", "Any"], ["post", "Posts"], ["case_study", "Case studies"], ["research", "Research"], ["thesis", "Theses"]];
 
 export default function SearchFilters({ open, onClose, tab, profile, post, onApply, onClear }) {

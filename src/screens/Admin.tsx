@@ -303,7 +303,7 @@ function Overview() {
           <Row label="Research" value={c.posts.research} icon={BookOpen} />
           <Row label="Thesis" value={c.posts.thesis} icon={BookOpen} />
           <Row label="Case studies (posts)" value={c.posts.case_study} icon={BookOpen} />
-          <Row label="Pulses" value={c.reels} icon={Film} />
+          <Row label="Pulses" value={c.pulses} icon={Film} />
           <Row label="Clinical cases" value={c.clinicalCases} icon={FileStack} />
         </Panel>
         <Panel title="Consultations">
@@ -1276,7 +1276,7 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
 
       {s && (
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          {[["Posts", s.content?.posts], ["Pulses", s.content?.reels], ["Cases", s.content?.cases],
+          {[["Posts", s.content?.posts], ["Pulses", s.content?.pulses], ["Cases", s.content?.cases],
             ["As patient", s.consultations?.asPatient], ["As doctor", s.consultations?.asDoctor], ["Reports", s.pendingReportsAgainst]].map(([l, v]) => (
             <div key={l as string} className="rounded-xl bg-ink-900/[.03] p-2">
               <p className="text-lg font-extrabold text-ink-900">{compact((v as number) ?? 0)}</p>
@@ -1340,7 +1340,7 @@ const CONTENT_TABS = [
   { key: "research", label: "Research", icon: BookOpen },
   { key: "thesis", label: "Thesis", icon: BookOpen },
   { key: "case_study", label: "Case studies", icon: BookOpen },
-  { key: "reel", label: "Pulses", icon: Film },
+  { key: "pulse", label: "Pulses", icon: Film },
   { key: "clinical_case", label: "Clinical cases", icon: FileStack },
 ];
 

@@ -41,7 +41,7 @@ export default function FollowButton({ user, demo, variant = "solid", className,
   const nav = useNavigate();
   const toast = useToast();
   const id = user?.id || user?._id;
-  // `simple` (posts & reels): a plain Follow/Following toggle — collapse the
+  // `simple` (posts & pulses): a plain Follow/Following toggle — collapse the
   // connection sub-states (connect/connecting/accept/message) down to "following".
   const [state, setState] = useState(() => {
     const s = deriveState(user);

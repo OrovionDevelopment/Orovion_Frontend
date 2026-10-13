@@ -14,9 +14,9 @@ describe("routeFor — notification deep-link routing", () => {
     expect(routeFor({ type: "post_like", meta: { postId: "p1" } })).toBe("/app/post/p1");
   });
 
-  it("routes reel activity to the reels tab", () => {
-    expect(routeFor({ type: "reel_like" })).toBe("/app/pulse");
-    expect(routeFor({ type: "mention_reel", meta: { reelId: "r1" } })).toBe("/app/pulse");
+  it("routes pulse activity to the pulses tab", () => {
+    expect(routeFor({ type: "pulse_like" })).toBe("/app/pulse");
+    expect(routeFor({ type: "mention_pulse", meta: { pulseId: "r1" } })).toBe("/app/pulse");
   });
 
   it("routes follow/connection acceptance to the sender profile", () => {

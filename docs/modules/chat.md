@@ -32,7 +32,7 @@ proxied straight through. All routes require auth. See [index.md](index.md).
 { "content": "Hi Dr. Sharma, thanks for connecting!", "messageType": "text" }
 ```
 
-Post/reel/profile **shares** also land here as embedded reference messages (sent via
+Post/pulse/profile **shares** also land here as embedded reference messages (sent via
 `POST /api/posts/:id/share/inapp` etc.).
 
 ## Frontend

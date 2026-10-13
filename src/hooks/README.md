@@ -13,7 +13,7 @@ example of that split.
 the user returns to the tab.
 
 Used by the **post section** (`screens/Feed`) and the **Pulse section**
-(`screens/Reels`).
+(`screens/Pulses`).
 
 **Two input paths.** Touch is a single drag settled by `touchend`. Wheel/trackpad
 exists because **touch events never fire on desktop web** — without it the
@@ -34,9 +34,9 @@ abandons the pull immediately.
   promise that always resolves (Feed resolves its `pendingRefresh` in a
   `.finally()`, on success *and* failure, so the spinner can never hang).
 - `atTop()` is measured on the **window**. A screen that scrolls an inner
-  element instead (Reels' snap column) must pass `disabled` itself — Reels arms
+  element instead (Pulses' snap column) must pass `disabled` itself — Pulses arms
   the gesture only on slide 0 at `scrollTop === 0`, otherwise the hook's
-  `preventDefault` would fight the vertical swipe between reels.
+  `preventDefault` would fight the vertical swipe between pulses.
 
 ## `useRingtone.ts`
 

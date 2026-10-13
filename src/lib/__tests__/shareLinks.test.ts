@@ -58,7 +58,7 @@ describe("parseHandle", () => {
 
 describe("opening the app", () => {
   it("uses id-based scheme links every app build understands", () => {
-    expect(appSchemeUrl({ type: "reel", id: "r1" })).toBe("orovion://reel/r1");
+    expect(appSchemeUrl({ type: "pulse", id: "r1" })).toBe("orovion://pulse/r1");
   });
 
   it("builds an Android intent link with an encoded browser fallback", () => {

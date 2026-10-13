@@ -40,7 +40,7 @@ describe("reconcileFollowState — cross-surface follow sync", () => {
     expect(reconcileFollowState("message", { following: false }, false)).toBe("follow");
   });
 
-  it("simple buttons show 'following' once followed (posts, reels, suggestion cards)", () => {
+  it("simple buttons show 'following' once followed (posts, pulses, suggestion cards)", () => {
     expect(reconcileFollowState("follow", { following: true }, true)).toBe("following");
   });
 

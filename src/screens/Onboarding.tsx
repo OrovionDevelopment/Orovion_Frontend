@@ -1,4 +1,5 @@
 "use client";
+import SiteThreads from "@/components/ui/SiteThreads";
 import Roll from "@/components/ui/Roll";
 import { useEffect, useState } from "react";
 import { useNavigate, Navigate } from "@/lib/router";
@@ -80,7 +81,8 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="relative grid min-h-screen place-items-center overflow-hidden bg-ink-50 px-6 py-12">
+    <div className="relative isolate grid min-h-screen place-items-center overflow-hidden bg-ink-50 px-6 py-12">
+      <SiteThreads />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 mesh opacity-70" />
       <NavArrows variant="floating" />
 
@@ -162,7 +164,8 @@ export default function Onboarding() {
 function SuccessScreen({ name, onHome, onProfile }) {
   const first = (name || "").trim().split(/\s+/)[0] || "there";
   return (
-    <div className="relative grid min-h-screen place-items-center overflow-hidden bg-ink-50 px-6 py-12">
+    <div className="relative isolate grid min-h-screen place-items-center overflow-hidden bg-ink-50 px-6 py-12">
+      <SiteThreads />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-72 mesh opacity-80" />
       <div className="relative w-full max-w-md">
         <div className="card anim-pop p-8 text-center">

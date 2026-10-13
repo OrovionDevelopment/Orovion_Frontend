@@ -83,7 +83,7 @@ export default function ShareSheet({ open, onClose, post, demo, kind = "post", s
   const url = useMemo(() => {
     if (shareUrl) return shareUrl;
     if (!postId) return "";
-    return kind === "reel" ? pulseUrl(postId) : postUrl(postId);
+    return kind === "pulse" ? pulseUrl(postId) : postUrl(postId);
   }, [shareUrl, kind, postId]);
   const shareText = post?.content ? `${post.content.slice(0, 120)}${post.content.length > 120 ? "…" : ""}` : "Worth a read on Orovion";
 
@@ -121,8 +121,8 @@ export default function ShareSheet({ open, onClose, post, demo, kind = "post", s
     if (picked.length === 0) return;
     setSending(true);
     try {
-      // Reels have no in-app share endpoint yet — copy-link / external still work.
-      if (!demo && kind !== "reel") await dok.posts.shareInApp(postId, picked);
+      // Pulses have no in-app share endpoint yet — copy-link / external still work.
+      if (!demo && kind !== "pulse") await dok.posts.shareInApp(postId, picked);
       setSent(true);
       setTimeout(onClose, 1100);
     } catch {

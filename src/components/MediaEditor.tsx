@@ -38,7 +38,7 @@ const TEXT_COLORS = ["#ffffff", "#0e1213", "#1e7b74", "#e8957a", "#d8b25a", "#7a
 
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
-export default function MediaEditor({ item, isReel: isPulse = false, onSave, onClose }) {
+export default function MediaEditor({ item, isPulse: isPulse = false, onSave, onClose }) {
   const isVideo = item.kind === "video";
   const [tool, setTool] = useState("filter");
   const [filter, setFilter] = useState(item.filter || "Original");
@@ -49,7 +49,7 @@ export default function MediaEditor({ item, isReel: isPulse = false, onSave, onC
   const [activeText, setActiveText] = useState(null);
   const [music, setMusic] = useState(item.music || null);
   const [trim, setTrim] = useState(item.trim || { start: 0, end: 0 });
-  const [cover, setCover] = useState(item.cover ?? null); // reel thumbnail frame (seconds)
+  const [cover, setCover] = useState(item.cover ?? null); // pulse thumbnail frame (seconds)
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef(null);

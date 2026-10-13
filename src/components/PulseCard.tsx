@@ -1,6 +1,6 @@
 "use client";
 import Roll from "@/components/ui/Roll";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@/lib/router";
 import {
   Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
@@ -25,7 +25,7 @@ const rid = (r) => r?._id || r?.id;
 type Overrides = { liked?: boolean; likesCount?: number; saved?: boolean; commentsCount?: number };
 
 type PulseCardProps = {
-  reel: any;
+  pulse: any;
   active?: boolean;
   over?: Overrides;
   onPatch?: (pulseId: any, patch: Overrides) => void;
@@ -41,16 +41,16 @@ type PulseCardProps = {
 };
 
 /**
- * One Pulse (reel) and its full interaction stack (docs/modules/reels.md):
- * optimistic like + likers list, the network FollowButton state machine, reel
+ * One Pulse (pulse) and its full interaction stack (docs/modules/pulses.md):
+ * optimistic like + likers list, the network FollowButton state machine, pulse
  * comments (@mentions / nested replies), save, share, view/watched pings and the
  * owner / third-party 3-dot menu.
  *
  * Used by both surfaces so they cannot drift apart:
- *   - `PulseViewer` — full-screen overlay opened from a grid (profile reels).
- *   - `Reels` — the Pulse tab's one-reel-at-a-time vertical feed.
+ *   - `PulseViewer` — full-screen overlay opened from a grid (profile pulses).
+ *   - `Pulses` — the Pulse tab's one-pulse-at-a-time vertical feed.
  *
- * `active` means "this is the reel the user is looking at". Only an active card
+ * `active` means "this is the pulse the user is looking at". Only an active card
  * mounts a <video> and fires view/watched pings, so a feed of N cards never
  * spawns N players or N phantom views.
  *
@@ -58,7 +58,7 @@ type PulseCardProps = {
  * counts survive scrolling away and back within a session.
  */
 export default function PulseCard({
-  reel: pulse,
+  pulse: pulse,
   active = true,
   over = {},
   onPatch,
@@ -96,10 +96,10 @@ export default function PulseCard({
   const [deleting, setDeleting] = useState(false);
   const [caption, setCaption] = useState(pulse?.caption);
 
-  // keep the caption in sync when the card is recycled onto another reel
+  // keep the caption in sync when the card is recycled onto another pulse
   useEffect(() => { setCaption(pulse?.caption); }, [pulse?.caption]);
 
-  // view + watched pings — only for the reel actually on screen
+  // view + watched pings — only for the pulse actually on screen
   useEffect(() => {
     if (!active || demo || !id) return;
     dok.pulses.view(id).catch(() => {});
@@ -130,11 +130,22 @@ export default function PulseCard({
   };
 
   /* ---- save engine ---- */
+  // One save request at a time. The endpoint TOGGLES whatever is stored, so two
+  // quick clicks would send two flips whose replies can arrive out of order and
+  // leave the icon showing the opposite of the server.
+  const saving = useRef(false);
   const toggleSave = () => {
+    if (saving.current) return;
     const next = !saved;
     patch({ saved: next });
     if (demo) return;
-    dok.pulses.save(id).catch(() => { patch({ saved }); toast?.error("Couldn't update saved items"); });
+    saving.current = true;
+    // Its reply is the truth: if the screen was out of date (saved from the app,
+    // an older feed page), the optimistic guess above is corrected, not left inverted.
+    dok.pulses.save(id)
+      .then((d) => { if (typeof d?.saved === "boolean") patch({ saved: d.saved }); })
+      .catch(() => { patch({ saved }); toast?.error("Couldn't update saved items"); })
+      .finally(() => { saving.current = false; });
   };
 
   /* ---- 3-dot actions ---- */
@@ -190,7 +201,7 @@ export default function PulseCard({
         />
       ) : (
         // Off-screen slides stay as a poster: no <video>, no hls.js, no autoplay.
-        // Only when a REAL poster exists — reels uploaded via POST /api/reels have
+        // Only when a REAL poster exists — pulses uploaded via POST /api/pulses have
         // none, and an <img> with no src renders as a broken tile. The container's
         // bg-ink-950 is the placeholder.
         pulsePoster(pulse) ? (
@@ -282,11 +293,11 @@ export default function PulseCard({
         </div>
       </Modal>
 
-      {/* overlays — reel-aware */}
-      <ShareSheet open={share} onClose={() => setShare(false)} post={{ ...pulse, content: caption }} demo={demo} kind="reel" />
-      <LikesSheet open={likesOpen} onClose={() => setLikesOpen(false)} postId={id} count={likesCount} demo={demo} kind="reel" />
-      <CommentsSheet open={commentsOpen} onClose={() => setCommentsOpen(false)} post={{ ...pulse, commentsCount }} demo={demo} kind="reel" onCountChange={(d) => patch({ commentsCount: Math.max(0, commentsCount + d) })} />
-      <EditPostModal open={editOpen} onClose={() => setEditOpen(false)} post={pulse} demo={demo} kind="reel" onSaved={(text) => setCaption(text)} />
+      {/* overlays — pulse-aware */}
+      <ShareSheet open={share} onClose={() => setShare(false)} post={{ ...pulse, content: caption }} demo={demo} kind="pulse" />
+      <LikesSheet open={likesOpen} onClose={() => setLikesOpen(false)} postId={id} count={likesCount} demo={demo} kind="pulse" />
+      <CommentsSheet open={commentsOpen} onClose={() => setCommentsOpen(false)} post={{ ...pulse, commentsCount }} demo={demo} kind="pulse" onCountChange={(d) => patch({ commentsCount: Math.max(0, commentsCount + d) })} />
+      <EditPostModal open={editOpen} onClose={() => setEditOpen(false)} post={pulse} demo={demo} kind="pulse" onSaved={(text) => setCaption(text)} />
     </div>
   );
 }

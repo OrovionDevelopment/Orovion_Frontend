@@ -203,22 +203,22 @@ caption). `mentions` accepts `@uniqueusername` (case-insensitive) and/or user id
 resolved server-side and notified. Media via `multipart: media` (≤500MB/file).
 Editing (`PUT /:id`) is allowed for 24h on caption/specialties/hashtags/mentions
 (media locked); after 24h → `403 { code: "MODIFICATION_LEASE_EXPIRED" }`. Same
-rules apply to reels (`POST /api/reels`, video ≤500MB).
+rules apply to pulses (`POST /api/pulses`, video ≤500MB).
 Upload `media` (up to 10 files) as `multipart/form-data`.
 
 ---
 
-## Reels — `/api/reels`
+## Pulses — `/api/pulses`
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/feed` | 🔓 | Infinite-scroll reel feed |
-| GET | `/saved` | 🔒 | Saved reels |
-| GET | `/user/:userId` | 🔓 | User reels |
-| POST | `/` | 🔒 | Create reel `multipart: video` → HLS transcoding async |
+| GET | `/feed` | 🔓 | Infinite-scroll pulse feed |
+| GET | `/saved` | 🔒 | Saved pulses |
+| GET | `/user/:userId` | 🔓 | User pulses |
+| POST | `/` | 🔒 | Create pulse `multipart: video` → HLS transcoding async |
 | GET | `/:id` | 🔓 | Pulse detail (author carries `isFollowing`) |
 | PUT | `/:id` | 🔒 | Edit caption/tags/visibility (blocked after 24 h) |
-| DELETE | `/:id` | 🔒 | Delete reel |
+| DELETE | `/:id` | 🔒 | Delete pulse |
 | POST | `/:id/view` | 🔓 | Increment view (debounced) |
 | POST | `/:id/watched` | 🔒 | Mark watched (>50% / >10s) → 48h discovery lockout |
 | POST | `/:id/analytics` | 🔓 | Batch analytics |
@@ -228,7 +228,7 @@ Upload `media` (up to 10 files) as `multipart/form-data`.
 | POST | `/:id/not-interested` | 🔒 | Suppress from feed |
 | POST | `/:id/comments` | 🔒 | Add comment / reply (`@username` → mention notify) |
 | GET | `/:id/comments` · `/:id/comments/:commentId/replies` | — | Comments / replies |
-| DELETE | `/:id/comments/:commentId` | 🔒 | Delete own comment **or any on your reel** |
+| DELETE | `/:id/comments/:commentId` | 🔒 | Delete own comment **or any on your pulse** |
 | POST | `/:id/comments/:commentId/like` | 🔒 | Toggle comment like |
 | PUT | `/:id/cover` | 🔒 | Replace thumbnail `multipart: cover` |
 
@@ -237,7 +237,7 @@ Use `hlsUrl` (master.m3u8) for playback once status is `COMPLETED`.
 
 > **`GET /feed` is a discovery engine** (`?sessionId=&specialty=&limit=`): true-random
 > global selection, 48h watched suppression (`POST /:id/watched`), session de-dup, and
-> an exhaustion loop that recycles watched reels. Returns `{ sessionId, reels, hasMore,
+> an exhaustion loop that recycles watched pulses. Returns `{ sessionId, pulses, hasMore,
 > exhausted }`. Full model: [modules/recommendation.md](modules/recommendation.md).
 
 ---
@@ -245,10 +245,10 @@ Use `hlsUrl` (master.m3u8) for playback once status is `COMPLETED`.
 ## Likes — `/api/likes`
 
 Universal like engine for any entity, keyed by `targetType` + `targetId`. The
-per-entity toggles above (`/api/posts/:id/like`, `/api/reels/:id/like`) are aliases
+per-entity toggles above (`/api/posts/:id/like`, `/api/pulses/:id/like`) are aliases
 over this same engine. Full guide: [modules/likes.md](modules/likes.md).
 
-`targetType` (case-insensitive): `POST` · `COMMENT` · `REEL` · `REEL_COMMENT`. An
+`targetType` (case-insensitive): `POST` · `COMMENT` · `PULSE` · `PULSE_COMMENT`. An
 unknown type returns 400.
 
 | Method | Path | Auth | Description |
@@ -285,7 +285,7 @@ Each card's `author` block carries **`isFollowing`** + **`connectionStatus`** so
 header renders the right button (State A/B): own post → owner menu · `!isFollowing` →
 **Follow** · following + `connectionStatus` `none`→**Connect**, `connected`→**Message**,
 `pending_outgoing`→Connecting, `pending_incoming`→Accept. The like-lists
-(`GET /api/posts/:id/likes`, `/api/reels/:id/likes`) carry the same fields + `isSelf`.
+(`GET /api/posts/:id/likes`, `/api/pulses/:id/likes`) carry the same fields + `isSelf`.
 
 ---
 
@@ -355,7 +355,7 @@ Row cards carry `mutualConnectionsCount` + `uniqueUsername`/`professionalHeadlin
 ## Search — `/api/search`  (Global Search Discovery Engine)
 
 Fault-tolerant fuzzy search (PostgreSQL `pg_trgm` + `fuzzystrmatch`, auto-degrading to
-`ILIKE`). Typeahead, profiles, unified content (posts + cases + reels), trending
+`ILIKE`). Typeahead, profiles, unified content (posts + cases + pulses), trending
 hashtags, hashtag workspace. Full guide + JSON: [modules/search.md](modules/search.md).
 
 | Method | Path | Auth | Query params | Description |
@@ -364,10 +364,10 @@ hashtags, hashtag workspace. Full guide + JSON: [modules/search.md](modules/sear
 | GET | `/` | 🔓 | `q`, `limit` | Home preview → `{ users, posts, hashtags, fallback? }` |
 | GET | `/users` | 🔓 | `q`, `role`, `city`, `state`, `country`, `headline`, `education`, `workplace`, `cursor`, `limit` | Profiles tab (fuzzy + filters); adds `fallback` on zero results |
 | GET | `/posts` | 🔓 | `q`, `type`, `time`, `sort`, `specialty`, `affiliation`, `cursor`, `limit` | Posts-only (fuzzy + filters) |
-| GET | `/content` | 🔓 | `q`, `type`(post·research·thesis·case_study·case·reel·all), `time`(24h·week·month), `sort`(recent·trending), `specialty`, `affiliation`, `cursor` | **Unified** posts + cases + reels → `{ items[{kind,…}], hasMore, nextCursor }` (opaque cursor) |
+| GET | `/content` | 🔓 | `q`, `type`(post·research·thesis·case_study·case·pulse·all), `time`(24h·week·month), `sort`(recent·trending), `specialty`, `affiliation`, `cursor` | **Unified** posts + cases + pulses → `{ items[{kind,…}], hasMore, nextCursor }` (opaque cursor) |
 | GET | `/hashtags` | 🔓 | `q`, `limit` | Hashtag suggestions → `{ hashtags[{tag,count}] }` |
 | GET | `/trending` | — | `limit` | Trending hashtags by 48h velocity → `{ hashtags[{tag,count,score}] }` |
-| GET | `/hashtag/:tag` | 🔓 | `type`(all·case_study·research·reel), `cursor`, `limit` | Hashtag workspace → `{ tag, tab, totalCount, items, hasMore, nextCursor }` |
+| GET | `/hashtag/:tag` | 🔓 | `type`(all·case_study·research·pulse), `cursor`, `limit` | Hashtag workspace → `{ tag, tab, totalCount, items, hasMore, nextCursor }` |
 | POST | `/history` | 🔒 | body `{ q, type?, entityId?, entityType? }` | Record a committed search (deduped; keeps last 50/user) |
 | GET | `/history` | 🔒 | `limit` | My recent searches → `{ items[] }` |
 | DELETE | `/history/:id` | 🔒 | — | Remove one history entry |
@@ -512,7 +512,7 @@ All routes require admin authentication (internal use only).
 `/api/v1/pulse/*` is a transparent pass-through to **media-service** (the "pulse"
 social feature). api-service only attaches the caller (optional auth) and forwards the
 request unchanged — it does not own this contract. Request/response shapes are defined
-by media-service; refer to its docs. Reels (`/api/reels/*`) and follows/network are
+by media-service; refer to its docs. Pulses (`/api/pulses/*`) and follows/network are
 proxied to media-service the same way (those keep their api-service-side docs above).
 
 ---
@@ -561,7 +561,7 @@ Pass `nextCursor` as `cursor` in the next request. Never use `skip`-based pagina
 
 | Routing Key | Trigger | Consumer |
 |-------------|---------|----------|
-| `reel.created` | POST /api/reels/ | media-service |
+| `pulse.created` | POST /api/pulses/ | media-service |
 | `user.updated` | PUT /api/users/profile/me | chat-service |
 
 ## RabbitMQ Events Consumed

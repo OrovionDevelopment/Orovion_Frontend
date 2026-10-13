@@ -2,7 +2,7 @@
 /**
  * App-wide follow broadcast. Mirrors the `dl:auth-expired` window-event idiom so
  * every mounted follow button for a user resyncs the instant the viewer follows
- * or unfollows them on ANY surface — post card, reel, profile, suggestion card.
+ * or unfollows them on ANY surface — post card, pulse, profile, suggestion card.
  *
  * The server stays the source of truth on the next fetch; this only keeps the
  * already-mounted buttons consistent within a session. `source` lets the button

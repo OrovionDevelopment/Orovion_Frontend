@@ -48,7 +48,7 @@ and unilateral, and there is no `requested` state. States are
 `self | follow | following | connect | connecting | accept | message`.
 
 The button is rendered by three genuinely different layouts — the shared
-`components/ui/FollowButton.tsx` chip (post cards, reel cards, search, likes
+`components/ui/FollowButton.tsx` chip (post cards, pulse cards, search, likes
 sheet), the `components/UserCard.tsx` list row, and `screens/UserProfile.tsx`'s
 two-control profile header. They stay separate, but **all three share
 `useFollowAction()`**, which owns the 500 ms debounce, the optimistic commit,
@@ -66,7 +66,7 @@ Two rules that are easy to break:
 
 **Theming (light/dark).** `darkMode: "class"`; themed tokens are CSS variables in `src/app/globals.css` (`:root` = light, `.dark` = dark) consumed by `tailwind.config.js`. Rules when writing UI:
 - Cards/sheets/inputs/dropdowns use `bg-surface`, **never `bg-white`** (literal white is only for content sitting on media or solid brand color).
-- The `ink` ramp *flips* in dark mode (`ink-50` page bg ↔ near-black, `ink-900` text ↔ near-white) — alpha fills like `bg-ink-900/[.06]` theme automatically. For always-dark contexts (lightboxes, reel posters, image scrims, modal backdrops) use the static `ink-950`.
+- The `ink` ramp *flips* in dark mode (`ink-50` page bg ↔ near-black, `ink-900` text ↔ near-white) — alpha fills like `bg-ink-900/[.06]` theme automatically. For always-dark contexts (lightboxes, pulse posters, image scrims, modal backdrops) use the static `ink-950`.
 - `text-brand-600`, `text-danger-700`, `text-rose-600` etc. are *text-only* overrides that brighten in dark mode; the same shades as `bg-*` stay fixed (buttons keep white text). Tint steps (`*-50`, `rose-100/200/300`, …) flip to deep tints.
 - Preference lives in localStorage `dl_theme` (`light|dark|system`): pure logic in `src/lib/theme.ts` (unit-tested), DOM side in `src/context/ThemeContext.tsx` (`useTheme()`), pre-paint no-flash script inline in `src/app/layout.tsx`. UI: `ThemeToggle` in the landing navbar, radio picker in Settings → Appearance. `Logo` swaps to `/brand/wordmark-dark.svg` via `dark:` classes.
 - **User appearance customization** (Settings → Appearance, `AppearanceStudio`): accent color themes (preset/custom + brightness + duo-gradient), body font, text size, bold text, chat bubble shape and chat wallpaper. Pure logic in `src/lib/appearance.ts` (unit-tested — generates the whole brand CSS-var ramp for both themes), DOM side in `src/context/AppearanceContext.tsx` (`useAppearance()`), persisted in localStorage `dl_appearance` (+ compiled CSS cache `dl_appearance_css` applied pre-paint by the layout boot script). Because of this, **every brand shade (including 400–950 solids) must stay CSS-var-driven** — never reintroduce hardcoded teal hex in tailwind.config.js or component styles.

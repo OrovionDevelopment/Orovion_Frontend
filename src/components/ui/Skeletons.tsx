@@ -55,7 +55,7 @@ export function CardRowsSkeleton({ count = 4, className = "space-y-2" }: { count
   );
 }
 
-/** Grid of media tiles (reels, galleries). */
+/** Grid of media tiles (pulses, galleries). */
 export function TileGridSkeleton({ count = 8, className = "grid grid-cols-2 gap-3 sm:grid-cols-3", tile = "aspect-[9/16] rounded-2xl" }: { count?: number; className?: string; tile?: string }) {
   return (
     <div className={className}>

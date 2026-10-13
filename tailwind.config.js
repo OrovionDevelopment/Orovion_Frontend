@@ -33,7 +33,7 @@ module.exports = {
           200: v("ink-200"), 300: v("ink-300"), 400: v("ink-400"), 500: v("ink-500"),
           600: v("ink-600"), 700: v("ink-700"), 800: v("ink-800"), 900: v("ink-900"),
           // Static near-black for always-dark contexts (media scrims, lightboxes,
-          // reel posters): identical in both themes, unlike the flipping ramp above.
+          // pulse posters): identical in both themes, unlike the flipping ramp above.
           950: "#0e1213",
         },
         accent: {

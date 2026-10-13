@@ -33,10 +33,6 @@ const nextConfig = {
     return [
       { source: "/u/:username", destination: "/:username", permanent: true },
       { source: "/:type(post|case|research|thesis)/:id", destination: "/p/:id", permanent: true },
-      { source: "/reel/:id", destination: "/pulse/:id", permanent: true },
-      // The in-app route was renamed to match the product name. Bookmarks, old
-      // notification deep links and links sitting in chats still point at /app/reels.
-      { source: "/app/reels", destination: "/app/pulse", permanent: true },
       // The Services page was renamed Features; keep old links working.
       { source: "/services", destination: "/features", permanent: true },
       // The Team pages were removed (the About page still shows the team); keep old links working.

@@ -256,7 +256,7 @@ function ProfileMenu({ user, demo, onChanged }) {
 
 /* The profile's two independent actions: a Follow control and a networking
    control, both visible at once (unlike the single morphing button on feed and
-   reel cards).
+   pulse cards).
 
    PRD State C: once the viewer follows, the networking control takes priority —
    but Following is deliberately RETAINED beside it rather than replaced, so the

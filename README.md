@@ -47,7 +47,7 @@ It has its own identity, **not** a Orovion user account:
   Bearer` on `/admin/*` calls only, and auto-refreshed on 401.
 - **Sections:** Overview (dashboard metrics + live online count), Users (search, block
   temporary/permanent, deactivate, permanent delete), Content (super-delete any
-  post/reel/thesis/case), Verifications (doctor + student KYC), Reports, Feedback, Deletions,
+  post/pulse/thesis/case), Verifications (doctor + student KYC), Reports, Feedback, Deletions,
   and the Audit log.
 - All calls go through `dok.admin.*` in `src/lib/api.ts`. The previous `x-admin-key` shared
   secret has been removed.
@@ -86,7 +86,7 @@ setup and an honest account of what code can and cannot do for ranking.
 ## Public share links
 
 Shared links are `https://www.orovion.com/<username>`, `/p/<postId>` and
-`/pulse/<reelId>` — built only by `src/lib/shareLinks.ts` (the app and
+`/pulse/<pulseId>` — built only by `src/lib/shareLinks.ts` (the app and
 api-service emit the same shapes). The pages live in `src/app/(public)/`: a
 signed-out visitor sees a read-only preview with **Open in the app**, **Get the
 app** and **Sign up**, and link-preview cards (WhatsApp, Telegram, LinkedIn)
@@ -95,7 +95,7 @@ come from their metadata. Everything shown comes from api-service
 the full view under `/app`.
 
 Older shapes keep working via `next.config.mjs` redirects: `/u/<name>`,
-`/post|case|research|thesis/<id>` → `/p/<id>`, `/reel/<id>` → `/pulse/<id>`;
+`/post|case|research|thesis/<id>` → `/p/<id>`, `/pulse/<id>` → `/pulse/<id>`;
 `/profile/<id or slug>` resolves to the username.
 
 **Opening links in the app** needs two files that must answer 200 as

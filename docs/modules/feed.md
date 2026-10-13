@@ -36,7 +36,7 @@ session / seen / exhaustion model.
 //     connected → Message. (Full recommendation model: recommendation.md)
 
 // POST /seen   { sessionId, postIds: ["clxA","clxB"] }   → data: { recorded: 2 }
-// GET /saved?tab=case_study     tab ∈ all | post | research | thesis | case_study | reel
+// GET /saved?tab=case_study     tab ∈ all | post | research | thesis | case_study | pulse
 // POST /not-interested/:postId  → 200 (no body)
 // POST /mute/:userId            → 200 (no body)
 ```
@@ -65,6 +65,6 @@ await api.post(`/feed/mute/${authorId}`);            // Don't recommend (mute au
 ```
 
 > **Redis:** the session order list (`feed:order:{userId}:{sessionId}:…`), seen set
-> (`feed:seen:…`), and fallback list are stored in Redis (~6h). The reel feed uses a
-> per-session "served" set (`reels:served:…`). All reads fall back to the DB if Redis
+> (`feed:seen:…`), and fallback list are stored in Redis (~6h). The pulse feed uses a
+> per-session "served" set (`pulses:served:…`). All reads fall back to the DB if Redis
 > is down. Full model → [recommendation.md](recommendation.md).

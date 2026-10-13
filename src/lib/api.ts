@@ -351,10 +351,18 @@ export const dok = {
     home: (q = "") => unwrap(api.get(`/feed/home${q}`)),
     explore: (q = "") => unwrap(api.get(`/feed/explore${q}`)),
     guest: (tab = "all") => unwrap(api.get(`/feed/guest?tab=${tab}`)),
-    saved: (q = "") => unwrap(api.get(`/feed/saved${q}`)), // ?tab=all|post|research|thesis|case_study|reel
+    // Posts only, and ignores `tab` — use `dok.saved.list` for the Saved page.
+    saved: (q = "") => unwrap(api.get(`/feed/saved${q}`)),
     notInterested: (postId) => unwrap(api.post(`/feed/not-interested/${postId}`)),
     mute: (userId) => unwrap(api.post(`/feed/mute/${userId}`)), // "don't recommend" author
     unmute: (userId) => unwrap(api.delete(`/feed/mute/${userId}`)),
+  },
+  saved: {
+    // Unified saved list across posts AND Pulses, filtered by category in SQL.
+    // type = ALL | POST | CASE_STUDY | RESEARCH | THESIS | PULSE (see lib/savedItems).
+    // Resolves to { data: [{ contentType, content, savedAt }], hasMore, nextCursor }.
+    list: (type = "ALL", cursor?: string | null) =>
+      unwrap(api.get("/saved", { params: { type, limit: 20, ...(cursor ? { cursor } : {}) } })),
   },
   posts: {
     get: (id) => unwrap(api.get(`/posts/${id}`)),
@@ -375,24 +383,24 @@ export const dok = {
     create: (form) => postForm("/posts", form), // multipart: media (×10) + JSON fields
   },
   pulses: {
-    feed: (q = "") => unwrap(api.get(`/reels/feed${q}`)),
-    byUser: (userId, q = "") => unwrap(api.get(`/reels/user/${userId}${q}`)), // a user's reels (profile content grid)
-    create: (form) => postForm("/reels", form), // multipart: video + caption/visibility/specialties/hashtags/mentions
-    get: (id) => unwrap(api.get(`/reels/${id}`)),
-    update: (id, b) => unwrap(api.put(`/reels/${id}`, b)), // caption/tags ≤24h (403 after)
-    remove: (id) => unwrap(api.delete(`/reels/${id}`)),
-    like: (id) => unwrap(api.post(`/reels/${id}/like`)), // toggle → { isLiked, likesCount }
-    likes: (id, q = "") => unwrap(api.get(`/reels/${id}/likes${q}`)), // { users, hasMore, nextCursor }
-    save: (id) => unwrap(api.post(`/reels/${id}/save`)),
-    view: (id) => unwrap(api.post(`/reels/${id}/view`)), // debounced view ping
-    watched: (id) => unwrap(api.post(`/reels/${id}/watched`)), // >50% / >10s → 48h lockout
-    notInterested: (id) => unwrap(api.post(`/reels/${id}/not-interested`)),
+    feed: (q = "") => unwrap(api.get(`/pulses/feed${q}`)),
+    byUser: (userId, q = "") => unwrap(api.get(`/pulses/user/${userId}${q}`)), // a user's pulses (profile content grid)
+    create: (form) => postForm("/pulses", form), // multipart: video + caption/visibility/specialties/hashtags/mentions
+    get: (id) => unwrap(api.get(`/pulses/${id}`)),
+    update: (id, b) => unwrap(api.put(`/pulses/${id}`, b)), // caption/tags ≤24h (403 after)
+    remove: (id) => unwrap(api.delete(`/pulses/${id}`)),
+    like: (id) => unwrap(api.post(`/pulses/${id}/like`)), // toggle → { isLiked, likesCount }
+    likes: (id, q = "") => unwrap(api.get(`/pulses/${id}/likes${q}`)), // { users, hasMore, nextCursor }
+    save: (id) => unwrap(api.post(`/pulses/${id}/save`)),
+    view: (id) => unwrap(api.post(`/pulses/${id}/view`)), // debounced view ping
+    watched: (id) => unwrap(api.post(`/pulses/${id}/watched`)), // >50% / >10s → 48h lockout
+    notInterested: (id) => unwrap(api.post(`/pulses/${id}/not-interested`)),
     // Comments mirror posts (same component contract)
-    comments: (id, q = "") => unwrap(api.get(`/reels/${id}/comments${q}`)),
-    comment: (id, b) => unwrap(api.post(`/reels/${id}/comments`, b)), // { content, parentId? }
-    replies: (id, commentId, q = "") => unwrap(api.get(`/reels/${id}/comments/${commentId}/replies${q}`)),
-    likeComment: (id, commentId) => unwrap(api.post(`/reels/${id}/comments/${commentId}/like`)),
-    deleteComment: (id, commentId) => unwrap(api.delete(`/reels/${id}/comments/${commentId}`)),
+    comments: (id, q = "") => unwrap(api.get(`/pulses/${id}/comments${q}`)),
+    comment: (id, b) => unwrap(api.post(`/pulses/${id}/comments`, b)), // { content, parentId? }
+    replies: (id, commentId, q = "") => unwrap(api.get(`/pulses/${id}/comments/${commentId}/replies${q}`)),
+    likeComment: (id, commentId) => unwrap(api.post(`/pulses/${id}/comments/${commentId}/like`)),
+    deleteComment: (id, commentId) => unwrap(api.delete(`/pulses/${id}/comments/${commentId}`)),
   },
   follows: {
     // Always immediate — private accounts were removed, so there is no
@@ -414,7 +422,7 @@ export const dok = {
     // Unified search. `extra` carries the filter query string, e.g. "&role=doctor&city=Mumbai" (PRD §3).
     users: (q, extra = "") => unwrap(api.get(`/search/users?q=${encodeURIComponent(q)}${extra}`)),
     posts: (q, extra = "") => unwrap(api.get(`/search/posts?q=${encodeURIComponent(q)}${extra}`)),
-    // Unified content (posts + cases + reels) with an opaque keyset cursor (docs/modules/search.md).
+    // Unified content (posts + cases + pulses) with an opaque keyset cursor (docs/modules/search.md).
     content: (q, extra = "") => unwrap(api.get(`/search/content?q=${encodeURIComponent(q)}${extra}`)),
     hashtags: (q) => unwrap(api.get(`/search/hashtags?q=${encodeURIComponent(q)}`)),
     // Trending hashtags ranked by 48h engagement velocity (PRD §4).
@@ -582,7 +590,7 @@ export const dok = {
     deactivateUser: (id, b) => unwrap(api.post(`/admin/users/${id}/deactivate`, b || {})),
     deleteUser: (id, b) => unwrap(api.delete(`/admin/users/${id}`, { data: b || {} })),
 
-    // ── Content moderation (post|research|thesis|case_study|reel|clinical_case) ──
+    // ── Content moderation (post|research|thesis|case_study|pulse|clinical_case) ──
     content: (params = {}) => unwrap(api.get("/admin/content", { params })),
     deleteContent: (type, id, b) => unwrap(api.delete(`/admin/content/${type}/${id}`, { data: b || {} })),
 

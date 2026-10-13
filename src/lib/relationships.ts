@@ -37,7 +37,7 @@ export function deriveState(u): RelationshipState {
  * Reconcile a follow broadcast (see lib/followBus) into a button's local state so
  * follow/unfollow on one surface mirrors on every other mounted button.
  *
- * `simple` collapses the connection sub-states to a plain "following" (post/reel
+ * `simple` collapses the connection sub-states to a plain "following" (post/pulse
  * cards, suggestion cards). In full mode an existing connection sub-state
  * (connecting/accept/message) is preserved once following — only follow↔unfollow
  * flips it; a fresh follow settles at the resting "connect".

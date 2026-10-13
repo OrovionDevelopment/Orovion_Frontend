@@ -10,7 +10,7 @@ Doctors, surgeons, nurses, therapists, pharmacists, medical students, and patien
 
 ## Product Purpose
 
-Orovion is a healthcare social platform: a verified professional network plus a clinical content feed (posts, case studies, research papers, theses, reels), real-time chat, and consultations. The feed is the core surface; trust signals (verification, credentials, specialty) are first-class data, not decoration. Success: a clinician can scan the feed, judge source credibility instantly, engage (react, discuss, save, share), and grow their professional graph without friction.
+Orovion is a healthcare social platform: a verified professional network plus a clinical content feed (posts, case studies, research papers, theses, pulses), real-time chat, and consultations. The feed is the core surface; trust signals (verification, credentials, specialty) are first-class data, not decoration. Success: a clinician can scan the feed, judge source credibility instantly, engage (react, discuss, save, share), and grow their professional graph without friction.
 
 ## Brand Personality
 

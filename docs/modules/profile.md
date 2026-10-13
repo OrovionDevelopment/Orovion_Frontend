@@ -11,10 +11,10 @@ for setup. Full worked examples (curl + responses): [../profile.md](../profile.m
 | GET | `/me` | 🔒 | Own profile (+ doctor/student sub-profile) |
 | GET | `/me/full` | 🔒 | Consolidated hydrate payload (offline cache) |
 | GET | `/me/completion` | 🔒 | Role-aware section completion + verification |
-| GET | `/me/archive` | 🔒 | Own content (`?type=all\|reel\|post\|research\|thesis\|case_study`) |
+| GET | `/me/archive` | 🔒 | Own content (`?type=all\|pulse\|post\|research\|thesis\|case_study`) |
 | GET | `/me/practice` | 🔒 | Own research/thesis/case studies |
-| GET | `/me/liked` | 🔒 | Interaction history: posts + reels you liked |
-| GET | `/me/commented` | 🔒 | Interaction history: posts + reels you commented on |
+| GET | `/me/liked` | 🔒 | Interaction history: posts + pulses you liked |
+| GET | `/me/commented` | 🔒 | Interaction history: posts + pulses you commented on |
 | GET | `/me/counts` | 🔒 | Followers / following / connections / posts counts |
 | PUT | `/me/basic` | 🔒 | Update basic contact (returns `locks`) |
 | GET | `/username/check?username=` | 🔒 | Username availability |
@@ -49,7 +49,7 @@ for setup. Full worked examples (curl + responses): [../profile.md](../profile.m
 //   → data: { available: true, username: "dranya", code: null }   (case-insensitive; @ optional)
 //   unavailable → { available: false, code: "USERNAME_ALREADY_EXISTS" | "<format code>" }
 
-// GET /me/liked / /me/commented  → data: { items: [ { type:'post'|'reel', id, content,
+// GET /me/liked / /me/commented  → data: { items: [ { type:'post'|'pulse', id, content,
 //   likesCount, commentsCount, interactedAt, author:{ uniqueUsername, isVerified, ... } } ], hasMore, nextCursor }
 
 // Headline (PUT /me/basic professionalHeadline) is capped at 40 words.

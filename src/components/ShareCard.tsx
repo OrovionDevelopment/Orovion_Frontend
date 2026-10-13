@@ -49,8 +49,8 @@ export default function ShareCard({ shareType, entityId, mine }) {
         else if (shareType === "profile") res = await dok.profile.byId(entityId);
         else res = await dok.posts.get(entityId);
         if (!alive) return;
-        // Unwrap nested entity: posts under .post, profiles under .user, reels under .reel.
-        const d = res?.post || res?.user || res?.reel || res || {};
+        // Unwrap nested entity: posts under .post, profiles under .user, pulses under .pulse.
+        const d = res?.post || res?.user || res?.pulse || res || {};
         setData(d);
       } catch (e) {
         // Only an explicit 404 means the content is gone; anything else keeps it.

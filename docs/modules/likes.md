@@ -1,11 +1,11 @@
 # Likes — `/api/likes`
 
 Universal like engine for **any** likeable entity. One set of endpoints handles
-posts, comments, reels, and reel-comments — keyed by `targetType` + `targetId`.
+posts, comments, pulses, and pulse-comments — keyed by `targetType` + `targetId`.
 See [index.md](index.md) for setup.
 
-> Posts and reels also expose their own `POST /:id/like` toggles ([posts.md](posts.md),
-> [reels.md](reels.md)) — those are thin aliases over this same engine and write the
+> Posts and pulses also expose their own `POST /:id/like` toggles ([posts.md](posts.md),
+> [pulses.md](pulses.md)) — those are thin aliases over this same engine and write the
 > same `likes` table. Use whichever fits the screen; the result shape is compatible.
 
 `targetType` (case-insensitive in the URL, normalised to upper-case server-side):
@@ -14,11 +14,11 @@ See [index.md](index.md) for setup.
 |---|---|
 | `POST` | A post |
 | `COMMENT` | A post comment |
-| `REEL` | A reel |
-| `REEL_COMMENT` | A reel comment |
+| `PULSE` | A pulse |
+| `PULSE_COMMENT` | A pulse comment |
 
 An unknown `targetType` returns **400**. Liking notifies the entity author
-(`post_like` / `comment_like` / `reel_like`) unless they liked their own content.
+(`post_like` / `comment_like` / `pulse_like`) unless they liked their own content.
 
 ## Endpoints
 
@@ -60,11 +60,11 @@ async function toggleLike(type, id, wasLiked, count, setLiked, setCount) {
   try { const d = await api.post(`/likes/${type}/${id}`); setCount(d.likeCount); }
   catch { setLiked(wasLiked); setCount(count); toast("Couldn't update like"); }
 }
-toggleLike("REEL_COMMENT", commentId, liked, count, setLiked, setCount);
+toggleLike("PULSE_COMMENT", commentId, liked, count, setLiked, setCount);
 
 // who liked (tap the count)
 const { users, nextCursor, hasMore } = await api.get(`/likes/POST/${postId}/likers?limit=20`);
 
 // hydrate like state for a guest-visible widget
-const { liked } = await api.get(`/likes/REEL/${reelId}/status`);
+const { liked } = await api.get(`/likes/PULSE/${pulseId}/status`);
 ```

@@ -40,18 +40,18 @@ spinner.
 
 ## `Pulses.tsx` — Pulse
 
-A vertical, **one-reel-at-a-time** discovery feed (not a tile grid). Slides are a
+A vertical, **one-pulse-at-a-time** discovery feed (not a tile grid). Slides are a
 native CSS scroll-snap column (`snap-y snap-mandatory`) where each slide fills the
-content viewport, so exactly one reel is on screen; trackpad, touch and the arrow
-keys all step one reel without a custom gesture lock. An `IntersectionObserver`
+content viewport, so exactly one pulse is on screen; trackpad, touch and the arrow
+keys all step one pulse without a custom gesture lock. An `IntersectionObserver`
 (threshold .6) picks the active slide, and **only the active slide mounts a
 player** — every other slide stays a poster, so a long feed never accumulates
 `<video>`/hls.js instances or fires phantom view pings.
 
 Each slide renders `PulseCard`, shared with `PulseViewer` (the overlay opened from
-the profile reels grid) so the two surfaces cannot drift apart. Engagement
+the profile pulses grid) so the two surfaces cannot drift apart. Engagement
 overrides (`liked`/`likesCount`/`saved`/`commentsCount`) are held **here**, keyed
-by reel id, so state survives scrolling away and back.
+by pulse id, so state survives scrolling away and back.
 
 **Pagination — `cursor` is mandatory.** media-service materialises a ranked
 session once and every later page is an OFFSET slice of it, but it only honours a
@@ -71,7 +71,7 @@ end-of-feed CTA, which exists because the pull gesture is armed only on slide 0
 and would otherwise be unreachable from the tail. Because this screen scrolls an inner element rather than the
 window, it must pass `disabled` to the hook itself: the gesture is armed only on
 slide 0 at `scrollTop === 0`, otherwise the hook's `preventDefault` would fight
-the vertical swipe between reels. Auto-refresh is skipped unless the user is
+the vertical swipe between pulses. Auto-refresh is skipped unless the user is
 still on slide 0, so returning to the tab never yanks them out of a deep
 position. Needs no `refresh=1`: this path has no gateway cache.
 
@@ -98,6 +98,14 @@ than via Clarity's dashboard masking mode — which anyone with dashboard access
 could flip. Masking hides content only; clicks and scroll still register, so
 heatmaps are unaffected. Any new sensitive UI on a recorded route needs the same
 attribute.
+
+## `Saved.tsx` — category tabs
+
+Each tab (All, Posts, Case studies, Research, Theses, Pulse) loads its own list
+from `dok.saved.list(type)` and renders Pulses as a poster grid and everything
+else as `PostCard`s, with **Load more** for further pages. Tab→type mapping and
+the Pulse/post split live in `src/lib/savedItems.ts` (see that README for why the
+old `/feed/saved?tab=` source showed the same list on every tab).
 
 ## Others
 
@@ -131,9 +139,9 @@ response (`shouldWriteFeedCache`).
 
 ## Pulse posters
 
-`pulsePoster()` (`src/lib/utils.ts`) returns `undefined` whenever a reel has no
-genuine thumbnail, which is the normal case for reels uploaded via
-`POST /api/reels`. Every call site therefore guards the image:
+`pulsePoster()` (`src/lib/utils.ts`) returns `undefined` whenever a pulse has no
+genuine thumbnail, which is the normal case for pulses uploaded via
+`POST /api/pulses`. Every call site therefore guards the image:
 
 ```jsx
 {pulsePoster(r) && <img src={pulsePoster(r)} … />}

@@ -52,6 +52,17 @@ would break every request rather than just the refresh.
 and fails over between backends on a 5xx, so without a key one send can arrive
 twice and be stored twice. One key per message; reuse it on a resend.
 
+## Saved page — `savedItems.ts`
+
+The Saved page reads `GET /api/saved?type=ALL|POST|CASE_STUDY|RESEARCH|THESIS|PULSE`
+(`dok.saved.list`): one list across posts **and** Pulses, filtered per category in
+SQL, newest first, cursor-paged, each row labelled with its `contentType`.
+`savedTypeFor` maps a tab to its type; `splitSaved` separates Pulses from posts by
+that label. Do **not** go back to `dok.feed.saved` (`/feed/saved`): it returns
+saved posts only and ignores `tab`, which made every tab show the same list and
+the Pulse tab never show a Pulse, and the page then guessed Pulses from
+`videoUrl`/`thumbnailUrl`, so video posts appeared as Pulses.
+
 ## Public share links
 
 - `shareLinks.ts` — the **only** place the web builds a share URL
@@ -63,9 +74,8 @@ twice and be stored twice. One key per message; reuse it on a resend.
 - `shareDetect.ts` — the reverse direction: `detectShare(message)` decides
   whether a chat message is a share, and of what, so `ShareCard` renders a card
   instead of a bare link. It must recognise **every** path a share link can carry
-  — `/p/<id>` (canonical post), `/pulse/<id>`, the legacy `/reel/<id>` (still in
-  sent messages and in the `orovion://reel/<id>` scheme every app build emits),
-  and the legacy `/post|case|research|thesis/<id>`. Missing one is silent: the
+  — `/p/<id>` (canonical post), `/pulse/<id>` (also as `orovion://pulse/<id>`),
+  `/profile/<id>`, and the legacy `/post|case|research|thesis/<id>`. Missing one is silent: the
   share just shows as plain text, which is exactly how `/pulse/` and `/p/` links
   were broken before. A typed `shared_*` message whose content is a URL yields the
   id from the URL. Add a new share path here AND in `shareLinks.ts` together.
@@ -192,7 +202,7 @@ feed. Empty-over-empty is fine.
 
 ## `utils.ts` — `pulsePoster`
 
-Returns a reel's poster **only when a real image exists**, otherwise `undefined`.
+Returns a pulse's poster **only when a real image exists**, otherwise `undefined`.
 
 It used to synthesise one by swapping the video's extension to `.jpg`. That worked
 on Cloudinary, which renders a JPEG frame on demand; it does not work on S3 +
@@ -200,12 +210,12 @@ CloudFront, which serve only objects that were actually uploaded. The derived UR
 pointed at a file nobody ever wrote — confirmed in production as a `404` on the
 `.jpg` next to a `200` on the `.mp4` at the identical key. CloudFront reports that
 as `403 AccessDenied` (the reader has no `s3:ListBucket` to distinguish missing
-from forbidden), and Firefox logs it as `NS_ERROR_DOM_NETWORK_ERR`, once per reel
+from forbidden), and Firefox logs it as `NS_ERROR_DOM_NETWORK_ERR`, once per pulse
 on screen.
 
 **Callers must handle `undefined` by rendering a placeholder, never an `<img>`
-with no `src`.** Undefined is the common case: reels created through
-`POST /api/reels` have no thumbnail at all, because api's S3 upload returns no
+with no `src`.** Undefined is the common case: pulses created through
+`POST /api/pulses` have no thumbnail at all, because api's S3 upload returns no
 `thumbnail_url` and media stores the resulting null verbatim. Giving them real
-posters requires generating one at upload or routing reels through the video
+posters requires generating one at upload or routing pulses through the video
 pipeline — neither is done yet.

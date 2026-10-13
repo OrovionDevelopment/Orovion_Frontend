@@ -33,7 +33,7 @@ const SECTIONS = [
           "Create professional profiles",
           "Build networks and connections",
           "Share educational and professional content",
-          "Publish posts, reels, case studies, and research content",
+          "Publish posts, pulses, case studies, and research content",
           "Participate in discussions",
           "Exchange messages",
           "Access professional opportunities and resources",
@@ -124,7 +124,7 @@ const SECTIONS = [
     title: "User content",
     body: (
       <>
-        <p>Users may create, upload, publish, and share content through the Platform, including posts, reels, case studies, research summaries, comments, messages, profile information, and documents or media.</p>
+        <p>Users may create, upload, publish, and share content through the Platform, including posts, pulses, case studies, research summaries, comments, messages, profile information, and documents or media.</p>
         <p>You retain ownership of content you create.</p>
         <p>By publishing content on Orovion, you grant Orovion a worldwide, non-exclusive, royalty-free license to host, display, reproduce, distribute, process, and make such content available solely for operating, maintaining, improving, and promoting the Platform.</p>
       </>

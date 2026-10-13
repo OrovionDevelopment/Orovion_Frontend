@@ -63,7 +63,7 @@
     "mtime": 1781113660.070397,
     "hash": "c1572cdcdc3669e2746ba0fb39739cf9"
   },
-  "C:\\Users\\ASUS\\Desktop\\DokLynk\\DokLynk Web\\src\\app\\app\\reels\\page.tsx": {
+  "C:\\Users\\ASUS\\Desktop\\DokLynk\\DokLynk Web\\src\\app\\app\\pulses\\page.tsx": {
     "mtime": 1781058272.6214337,
     "hash": "4d353efa6924bcc492afdb2a420dcfc6"
   },
@@ -119,11 +119,11 @@
     "mtime": 1781113979.193737,
     "hash": "9de83c8e942a37408d486e2cf594b408"
   },
-  "C:\\Users\\ASUS\\Desktop\\DokLynk\\DokLynk Web\\src\\components\\ReelVideo.tsx": {
+  "C:\\Users\\ASUS\\Desktop\\DokLynk\\DokLynk Web\\src\\components\\PulseVideo.tsx": {
     "mtime": 1781549858.1218188,
     "hash": "f9fa5252c90172b28d07e7ff7e4d71ff"
   },
-  "C:\\Users\\ASUS\\Desktop\\DokLynk\\DokLynk Web\\src\\components\\ReelViewer.tsx": {
+  "C:\\Users\\ASUS\\Desktop\\DokLynk\\DokLynk Web\\src\\components\\PulseViewer.tsx": {
     "mtime": 1781549916.482003,
     "hash": "c94334dac4eb627ed59702fdf543bb74"
   },
@@ -311,7 +311,7 @@
     "mtime": 1781603258.4052415,
     "hash": "7359ca6c65c808884147fb8c5217bcdd"
   },
-  "C:\\Users\\ASUS\\Desktop\\DokLynk\\DokLynk Web\\src\\screens\\Reels.tsx": {
+  "C:\\Users\\ASUS\\Desktop\\DokLynk\\DokLynk Web\\src\\screens\\Pulses.tsx": {
     "mtime": 1781549953.6834867,
     "hash": "b0209bb56837ba4a142f0322be15f411"
   },

@@ -10,12 +10,12 @@ const EDIT_WINDOW_MS = 24 * 3600e3;
 export const canEditPost = (post) => Date.now() - new Date(post?.createdAt).getTime() < EDIT_WINDOW_MS;
 
 /**
- * Inline edit of a post's text body (or a reel's caption) — programmatically
- * active ≤24h after creation. Pass kind="reel" to edit a reel caption.
+ * Inline edit of a post's text body (or a pulse's caption) — programmatically
+ * active ≤24h after creation. Pass kind="pulse" to edit a pulse caption.
  */
 export default function EditPostModal({ open, onClose, post, demo, onSaved, kind = "post" }) {
   const toast = useToast();
-  const isPulse = kind === "reel";
+  const isPulse = kind === "pulse";
   const initial = post?.content ?? post?.caption ?? "";
   const [content, setContent] = useState(initial);
   const [saving, setSaving] = useState(false);

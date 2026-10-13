@@ -38,7 +38,7 @@ const TYPES = [
   { key: "post", icon: ImageIcon, label: "Post" },
   { key: "research", icon: FileText, label: "Research" },
   { key: "case_study", icon: Stethoscope, label: "Case" },
-  { key: "reel", icon: Clapperboard, label: "Pulse" },
+  { key: "pulse", icon: Clapperboard, label: "Pulse" },
 ];
 
 const presetCss = (m) => {
@@ -152,7 +152,7 @@ export default function Create() {
     if (next.length) setEditing(media.length);
   };
 
-  const isPulse = type === "reel";
+  const isPulse = type === "pulse";
 
   const publish = async () => {
     if (busy) return;
@@ -325,7 +325,7 @@ export default function Create() {
       {editing != null && media[editing] && (
         <MediaEditor
           item={media[editing]}
-          isReel={isPulse}
+          isPulse={isPulse}
           onClose={() => setEditing(null)}
           onSave={(edited) => { setMedia((m) => m.map((x, i) => (i === editing ? { ...edited, file: x.file } : x))); setEditing(null); }}
         />

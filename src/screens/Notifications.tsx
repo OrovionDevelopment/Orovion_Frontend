@@ -15,14 +15,14 @@ import { cn, timeAgo } from "@/lib/utils";
 
 const ICON = {
   post_like: { i: Heart, c: "bg-rose-50 text-rose-500" },
-  reel_like: { i: Heart, c: "bg-rose-50 text-rose-500" },
+  pulse_like: { i: Heart, c: "bg-rose-50 text-rose-500" },
   comment_like: { i: Heart, c: "bg-rose-50 text-rose-500" },
   post_comment: { i: MessageCircle, c: "bg-brand-50 text-brand-600" },
-  reel_comment: { i: MessageCircle, c: "bg-brand-50 text-brand-600" },
+  pulse_comment: { i: MessageCircle, c: "bg-brand-50 text-brand-600" },
   comment_reply: { i: MessageCircle, c: "bg-brand-50 text-brand-600" },
   mention_comment: { i: AtSign, c: "bg-amber-50 text-amber-600" },
   mention_post: { i: AtSign, c: "bg-amber-50 text-amber-600" },
-  mention_reel: { i: AtSign, c: "bg-amber-50 text-amber-600" },
+  mention_pulse: { i: AtSign, c: "bg-amber-50 text-amber-600" },
   follow: { i: UserPlus, c: "bg-sky-50 text-sky-600" },
   follow_request: { i: UserPlus, c: "bg-sky-50 text-sky-600" },
   follow_request_accepted: { i: UserPlus, c: "bg-emerald-50 text-emerald-600" },
@@ -34,7 +34,7 @@ const ICON = {
 const FILTERS = [
   { key: "All", match: () => true },
   { key: "Mentions", match: (t) => t.startsWith("mention") },
-  { key: "Comments", match: (t) => t === "post_comment" || t === "reel_comment" },
+  { key: "Comments", match: (t) => t === "post_comment" || t === "pulse_comment" },
   { key: "Replies", match: (t) => t.includes("reply") },
   { key: "Likes", match: (t) => t.includes("like") },
   { key: "Network", match: (t) => t.startsWith("follow") || t.includes("connection") },

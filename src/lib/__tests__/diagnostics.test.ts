@@ -5,12 +5,12 @@ describe("describeRequestError", () => {
   it("pulls status, method, url and the server's message out of an axios error", () => {
     const d = describeRequestError({
       message: "Request failed with status code 403",
-      config: { method: "get", url: "/reels/feed?limit=10" },
+      config: { method: "get", url: "/pulses/feed?limit=10" },
       response: { status: 403, data: { message: "Secondary devices cannot view other sessions." } },
     });
     expect(d.status).toBe(403);
     expect(d.method).toBe("GET");
-    expect(d.url).toBe("/reels/feed?limit=10");
+    expect(d.url).toBe("/pulses/feed?limit=10");
     expect(d.serverMessage).toBe("Secondary devices cannot view other sessions.");
     expect(d.noResponse).toBe(false);
   });

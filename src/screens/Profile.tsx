@@ -18,14 +18,14 @@ import { readCache, writeCache } from "@/lib/offline-cache";
 import { cn, compact, pulsePoster } from "@/lib/utils";
 
 const TABS = ["Posts", "About"];
-// Profile content grid categories (docs/API.md: GET /posts/user/:id?postType=, GET /reels/user/:id)
+// Profile content grid categories (docs/API.md: GET /posts/user/:id?postType=, GET /pulses/user/:id)
 const CONTENT_CATS = [
   { key: "all", label: "All", kind: "post", type: null },
   { key: "post", label: "Posts", kind: "post", type: "post" },
   { key: "case_study", label: "Case studies", kind: "post", type: "case_study" },
   { key: "research", label: "Research", kind: "post", type: "research" },
   { key: "thesis", label: "Thesis", kind: "post", type: "thesis" },
-  { key: "reel", label: "Reels", kind: "reel", type: null },
+  { key: "pulse", label: "Pulses", kind: "pulse", type: null },
 ];
 const yr = (d) => (d ? new Date(d).getFullYear() : "Now");
 const monthYear = (d) => (d ? new Date(d).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : null);
@@ -216,13 +216,13 @@ export default function Profile() {
   );
 }
 
-/* Category-wise content grid: All · Posts · Case studies · Research · Thesis · Reels.
-   Posts come from /posts/user/:id?postType=, reels from /reels/user/:id. Each
+/* Category-wise content grid: All · Posts · Case studies · Research · Thesis · Pulses.
+   Posts come from /posts/user/:id?postType=, pulses from /pulses/user/:id. Each
    category is fetched lazily on first open and cached for the session. */
 function ProfileContent({ userId, demo }) {
   const [cat, setCat] = useState("all");
   const [cache, setCache] = useState({}); // key -> items[] | null (loading) | undefined (untouched)
-  const [openPulse, setOpenPulse] = useState(null); // index into the reel list
+  const [openPulse, setOpenPulse] = useState(null); // index into the pulse list
 
   const def = CONTENT_CATS.find((c) => c.key === cat);
   const items = cache[cat];
@@ -231,8 +231,8 @@ function ProfileContent({ userId, demo }) {
     if (!userId || cache[cat] !== undefined) return; // already loading or loaded
     let alive = true;
     setCache((c) => ({ ...c, [cat]: null }));
-    const run = def.kind === "reel"
-      ? dok.pulses.byUser(userId, "?limit=30").then((d) => d.reels || d.items || d.feed || [])
+    const run = def.kind === "pulse"
+      ? dok.pulses.byUser(userId, "?limit=30").then((d) => d.pulses || d.items || d.feed || [])
       : dok.posts.byUser(userId, `?limit=30${def.type ? `&postType=${def.type}` : ""}`).then((d) => d.posts || d.feed || []);
     run
       .then((list) => alive && setCache((c) => ({ ...c, [cat]: Array.isArray(list) ? list : [] })))
@@ -244,7 +244,7 @@ function ProfileContent({ userId, demo }) {
   const removePost = (pid) =>
     setCache((c) => ({ ...c, [cat]: (c[cat] || []).filter((p) => (p._id || p.id) !== pid) }));
   const removePulse = (rid) =>
-    setCache((c) => ({ ...c, reel: (c.reel || []).filter((r) => (r._id || r.id) !== rid) }));
+    setCache((c) => ({ ...c, pulse: (c.pulse || []).filter((r) => (r._id || r.id) !== rid) }));
 
   return (
     <div>
@@ -268,10 +268,10 @@ function ProfileContent({ userId, demo }) {
 
       {/* content */}
       {items == null ? (
-        def.kind === "reel" ? <TileGridSkeleton count={6} /> : <PostFeedSkeleton />
+        def.kind === "pulse" ? <TileGridSkeleton count={6} /> : <PostFeedSkeleton />
       ) : items.length === 0 ? (
-        <Empty icon={def.kind === "reel" ? Clapperboard : Briefcase} text={`No ${def.label.toLowerCase()} yet.`} />
-      ) : def.kind === "reel" ? (
+        <Empty icon={def.kind === "pulse" ? Clapperboard : Briefcase} text={`No ${def.label.toLowerCase()} yet.`} />
+      ) : def.kind === "pulse" ? (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {items.map((r, idx) => (
@@ -302,7 +302,7 @@ function ProfileContent({ userId, demo }) {
             ))}
           </div>
           {openPulse != null && (
-            <PulseViewer reels={items} index={openPulse} onClose={() => setOpenPulse(null)} onRemoved={removePulse} />
+            <PulseViewer pulses={items} index={openPulse} onClose={() => setOpenPulse(null)} onRemoved={removePulse} />
           )}
         </>
       ) : (

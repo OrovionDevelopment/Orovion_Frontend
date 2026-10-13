@@ -7,16 +7,16 @@ import PulseCard from "@/components/PulseCard";
 const rid = (r) => r?._id || r?.id;
 
 /**
- * Full-screen Pulse (reel) overlay opened from a grid (profile reels).
+ * Full-screen Pulse (pulse) overlay opened from a grid (profile pulses).
  *
  * This component owns only the shell — portal, backdrop, close/up/down chrome and
- * the current index. Everything about a single reel (player, rail, caption,
+ * the current index. Everything about a single pulse (player, rail, caption,
  * sheets, pings) lives in `PulseCard`, shared with the Pulse tab's vertical feed.
  *
- * Per-reel engagement lives in a keyed override map held HERE so state survives
+ * Per-pulse engagement lives in a keyed override map held HERE so state survives
  * up/down navigation within the session.
  */
-export default function PulseViewer({ reels: pulses, index, onClose, onRemoved, onReachEnd }) {
+export default function PulseViewer({ pulses: pulses, index, onClose, onRemoved, onReachEnd }) {
   const [i, setI] = useState(index);
   const [muted, setMuted] = useState(true);
   const [over, setOver] = useState({});
@@ -34,7 +34,7 @@ export default function PulseViewer({ reels: pulses, index, onClose, onRemoved, 
 
   const isLast = i >= pulses.length - 1;
 
-  // Scroll (wheel) + swipe navigation between reels, throttled so one gesture = one reel.
+  // Scroll (wheel) + swipe navigation between pulses, throttled so one gesture = one pulse.
   const navLock = useRef(false);
   const touchY = useRef(null);
   const onWheel = (e) => {
@@ -69,7 +69,7 @@ export default function PulseViewer({ reels: pulses, index, onClose, onRemoved, 
     if (i >= pulses.length - 2) onReachEnd?.();
   }, [i, pulses.length, onReachEnd]);
 
-  // A removed reel (deleted / not-interested) drops out of the list; step onto a
+  // A removed pulse (deleted / not-interested) drops out of the list; step onto a
   // neighbour, or close when it was the only one.
   const handleRemoved = (removedId) => {
     onRemoved?.(removedId);
@@ -81,7 +81,7 @@ export default function PulseViewer({ reels: pulses, index, onClose, onRemoved, 
 
   return createPortal(
     // z-[60]: above app chrome (z-40) but BELOW the sheets it opens (z-[70]) so the
-    // 3-dot menu, share, comments and likes sheets are not covered by the reel card
+    // 3-dot menu, share, comments and likes sheets are not covered by the pulse card
     <div onWheel={onWheel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/95 animate-fade-in">
       {/* header */}
       <div className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between p-4 text-white">
@@ -99,7 +99,7 @@ export default function PulseViewer({ reels: pulses, index, onClose, onRemoved, 
       {/* phone frame */}
       <PulseCard
         key={id}
-        reel={pulse}
+        pulse={pulse}
         active
         over={over[id] || {}}
         onPatch={patch}

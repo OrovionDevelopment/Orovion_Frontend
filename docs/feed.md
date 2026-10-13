@@ -166,8 +166,8 @@ Once `isFollowing === true`, the card header (and like-list row) is driven by th
 | `pending_incoming` | **Accept** | `POST /api/network/request/:requestId/accept` |
 | `connected` | **Message** (Case 2) | `POST /api/chat/start` → opens the DM thread |
 
-Both feed cards (`/api/feed/home`, `/api/reels/feed`) and like-list rows
-(`/api/posts/:id/likes`, `/api/reels/:id/likes`) carry `isFollowing` + `connectionStatus`.
+Both feed cards (`/api/feed/home`, `/api/pulses/feed`) and like-list rows
+(`/api/posts/:id/likes`, `/api/pulses/:id/likes`) carry `isFollowing` + `connectionStatus`.
 
 **Connect (Case 1)** sends a professional connection request → target sees it in
 `GET /api/network/requests` (Network → Requests) and gets a
@@ -197,7 +197,7 @@ curl -X POST "$BASE/api/posts/$POST_ID/save" -H "Authorization: Bearer $TOKEN"  
 curl "$BASE/api/feed/saved?tab=case_study" -H "Authorization: Bearer $TOKEN"      # private Saved tab by category
 ```
 The Saved tab is private to the owner; `tab` ∈ `all | post | research | thesis |
-case_study | reel`.
+case_study | pulse`.
 
 ---
 

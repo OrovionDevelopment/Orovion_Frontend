@@ -114,7 +114,7 @@ export function PublicPulseCard({ pulse: p }: { pulse: PublicPulse }) {
       </div>
       {p.caption && <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-ink-700">{p.caption}</p>}
       <Counts items={[[<Heart key="h" size={16} />, p.likesCount, "likes"], [<Play key="v" size={16} />, p.viewsCount, "views"]]} />
-      <PublicPreviewActions target={{ type: "reel", id: p.id }} />
+      <PublicPreviewActions target={{ type: "pulse", id: p.id }} />
     </article>
   );
 }

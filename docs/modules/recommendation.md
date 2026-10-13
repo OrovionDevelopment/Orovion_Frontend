@@ -1,11 +1,11 @@
 # Recommendation Engine — Home Feed & Pulse Discovery
 
-How the **home post feed** and **reel feed** select, order, de-duplicate, and recycle
-content. Run `npm run migrate` (adds `reel_watch_history`) before using the reel
+How the **home post feed** and **pulse feed** select, order, de-duplicate, and recycle
+content. Run `npm run migrate` (adds `pulse_watch_history`) before using the pulse
 engine. See [index.md](index.md) for setup.
 
 The pure ranking math lives in `src/shared/utils/feed.ranking.js` (unit-tested);
-the orchestration is in the feed/reel controllers, backed by Redis.
+the orchestration is in the feed/pulse controllers, backed by Redis.
 
 ---
 
@@ -79,13 +79,13 @@ api.post('/feed/seen', { sessionId, postIds: seenBatch });
 
 ---
 
-## 2. Pulse Discovery — `GET /api/reels/feed` 🔓
+## 2. Pulse Discovery — `GET /api/pulses/feed` 🔓
 
 Discovery-first vertical feed: **true-random** global selection, **48-hour** watched
-suppression, per-session de-dup, and an exhaustion loop that recycles watched reels.
+suppression, per-session de-dup, and an exhaustion loop that recycles watched pulses.
 
 ```
-GET /api/reels/feed?sessionId=&cursor=&specialty=&limit=10
+GET /api/pulses/feed?sessionId=&cursor=&specialty=&limit=10
 ```
 - Omit `sessionId` (e.g. every time the user enters the Pulse tab) → a **fresh**
   session, returned in the response.
@@ -97,40 +97,40 @@ GET /api/reels/feed?sessionId=&cursor=&specialty=&limit=10
   `nextCursor === null`; `exhausted` is only `!hasMore` and is **not** a stop
   signal.
 
-**Response `data`:** `{ sessionId, reels: [ { …, author:{…isFollowing, connectionStatus} } ], hasMore, exhausted }`
+**Response `data`:** `{ sessionId, pulses: [ { …, author:{…isFollowing, connectionStatus} } ], hasMore, exhausted }`
 
 **How it works**
-1. **True-random selection:** picks reels in random order from the whole eligible pool
+1. **True-random selection:** picks pulses in random order from the whole eligible pool
    (completed, public, active author, matching specialty) — discovery-first, *not*
    limited to the follow graph.
-2. **48h watched lockout:** reels the viewer watched in the last 48h (recorded via
-   `POST /reels/:id/watched`) are hidden. Session-served reels and "not interested"
-   reels and muted authors are also excluded.
+2. **48h watched lockout:** pulses the viewer watched in the last 48h (recorded via
+   `POST /pulses/:id/watched`) are hidden. Session-served pulses and "not interested"
+   pulses and muted authors are also excluded.
 3. **Exhaustion loop:** when the un-watched pool runs dry, the 48h filter is unlocked
-   and watched reels are **recycled**, prioritized by: **new comments since last view →
+   and watched pulses are **recycled**, prioritized by: **new comments since last view →
    saved → highest global retention (views)**, then random. If even that is exhausted
    (everything served this session), the served set resets so the infinite scroll never
    dead-ends. `exhausted: true` flags the recycled state.
 
-### `POST /api/reels/:id/watched` 🔒
+### `POST /api/pulses/:id/watched` 🔒
 
-Call when a reel is watched past 50% or for >10s. Upserts `reel_watch_history`
+Call when a pulse is watched past 50% or for >10s. Upserts `pulse_watch_history`
 (refreshes `watchedAt`). → `"Watch recorded."`
 
 ```js
-// frontend (per reel, once threshold met)
-api.post(`/reels/${reelId}/watched`);
+// frontend (per pulse, once threshold met)
+api.post(`/pulses/${pulseId}/watched`);
 // feed:
-let reelSession, reelCursor;
-async function loadReels({ fresh = false } = {}) {
+let pulseSession, pulseCursor;
+async function loadPulses({ fresh = false } = {}) {
   const q = new URLSearchParams({ limit: '10' });
-  if (!fresh && reelSession && reelCursor) { q.set('sessionId', reelSession); q.set('cursor', reelCursor); }
-  const d = await api.get(`/reels/feed?${q}`);
-  reelSession = d.sessionId;
-  reelCursor  = d.nextCursor ?? null;           // null → genuine end of feed
-  return d;                                     // d.exhausted → "replaying top reels"
+  if (!fresh && pulseSession && pulseCursor) { q.set('sessionId', pulseSession); q.set('cursor', pulseCursor); }
+  const d = await api.get(`/pulses/feed?${q}`);
+  pulseSession = d.sessionId;
+  pulseCursor  = d.nextCursor ?? null;           // null → genuine end of feed
+  return d;                                     // d.exhausted → "replaying top pulses"
 }
-function enterReelTab() { reelSession = reelCursor = undefined; return loadReels({ fresh: true }); }
+function enterPulseTab() { pulseSession = pulseCursor = undefined; return loadPulses({ fresh: true }); }
 ```
 
 ---
@@ -141,6 +141,6 @@ function enterReelTab() { reelSession = reelCursor = undefined; return loadReels
 |---|---|---|
 | Ordering | Specialty-filtered + weighted pseudo-random (session-stable) | True-random global |
 | Refresh trigger | pull-to-refresh / specialty chip / boot (omit `sessionId`) | every Pulse-tab entry (omit `sessionId`) |
-| View threshold (client) | card visible >1.5s → `POST /feed/seen` | watched >50% or >10s → `POST /reels/:id/watched` |
+| View threshold (client) | card visible >1.5s → `POST /feed/seen` | watched >50% or >10s → `POST /pulses/:id/watched` |
 | Exclusion window | current session (Redis seen set) | hard 48h watched lockout |
 | Exhaustion fallback | shuffle previously-seen posts of the active specialty | unlock 48h; prioritize new-comments / saved / high-retention |

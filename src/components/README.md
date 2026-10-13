@@ -17,11 +17,11 @@ Orovion's own admin dashboard is `src/features/analytics/`, a different thing.
 
 Follow the theming rules in the root `CLAUDE.md`: `bg-surface` for cards and
 sheets (never `bg-white`), the flipping `ink` ramp for content, and the static
-`ink-950` for always-dark contexts such as reel posters and image scrims.
+`ink-950` for always-dark contexts such as pulse posters and image scrims.
 
-## Pulse (reels) trio
+## Pulse (pulses) trio
 
-`PulseCard` is the single source of truth for **one reel**: player, mute toggle,
+`PulseCard` is the single source of truth for **one pulse**: player, mute toggle,
 right action rail (like / comment / share / save / more), author + `FollowButton`
 + caption, double-tap-to-like, the view/watched pings, and every sheet it opens
 (3-dot `BottomSheet`, delete `Modal`, `ShareSheet`, `LikesSheet`, `CommentsSheet`,
@@ -29,17 +29,21 @@ right action rail (like / comment / share / save / more), author + `FollowButton
 
 | Consumer | Shape |
 |---|---|
-| `PulseViewer` | Full-screen portal overlay opened from a grid (profile reels). Owns the portal, close/up-down chrome and the current index. |
-| `screens/Reels` | The Pulse tab's one-reel-at-a-time snap-scrolling feed. |
+| `PulseViewer` | Full-screen portal overlay opened from a grid (profile pulses). Owns the portal, close/up-down chrome and the current index. |
+| `screens/Pulses` | The Pulse tab's one-pulse-at-a-time snap-scrolling feed. |
 
 Two contracts matter when touching these:
 
-- **`active`** means "the reel the user is looking at". Only an active card mounts
+- **`active`** means "the pulse the user is looking at". Only an active card mounts
   a `<video>` and fires view/watched pings — that is what stops a feed of N slides
   from spawning N players or N phantom views. Inactive cards render the poster.
-- **Engagement overrides live in the parent** (`over` + `onPatch`, keyed by reel
+- **Engagement overrides live in the parent** (`over` + `onPatch`, keyed by pulse
   id), not in the card, so optimistic like/save/comment counts survive navigating
-  away from a reel and back within a session.
+  away from a pulse and back within a session.
+- **Save trusts the server.** `POST /pulses/:id/save` *toggles* whatever is stored,
+  so the card applies the reply's `{ saved }` after its optimistic flip. Without
+  that, a stale screen (saved from the app, a double click, an older feed page)
+  left every later click inverted.
 
 `PulseVideo` is the player underneath: native HLS on Safari/iOS, lazy-loaded
 `hls.js` elsewhere, and a poster + status overlay while `processingStatus` is
@@ -47,9 +51,9 @@ still `PENDING`/`PROCESSING` (or `FAILED`).
 
 ## Pulse posters
 
-`pulsePoster()` (`src/lib/utils.ts`) returns `undefined` whenever a reel has no
-genuine thumbnail, which is the normal case for reels uploaded via
-`POST /api/reels`. Every call site therefore guards the image:
+`pulsePoster()` (`src/lib/utils.ts`) returns `undefined` whenever a pulse has no
+genuine thumbnail, which is the normal case for pulses uploaded via
+`POST /api/pulses`. Every call site therefore guards the image:
 
 ```jsx
 {pulsePoster(r) && <img src={pulsePoster(r)} … />}

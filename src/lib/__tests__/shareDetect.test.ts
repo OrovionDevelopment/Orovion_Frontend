@@ -4,7 +4,7 @@ import { detectShare } from "@/lib/shareDetect";
 /**
  * REGRESSION GUARDS for chat share cards. Each `null` here is a share that would
  * render as a bare link instead of a card, which is how these bugs looked:
- *  - Pulse links moved to /pulse/<id> while this only knew /reel/<id>, so every
+ *  - Pulse links moved to /pulse/<id> while this only knew /pulse/<id>, so every
  *    shared Pulse showed as plain text.
  *  - The canonical post link /p/<id> was never recognised at all.
  *  - A typed share whose content was a URL (the app's fallback send) was looked
@@ -14,24 +14,24 @@ const text = (content: string) => ({ type: "text", content });
 
 describe("typed shares (the message type says what it is)", () => {
   it("maps each wire type to its card", () => {
-    expect(detectShare({ type: "shared_reel", content: "r1" })).toEqual({ shareType: "pulse", entityId: "r1" });
+    expect(detectShare({ type: "shared_pulse", content: "r1" })).toEqual({ shareType: "pulse", entityId: "r1" });
     expect(detectShare({ type: "shared_post", content: "p1" })).toEqual({ shareType: "post", entityId: "p1" });
     expect(detectShare({ type: "shared_profile", content: "u1" })).toEqual({ shareType: "profile", entityId: "u1" });
   });
 
   it("reads messageType when type is absent", () => {
-    expect(detectShare({ messageType: "shared_reel", content: "r1" })).toEqual({ shareType: "pulse", entityId: "r1" });
+    expect(detectShare({ messageType: "shared_pulse", content: "r1" })).toEqual({ shareType: "pulse", entityId: "r1" });
   });
 
   it("takes the id out of a URL instead of looking up the URL itself", () => {
-    expect(detectShare({ type: "shared_reel", content: "https://www.orovion.com/pulse/r1" }))
+    expect(detectShare({ type: "shared_pulse", content: "https://www.orovion.com/pulse/r1" }))
       .toEqual({ shareType: "pulse", entityId: "r1" });
     expect(detectShare({ type: "shared_post", content: "https://www.orovion.com/p/p1?utm_source=x" }))
       .toEqual({ shareType: "post", entityId: "p1" });
   });
 
   it("ignores a typed share with no content", () => {
-    expect(detectShare({ type: "shared_reel", content: "" })).toBeNull();
+    expect(detectShare({ type: "shared_pulse", content: "" })).toBeNull();
   });
 });
 
@@ -40,9 +40,9 @@ describe("links pasted into a text message", () => {
     expect(detectShare(text("look https://www.orovion.com/pulse/r1"))).toEqual({ shareType: "pulse", entityId: "r1" });
   });
 
-  it("still recognises legacy reel links, web and app-scheme, any case", () => {
-    expect(detectShare(text("https://www.orovion.com/reel/r1"))).toEqual({ shareType: "pulse", entityId: "r1" });
-    expect(detectShare(text("orovion://reel/r1"))).toEqual({ shareType: "pulse", entityId: "r1" });
+  it("recognises pulse links on the web and the app scheme, any case", () => {
+    expect(detectShare(text("https://www.orovion.com/pulse/r1"))).toEqual({ shareType: "pulse", entityId: "r1" });
+    expect(detectShare(text("orovion://pulse/r1"))).toEqual({ shareType: "pulse", entityId: "r1" });
     expect(detectShare(text("Orovion://Pulse/r1"))).toEqual({ shareType: "pulse", entityId: "r1" });
   });
 

@@ -6,7 +6,7 @@ import { absoluteUrl } from "@/lib/seo";
  *
  *   profile  https://www.orovion.com/<username>     (no username yet: /profile/<userId>)
  *   post     https://www.orovion.com/p/<postId>     (case studies, research, theses too)
- *   pulse    https://www.orovion.com/pulse/<reelId>
+ *   pulse    https://www.orovion.com/pulse/<pulseId>
  *
  * The public pages behind them live in `src/app/(public)/`. The origin is
  * `SITE_URL`, so a share link always points at the canonical site.
@@ -69,7 +69,7 @@ export function safeHandleTarget(value: unknown, current?: string): string | nul
  * (`handleGenerateRoute` in the app's main.dart) — deliberately id-based, so an
  * old install opens the right screen from a new link.
  */
-export type AppTarget = { type: "profile" | "post" | "reel"; id: string };
+export type AppTarget = { type: "profile" | "post" | "pulse"; id: string };
 
 export const APP_SCHEME = "orovion";
 export const APP_PACKAGE = "com.orovion.app";

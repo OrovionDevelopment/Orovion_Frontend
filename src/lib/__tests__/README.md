@@ -13,6 +13,12 @@ Session:
   has no `document`/`localStorage`, which is also the condition the guards in
   `api.ts` must survive — the tests stub both globals per case.
 
+Saved page:
+
+- `savedItems.test.ts` — every Saved tab maps to its own `/api/saved` type (no
+  two tabs return the same list), and items are split into Pulses vs posts by the
+  server's `contentType`, so a video post with a thumbnail stays a post.
+
 Share links:
 
 - `shareDetect.test.ts` — which chat messages render as share cards. Guards three
