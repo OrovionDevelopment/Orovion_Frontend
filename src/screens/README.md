@@ -126,6 +126,17 @@ the identical top posts, because the ranking is deterministic. A refresh still
 sets `refresh=1` to bypass the gateway's page cache — that is independent of the
 session.
 
+**One exception: an exhausted session.** The session lives in sessionStorage, so
+it survives a reload. On a small catalogue (a fresh database, say) the first load
+serves every post, and each reload then asks the server for posts not yet served
+in that session — none — and the feed went blank. This hit only the web: the app
+keeps its session in memory, so a restart always starts over. Now, when a FIRST
+page comes back empty and a session was sent (`isExhaustedSession` in
+`src/lib/feedSession.ts`), the screen rotates that session and asks once more. New
+posts still come first when there are any; otherwise you get the full feed again
+instead of an empty one. Cursor pages and session-less requests are never retried,
+so there is no loop. Both `Feed.tsx` and `Explore.tsx` do this.
+
 `Explore.tsx` uses the `explore` scope, never `home` — all three feed routes
 share one media pipeline, so a shared session would let the two feeds hide each
 other's content.

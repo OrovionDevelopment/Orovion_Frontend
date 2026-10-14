@@ -17,6 +17,7 @@ import {
   getFeedSessionId,
   setFeedSessionId,
   rotateFeedSession,
+  isExhaustedSession,
 } from "../feedSession";
 
 const memoryStorage = (): Storage => {
@@ -104,5 +105,30 @@ describe("hostile or absent storage", () => {
     expect(getFeedSessionId("home")).toBeNull();
     expect(() => setFeedSessionId("home", "sess_abc")).not.toThrow();
     expect(() => rotateFeedSession("home")).not.toThrow();
+  });
+});
+
+describe("isExhaustedSession — empty first page from a used-up session", () => {
+  // REGRESSION GUARD: the web keeps its feed session in sessionStorage, so it
+  // survives a reload. On a small catalogue the first load serves every post and
+  // each reload then got an empty page — a blank feed on the web only (the app
+  // keeps its session in memory). An empty first page sent WITH a session means
+  // "already served everything", so the feed rotates and asks once more.
+  test("an empty first page sent with a session is exhausted", () => {
+    expect(isExhaustedSession([], true)).toBe(true);
+    expect(isExhaustedSession(undefined, true)).toBe(true);
+  });
+
+  test("a page with items is never exhausted", () => {
+    expect(isExhaustedSession([{ id: "p1" }], true)).toBe(false);
+  });
+
+  test("an empty page sent WITHOUT a session is a genuinely empty feed", () => {
+    // Retrying would just repeat the same request — no loop.
+    expect(isExhaustedSession([], false)).toBe(false);
+  });
+
+  test("an empty CURSOR page is the real end of the feed, not exhaustion", () => {
+    expect(isExhaustedSession([], true, true)).toBe(false);
   });
 });

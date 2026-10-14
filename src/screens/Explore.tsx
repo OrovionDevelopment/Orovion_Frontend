@@ -5,7 +5,7 @@ import RightRail from "@/components/layout/RightRail";
 import { PostFeedSkeleton } from "@/components/ui/Skeletons";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
-import { getFeedSessionId, setFeedSessionId } from "@/lib/feedSession";
+import { getFeedSessionId, setFeedSessionId, rotateFeedSession, isExhaustedSession } from "@/lib/feedSession";
 
 export default function Explore() {
   const { demo } = useAuth();
@@ -22,6 +22,13 @@ export default function Explore() {
     const sess = getFeedSessionId("explore");
     dok.feed
       .explore(sess ? `?sessionId=${encodeURIComponent(sess)}` : "")
+      // Everything in this session already served → start a fresh one once
+      // rather than show an empty page (see isExhaustedSession).
+      .then((d) => {
+        if (!isExhaustedSession(d?.feed || d?.posts, Boolean(sess))) return d;
+        rotateFeedSession("explore");
+        return dok.feed.explore("");
+      })
       .then((d) => { setFeedSessionId("explore", d.sessionId); setPosts(d.feed || d.posts || []); })
       .catch(() => setPosts([]));
   }, []);

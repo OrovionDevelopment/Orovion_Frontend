@@ -77,6 +77,22 @@ export function rotateFeedSession(scope: FeedScope): void {
   }
 }
 
+/**
+ * True when a FIRST page came back empty only because this tab's session has
+ * already been served everything. The session lives in sessionStorage, so it
+ * survives a reload: on a small catalogue (e.g. a fresh database) the first load
+ * serves every post, and every reload after that asks "anything not yet served
+ * in this session?" — nothing — and the feed goes blank. The app keeps its
+ * session in memory, so a restart always starts over, which is why only the web
+ * hit this. The caller then rotates the session and asks once more: you still get
+ * new posts first when there are any, and the full feed instead of a blank one
+ * when there aren't. Never true for a cursor page or a request sent without a
+ * session (that empty is genuine).
+ */
+export function isExhaustedSession(items: unknown[] | null | undefined, sentSession: boolean, isCursorPage = false): boolean {
+  return sentSession && !isCursorPage && (!Array.isArray(items) || items.length === 0);
+}
+
 /** Test seam — clears every scope. */
 export function _resetFeedSessions(): void {
   (["home", "explore"] as FeedScope[]).forEach(rotateFeedSession);

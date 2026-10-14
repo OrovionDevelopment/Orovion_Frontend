@@ -35,9 +35,9 @@ const appendArray = (fd, key, arr) => {
 };
 
 const TYPES = [
-  { key: "post", icon: ImageIcon, label: "Post" },
-  { key: "research", icon: FileText, label: "Research" },
-  { key: "case_study", icon: Stethoscope, label: "Case" },
+  { key: "post", icon: ImageIcon, label: "Quick post" },
+  { key: "case_study", icon: Stethoscope, label: "Case study" },
+  { key: "research", icon: FileText, label: "Research summary" },
   { key: "pulse", icon: Clapperboard, label: "Pulse" },
 ];
 
@@ -199,14 +199,14 @@ export default function Create() {
     <div className="mx-auto max-w-xl pb-24">
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between border-b border-ink-900/[.06] p-4">
-          <h2 className="font-display text-lg font-extrabold">Create</h2>
+          <h2 className="font-display text-lg font-extrabold">What are you sharing</h2>
           <button onClick={() => nav(-1)} className="press rounded-full p-1.5 hover:bg-ink-900/5"><X size={18} /></button>
         </div>
 
         <div className="grid grid-cols-5 gap-1 p-3">
           {TYPES.map((t) => (
             <button key={t.key} onClick={() => setType(t.key)} className={cn("press flex flex-col items-center gap-1.5 rounded-xl px-1 py-3 text-[11px] font-semibold transition", type === t.key ? "bg-brand-600 text-white shadow-glow" : "text-ink-600 hover:bg-brand-50")}>
-              <t.icon size={20} /> <span>{t.label}</span>
+              <t.icon size={20} /> <span className="text-center leading-tight">{t.label}</span>
             </button>
           ))}
         </div>
@@ -226,7 +226,7 @@ export default function Create() {
             onKeyDown={(e) => { if (e.key === "Escape") setSuggest(null); }}
             onBlur={() => setTimeout(() => setSuggest(null), 150)}
             rows={media.length ? 3 : 6}
-            placeholder={isPulse ? "Add a caption for your Pulse…  use # and @" : "Share a case, paper or healthcare update…  use # and @"}
+            placeholder={isPulse ? "Add a caption for your Pulse…  use # and @" : "What's on your mind?"}
             className="w-full resize-none text-[15px] outline-none placeholder:text-ink-400"
           />
         </div>
@@ -316,7 +316,7 @@ export default function Create() {
           <div className="flex items-center gap-3">
             {err && <span className="text-xs text-rose-600">{err}</span>}
             <button disabled={busy || (!text.trim() && !media.length)} onClick={publish} className="btn-primary px-6 py-2 text-sm">
-              <Roll>{busy ? "Publishing…" : "Publish"}</Roll>
+              <Roll>{busy ? "Posting…" : "Post"}</Roll>
             </button>
           </div>
         </div>

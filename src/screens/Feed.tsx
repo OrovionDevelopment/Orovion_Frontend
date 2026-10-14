@@ -2,7 +2,7 @@
 import Roll from "@/components/ui/Roll";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@/lib/router";
-import { FileText, Stethoscope, Clapperboard, PenLine, Loader2, Sparkles, Search as SearchIcon } from "lucide-react";
+import { Loader2, Sparkles, Search as SearchIcon } from "lucide-react";
 import PostCard from "@/components/PostCard";
 import RightRail from "@/components/layout/RightRail";
 import { Avatar } from "@/components/ui/Primitives";
@@ -11,7 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
 import { readCache, writeCache, shouldWriteFeedCache } from "@/lib/offline-cache";
 import { shouldForceFresh } from "@/lib/feedFreshness";
-import { getFeedSessionId, setFeedSessionId } from "@/lib/feedSession";
+import { getFeedSessionId, setFeedSessionId, rotateFeedSession, isExhaustedSession } from "@/lib/feedSession";
 import { useToast } from "@/components/ui/Toast";
 import { sendOrQueue } from "@/lib/offline-queue";
 import { cn, roleLabel } from "@/lib/utils";
@@ -20,12 +20,6 @@ import { logFeedError, logFeedEmpty } from "@/lib/diagnostics";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 
 /** Post types the composer can launch. Typed so `label` stays a string. */
-const COMPOSER_SHORTCUTS: { icon: any; label: string }[] = [
-  { icon: PenLine, label: "Post" },
-  { icon: Stethoscope, label: "Case" },
-  { icon: FileText, label: "Research" },
-  { icon: Clapperboard, label: "Pulse" },
-];
 
 
 /**
@@ -120,8 +114,18 @@ export default function Feed() {
       setRefreshing(true); // chip switch → keep the layout, dim the list
     }
 
+    const forceFresh = shouldForceFresh(key, userIntent);
+    const sentSession = Boolean(getFeedSessionId("home"));
     dok.feed
-      .home(buildQuery(filter, null, shouldForceFresh(key, userIntent)))
+      .home(buildQuery(filter, null, forceFresh))
+      // An exhausted session (everything already served — common after a reload
+      // on a small catalogue) returns an empty first page; start a fresh session
+      // and ask once more instead of showing a blank feed. See isExhaustedSession.
+      .then((d) => {
+        if (!isExhaustedSession(d?.feed || d?.posts, sentSession)) return d;
+        rotateFeedSession("home");
+        return dok.feed.home(buildQuery(filter, null, forceFresh));
+      })
       .then(async (d) => {
         settled = true;
         if (seq !== reqSeq.current) return; // a newer chip tap superseded this payload
@@ -220,30 +224,13 @@ export default function Feed() {
         {/* Health-professional stats strip (app parity, mobile only) */}
         {user?.role === "doctor" && <DoctorStatsStrip />}
 
-        {/* Composer — one block, not two stacked cards. The prompt reads as a line
-            the user is about to type into, and the type shortcuts sit beneath it as
-            icons rather than a second full-width card competing for attention. */}
+        {/* Composer — a single prompt line; tapping it opens the full composer. */}
         <div className="card p-4">
           <div className="flex items-center gap-3">
             <Avatar user={user} size={42} />
             <button onClick={() => nav("/app/create")} className="flex-1 truncate text-left text-[17px] text-ink-400 transition hover:text-ink-500">
-              Share a case, paper or update…
+              Share something with the community...
             </button>
-          </div>
-          <div className="mt-3 flex items-center gap-1 pl-[54px]">
-            {COMPOSER_SHORTCUTS.map(({ icon: Icon, label }) => (
-              <button
-                key={label}
-                onClick={() => nav("/app/create")}
-                title={label}
-                aria-label={`Create ${label}`}
-                className="press grid h-9 w-9 place-items-center rounded-full text-brand-600 transition hover:bg-brand-50"
-              >
-                <Icon size={18} />
-              </button>
-            ))}
-            <div className="flex-1" />
-            <button onClick={() => nav("/app/create")} className="btn-primary px-5 py-2 text-sm"><Roll>Post</Roll></button>
           </div>
         </div>
 
@@ -409,7 +396,7 @@ function Empty({ filter, onReset }) {
       </p>
       <p className="max-w-xs text-sm text-ink-500">
         {filter.kind === "all"
-          ? "Follow clinicians to fill your feed with cases, research and updates."
+          ? "Connect with people, discover healthcare insights, and explore case studies, research summaries, and Pulses to bring your feed to life."
           : "Be the first to publish here, or check another specialty."}
       </p>
       {filter.kind !== "all" && (

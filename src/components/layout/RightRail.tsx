@@ -21,7 +21,7 @@ export default function RightRail() {
   return (
     <aside className="no-scrollbar sticky top-[5.5rem] hidden max-h-[calc(100vh-7rem)] w-80 shrink-0 space-y-5 overflow-y-auto overscroll-contain xl:block">
       <div className="card p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink-900"><Sparkles size={16} className="text-brand-600" /> Suggested clinicians</h3>
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink-900"><Sparkles size={16} className="text-brand-600" /> Suggested for you</h3>
         <div className="no-scrollbar max-h-[18rem] space-y-3.5 overflow-y-auto overscroll-contain pr-1">
           {people.length === 0
             ? <p className="text-xs text-ink-400">No suggestions yet.</p>
@@ -30,7 +30,7 @@ export default function RightRail() {
       </div>
 
       <div className="card p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink-900"><TrendingUp size={16} className="text-brand-600" /> Trending in medicine</h3>
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink-900"><TrendingUp size={16} className="text-brand-600" /> Trending</h3>
         <div className="no-scrollbar max-h-[18rem] space-y-1 overflow-y-auto overscroll-contain">
           {tags.length === 0 && <p className="px-2 text-xs text-ink-400">No trending tags yet.</p>}
           {tags.map((t, i) => {
