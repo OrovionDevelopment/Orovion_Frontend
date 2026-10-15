@@ -219,3 +219,42 @@ with no `src`.** Undefined is the common case: pulses created through
 `thumbnail_url` and media stores the resulting null verbatim. Giving them real
 posters requires generating one at upload or routing pulses through the video
 pipeline — neither is done yet.
+
+## Account blocks — `accountBlock.ts`
+
+When the API refuses an account (403 with `data.code` `ACCOUNT_SUSPENDED`,
+`ACCOUNT_ARCHIVED` or `RECOVERY_EXPIRED`), the person must be told why:
+
+- `blockFromError(e)` reads the block from an axios error.
+- `stashBlock(block)` saves it in **sessionStorage** (this tab only). It is
+  called by `api.ts` and `AuthContext` just before the forced logout.
+- `takeBlock()` reads it back **once**. Login does this on mount.
+- `describeBlock` / `blockMessage` build the text: until when (in the
+  viewer's locale) and the reason for a suspension, and what the person can
+  still do for an archived account.
+
+Everything is guarded for SSR and for storage that throws.
+
+## Formatting — `utils.ts`
+
+- `formatStat(value)`: a number or numeric string (Postgres BIGINT arrives as
+  a string) becomes a compact count (1.2K, 3.4M). An already-formatted string
+  such as "₹1,200" is shown as-is, and null, undefined or empty becomes "—".
+  Passing formatted money to `compact()` is what printed "NaNM" on the admin
+  money cards.
+- `formatDate(value)`: a readable date, or "—".
+- `daysUntil(value)`: whole days until a future date, never negative, or null.
+
+## Admin and account endpoints in `api.ts`
+
+- `dok.account.feedback(FormData | object)` sends multipart when given
+  `FormData`.
+- `dok.account.policy()` reads `/public/account-policy`.
+- `dok.admin` covers reports (`reports`, `dismissReport`, `takedownReport`),
+  verification queues with cursors (`vList`, `svList`, `svDetail`) and
+  `updateFeedback`.
+- The old `deletePost` was removed, together with the API route it called,
+  which never worked. Use the content takedown instead.
+
+`faq.ts`: the account answers name no number of days, because they also
+feed the server-rendered FAQ JSON-LD (see `screens/legal/README.md`).

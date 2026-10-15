@@ -36,3 +36,13 @@ Share links:
 
 `qrLogin.test.ts` has two stale expectations: `qrDeepLink` now appends
 `&platform=web`, and the test predates that.
+
+Accounts and admin:
+
+- `accountBlock.test.ts` — the three coded refusals are recognised and nothing
+  else is. The stash survives the sign-out and is read exactly once. Garbage in
+  storage and a missing `window` (SSR) are safe. The messages cover a timed
+  suspension (when access returns, and why), a permanent one (no end date), and
+  archived/expired accounts (what the person can still do).
+- `utils.format.test.ts` — `formatStat` never prints "NaN" and shows "—" for
+  missing values; `formatDate` and `daysUntil` handle junk and past dates.

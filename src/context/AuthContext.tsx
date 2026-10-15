@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
+import { blockFromError, stashBlock } from "@/lib/accountBlock";
 import { dok, TOKENS } from "@/lib/api";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { clearOfflineCache, readCache, writeCache } from "@/lib/offline-cache";
@@ -63,7 +64,12 @@ export function AuthProvider({ children }) {
       await dok.auth.refresh();
     } catch (e: any) {
       const status = e?.response?.status;
-      return status === 401 || status === 403 ? hardLogout() : showCachedUser();
+      if (status === 401 || status === 403) {
+        // Suspended / archived: keep the reason so the login screen can say why.
+        stashBlock(blockFromError(e));
+        return hardLogout();
+      }
+      return showCachedUser();
     }
 
     try {

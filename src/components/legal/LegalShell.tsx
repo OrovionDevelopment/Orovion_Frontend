@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Mail, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAccountPolicy, recoveryPhrase } from "@/hooks/useAccountPolicy";
 import MarketingShell from "@/components/marketing/MarketingShell";
 import { Display, Eyebrow, enter } from "@/components/marketing/Type";
 
@@ -118,6 +119,11 @@ export default function LegalShell({ eyebrow, title, updated, intro, sections, c
 }
 
 /** Plain bullet list for enumerations without lead-in labels. */
+/** The account recovery period, from the server's own setting ("30 days"). */
+export function RecoveryPeriod() {
+  return <>{recoveryPhrase(useAccountPolicy())}</>;
+}
+
 export function Bullets({ items }) {
   return (
     <ul className="space-y-1.5">

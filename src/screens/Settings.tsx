@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   User, Bell, Lock, Smartphone, Palette, ChevronRight,
   LogOut, Globe, Eye, Trash2, ArrowUpRight, ShieldOff, Loader2, Check, X,
+  MessageSquare, Star, ImagePlus,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Avatar } from "@/components/ui/Primitives";
@@ -12,7 +13,8 @@ import AppearanceStudio from "@/components/settings/AppearanceStudio";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "@/lib/router";
 import { dok } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+import { useAccountPolicy, recoveryPhrase } from "@/hooks/useAccountPolicy";
 
 const SECTIONS = [
   { key: "account", icon: User, label: "Account", desc: "Name, headline, contact" },
@@ -20,6 +22,7 @@ const SECTIONS = [
   { key: "devices", icon: Smartphone, label: "Sessions & devices", desc: "Logged-in devices" },
   { key: "notifications", icon: Bell, label: "Notifications", desc: "What you get pinged about" },
   { key: "appearance", icon: Palette, label: "Appearance", desc: "Theme, colors, chat & fonts" },
+  { key: "feedback", icon: MessageSquare, label: "Send feedback", desc: "Ideas, bugs, suggestions" },
 ];
 
 export default function Settings() {
@@ -58,6 +61,7 @@ export default function Settings() {
           {active === "account" && <Account />}
           {active === "privacy" && <Privacy />}
           {active === "devices" && <Devices />}
+          {active === "feedback" && <Feedback />}
           {active === "notifications" && <Notifications />}
           {active === "appearance" && <Appearance />}
         </div>
@@ -358,20 +362,31 @@ function Devices() {
 }
 
 /* ───────────────────────── Danger zone (deactivate / delete) ───────────────────────── */
+// The recovery period comes from the server (useAccountPolicy) — never a
+// number written here. Plain-language rules: Api_service/docs/ACCOUNT_LIFECYCLE.md.
 function DangerZone() {
   const { demo, logout } = useAuth();
   const nav = useNavigate();
   const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const period = recoveryPhrase(useAccountPolicy());
 
   const deactivate = async () => {
-    if (demo || !confirm("Temporarily deactivate your account? Logging back in reactivates it.")) return;
-    setBusy("deactivate");
-    try { await dok.account.deactivate(); await logout(); nav("/"); } finally { setBusy(""); }
+    if (demo || !confirm("Deactivate your account?\n\nYour profile is hidden and you are signed out everywhere. Nothing is deleted — logging back in reactivates it.")) return;
+    setBusy("deactivate"); setError("");
+    try { await dok.account.deactivate(); await logout(); nav("/"); }
+    catch (e: any) { setError(e?.response?.data?.message || "Couldn't deactivate your account. Please try again."); }
+    finally { setBusy(""); }
   };
   const remove = async () => {
-    if (demo || !confirm("Schedule your account for deletion? You have 6 months to restore it by logging back in.")) return;
-    setBusy("delete");
-    try { await dok.account.remove(); await logout(); nav("/"); } finally { setBusy(""); }
+    if (demo || !confirm(`Delete your account?\n\nYour profile, posts and Pulses are hidden right away and you are signed out everywhere. You have ${period} to change your mind — just log in again and everything comes back. After that the account is archived and can no longer be restored.`)) return;
+    setBusy("delete"); setError("");
+    try {
+      const r = await dok.account.remove();
+      if (r?.scheduledDeletionAt) alert(`Your account is scheduled for deletion. Log in before ${formatDate(r.scheduledDeletionAt)} if you change your mind.`);
+      await logout(); nav("/");
+    } catch (e: any) { setError(e?.response?.data?.message || "Couldn't delete your account. Please try again."); }
+    finally { setBusy(""); }
   };
 
   return (
@@ -381,6 +396,126 @@ function DangerZone() {
       </button>
       <button onClick={remove} disabled={!!busy || demo} className="flex w-full items-center gap-3 rounded-xl border border-rose-200 p-3 text-left text-rose-600 hover:bg-rose-50">
         <Trash2 size={18} /><span className="text-sm font-semibold">{busy === "delete" ? "Scheduling…" : "Delete account"}</span>
+      </button>
+      {error && <p className="text-sm text-rose-600">{error}</p>}
+      <p className="text-xs leading-relaxed text-ink-500">
+        <b>Deactivate</b> hides your account until you log in again. <b>Delete</b> can be undone for {period} by logging in;
+        after that your account is archived and can't be restored. See the <a href="/help" className="text-brand-600 underline">Help center</a> for details.
+      </p>
+    </Card>
+  );
+}
+
+/* ───────────────────────── Feedback ───────────────────────── */
+const FEEDBACK_TYPES: [string, string][] = [
+  ["suggestion", "Suggestion"], ["idea", "Idea"], ["bug", "Something's broken"],
+  ["feature_request", "Feature request"], ["experience", "My experience"],
+];
+const FEEDBACK_MAX = 2000;
+const FEEDBACK_IMAGES = 5;
+const FEEDBACK_IMAGE_BYTES = 10 * 1024 * 1024;
+
+function Feedback() {
+  const { demo } = useAuth();
+  const [category, setCategory] = useState("suggestion");
+  const [message, setMessage] = useState("");
+  const [rating, setRating] = useState(0);
+  const [files, setFiles] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const addFiles = (list: FileList | null) => {
+    if (!list) return;
+    setError("");
+    const next = [...files];
+    for (const f of Array.from(list)) {
+      if (!f.type.startsWith("image/")) { setError("Screenshots must be images."); continue; }
+      if (f.size > FEEDBACK_IMAGE_BYTES) { setError("Each screenshot must be under 10 MB."); continue; }
+      if (next.length < FEEDBACK_IMAGES) next.push(f);
+    }
+    setFiles(next);
+  };
+
+  const send = async () => {
+    const text = message.trim();
+    if (!text) { setError("Please write your feedback."); return; }
+    setBusy(true); setError("");
+    try {
+      if (files.length) {
+        const form = new FormData();
+        form.append("category", category);
+        form.append("message", text);
+        form.append("platform", "web");
+        if (rating) form.append("rating", String(rating));
+        files.forEach((f) => form.append("images", f));
+        await dok.account.feedback(form);
+      } else {
+        await dok.account.feedback({ category, message: text, platform: "web", ...(rating ? { rating } : {}) });
+      }
+      setSent(true); setMessage(""); setRating(0); setFiles([]);
+    } catch (e: any) {
+      const status = e?.response?.status;
+      setError(status === 429
+        ? "You've sent a lot of feedback recently. Please try again a little later."
+        : e?.response?.data?.message || "Couldn't send your feedback. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <Card title="Send feedback">
+        <div className="flex items-center gap-3 rounded-xl bg-emerald-50 p-4 text-emerald-700">
+          <Check size={20} /><p className="text-sm font-semibold">Thank you — our team reads every message.</p>
+        </div>
+        <button onClick={() => setSent(false)} className="btn-outline px-4 py-2 text-sm">Send more feedback</button>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Send feedback">
+      <div className="flex flex-wrap gap-2">
+        {FEEDBACK_TYPES.map(([k, l]) => (
+          <button key={k} onClick={() => setCategory(k)} className={cn("rounded-full px-3.5 py-1.5 text-sm font-semibold transition", category === k ? "bg-brand-600 text-white" : "bg-ink-900/[.04] text-ink-600 hover:bg-brand-50")}>{l}</button>
+        ))}
+      </div>
+      <div>
+        <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={5} maxLength={FEEDBACK_MAX}
+          placeholder="Tell us what's working, what isn't, or what you'd love to see…" className="input resize-none text-sm" />
+        <p className="mt-1 text-right text-xs text-ink-400">{message.trim().length}/{FEEDBACK_MAX}</p>
+      </div>
+      <div>
+        <p className="mb-1.5 text-xs font-semibold text-ink-500">How is Orovion working for you? (optional)</p>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button key={n} onClick={() => setRating(rating === n ? 0 : n)} aria-label={`${n} star${n > 1 ? "s" : ""}`} className="p-1">
+              <Star size={22} className={n <= rating ? "fill-amber-400 text-amber-400" : "text-ink-300"} />
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <input ref={fileInput} type="file" accept="image/*" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+        <div className="flex flex-wrap items-center gap-2">
+          {files.map((f, i) => (
+            <span key={i} className="chip bg-ink-900/[.04] text-ink-600">
+              {f.name.length > 22 ? `${f.name.slice(0, 20)}…` : f.name}
+              <button onClick={() => setFiles(files.filter((_, j) => j !== i))} aria-label="Remove screenshot"><X size={12} /></button>
+            </span>
+          ))}
+          {files.length < FEEDBACK_IMAGES && (
+            <button onClick={() => fileInput.current?.click()} className="btn-outline px-3 py-1.5 text-xs"><ImagePlus size={14} /> Add screenshot</button>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-ink-400">Up to {FEEDBACK_IMAGES} images, 10 MB each. Please don't include patient details.</p>
+      </div>
+      {error && <p className="text-sm text-rose-600">{error}</p>}
+      <button onClick={send} disabled={busy || demo || !message.trim()} className="btn-primary w-full py-2.5 text-sm">
+        {busy ? <><Loader2 size={16} className="animate-spin" /> Sending…</> : "Send feedback"}
       </button>
     </Card>
   );

@@ -47,3 +47,11 @@ simultaneous refreshes would log the user out of a healthy session.
 
 `dl:auth-expired` (fired by the api layer when an in-flight refresh ultimately
 fails) is handled here as a logout too.
+
+## Why the user was logged out
+
+Before the hard logout on a refresh 401/403, `AuthContext` saves the server's
+coded reason, if there is one (`stashBlock(blockFromError(e))`, from
+`src/lib/accountBlock.ts`). The login screen then explains a suspension, an
+archived account or an ended recovery period, instead of silently showing the
+sign-in form. `src/lib/api.ts` does the same on its own refresh path.

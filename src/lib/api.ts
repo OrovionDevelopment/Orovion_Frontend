@@ -1,4 +1,5 @@
 import axios from "axios";
+import { blockFromError, stashBlock } from "./accountBlock";
 import { apiBase } from "./backend";
 
 // --- Web client token transport (see backend docs: "Clients: mobile vs web") ---
@@ -197,6 +198,8 @@ api.interceptors.response.use(
         // AuthContext drop the whole offline cache.
         const s = e?.response?.status;
         if (s === 401 || s === 403) {
+          // A suspended / archived account: keep the reason for the login screen.
+          stashBlock(blockFromError(e));
           TOKENS.clear();
           if (typeof window !== "undefined")
             window.dispatchEvent(new CustomEvent("dl:auth-expired"));
@@ -342,10 +345,15 @@ export const dok = {
     privacy: () => unwrap(api.get("/account/privacy")),
     updatePrivacy: (b) => unwrap(api.put("/account/privacy", b)),
     legal: () => unwrap(api.get("/account/legal")),
-    feedback: (b) => unwrap(api.post("/account/feedback", b)),
+    // { category, message, rating?, platform } — FormData when screenshots are attached.
+    feedback: (b) => (typeof FormData !== "undefined" && b instanceof FormData
+      ? postForm("/account/feedback", b)
+      : unwrap(api.post("/account/feedback", b))),
     deactivate: () => unwrap(api.post("/account/deactivate")),
     remove: () => unwrap(api.post("/account/delete")),
     restore: () => unwrap(api.post("/account/restore")),
+    // Public: the recovery period and lifecycle rules, straight from the server.
+    policy: () => unwrap(api.get("/public/account-policy")),
   },
   feed: {
     home: (q = "") => unwrap(api.get(`/feed/home${q}`)),
@@ -590,13 +598,13 @@ export const dok = {
     deactivateUser: (id, b) => unwrap(api.post(`/admin/users/${id}/deactivate`, b || {})),
     deleteUser: (id, b) => unwrap(api.delete(`/admin/users/${id}`, { data: b || {} })),
 
-    // ── Content moderation (post|research|thesis|case_study|pulse|clinical_case) ──
+    // ── Content moderation (post|research|case_study|pulse; media-owned) ──
     content: (params = {}) => unwrap(api.get("/admin/content", { params })),
     deleteContent: (type, id, b) => unwrap(api.delete(`/admin/content/${type}/${id}`, { data: b || {} })),
 
     // ── Doctor verifications ──
     vStats: () => unwrap(api.get("/admin/verifications/stats")),
-    vList: (status = "SUBMITTED") => unwrap(api.get("/admin/verifications", { params: { status, limit: 50 } })),
+    vList: (status = "SUBMITTED", cursor?: string | null) => unwrap(api.get("/admin/verifications", { params: { status, limit: 30, ...(cursor ? { cursor } : {}) } })),
     vDetail: (userId) => unwrap(api.get(`/admin/verifications/${userId}`)),
     vInReview: (userId) => unwrap(api.post(`/admin/verifications/${userId}/in-review`, {})),
     vApprove: (userId) => unwrap(api.post(`/admin/verifications/${userId}/approve`, {})),
@@ -604,17 +612,20 @@ export const dok = {
     vReset: (userId) => unwrap(api.post(`/admin/verifications/${userId}/reset`, {})),
 
     // ── Student verifications ──
-    svList: () => unwrap(api.get("/admin/student-verifications", { params: { limit: 50 } })),
+    svList: (status = "SUBMITTED", cursor?: string | null) => unwrap(api.get("/admin/student-verifications", { params: { status, limit: 30, ...(cursor ? { cursor } : {}) } })),
+    svDetail: (userId) => unwrap(api.get(`/admin/student-verifications/${userId}`)),
     svApprove: (userId) => unwrap(api.post(`/admin/student-verifications/${userId}/approve`, {})),
     svReject: (userId, reason) => unwrap(api.post(`/admin/student-verifications/${userId}/reject`, { reason })),
 
     // ── Reported content ──
-    reports: (status = "pending") => unwrap(api.get("/admin/reports", { params: { status, limit: 50 } })),
-    dismissReport: (id) => unwrap(api.post(`/admin/reports/${id}/dismiss`, {})),
-    deletePost: (id) => unwrap(api.delete(`/admin/posts/${id}`)),
+    // kind: post | pulse | user (profiles); status: pending | actioned | dismissed | all
+    reports: (params = {}) => unwrap(api.get("/admin/reports", { params: { limit: 20, ...params } })),
+    dismissReport: (id, kind) => unwrap(api.post(`/admin/reports/${id}/dismiss`, { kind })),
+    takedownReport: (id, kind, reason?: string) => unwrap(api.post(`/admin/reports/${id}/takedown`, { kind, reason })),
 
     // ── Feedback / deletion queue / audit ──
     feedback: (params = {}) => unwrap(api.get("/admin/feedback", { params })),
+    updateFeedback: (id, b) => unwrap(api.patch(`/admin/feedback/${id}`, b)),
     consultationRatings: (params = {}) => unwrap(api.get("/admin/consultations/ratings", { params })),
     deletions: (params = {}) => unwrap(api.get("/admin/deletions", { params })),
     audit: (params = {}) => unwrap(api.get("/admin/audit", { params })),

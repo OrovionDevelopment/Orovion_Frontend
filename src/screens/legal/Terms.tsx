@@ -5,7 +5,7 @@ import {
   Lock, Puzzle, Server, Ban, UserX, AlertCircle, Scale, Handshake,
   RefreshCcw, Landmark, Mail,
 } from "lucide-react";
-import LegalShell, { Bullets, Note } from "@/components/legal/LegalShell";
+import LegalShell, { Bullets, Note, RecoveryPeriod } from "@/components/legal/LegalShell";
 
 const SECTIONS = [
   {
@@ -303,13 +303,13 @@ const SECTIONS = [
     title: "Account deletion and recovery",
     body: (
       <>
-        <p>Users may request account deletion through platform settings. Deleted accounts enter a six (6) month recovery period. During this period:</p>
+        <p>Users may delete their account through account settings. Deletion is not immediate: the account first enters a recovery period of <RecoveryPeriod />. During this period:</p>
         <Bullets items={[
-          "The account may remain recoverable",
-          "Public visibility may be removed",
-          "Platform access may be restricted",
+          "The profile, posts and Pulses are hidden from other users",
+          "The user is signed out of every device",
+          "Signing in again with the same phone number, Google or Apple account restores the account and its content",
         ]} />
-        <p>If the user signs in again using the same credentials during this period, the account may be restored. After six (6) months, account data may be permanently deleted according to Orovion's retention procedures.</p>
+        <p>When the recovery period ends, the account is archived. It can no longer be restored by the user, and the phone number or social login it used is released so that a new account can be created. Archived data is retained in accordance with Orovion's retention procedures and applicable law. A user may ask Orovion to erase their data; only an administrator can permanently erase an account and its content.</p>
       </>
     ),
   },

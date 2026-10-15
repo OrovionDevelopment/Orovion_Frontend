@@ -41,3 +41,17 @@ abandons the pull immediately.
 ## `useRingtone.ts`
 
 Plays / stops the incoming-call ringtone for the consult call UI.
+
+## `useAccountPolicy.ts`
+
+`useAccountPolicy()` → `{ recoveryDays, restoreBy, afterRecovery, erasure }`,
+or `null` until loaded or when the server can't be reached. It reads
+`GET /api/public/account-policy`:
+
+- **Once per page load.** `loadAccountPolicy` caches the result and shares an
+  in-flight request, so many components cost one call.
+- **A failure is not cached**, so the next caller retries.
+
+`recoveryPhrase(policy)` gives "30 days", or "the recovery period" when the
+number is unknown. Settings, the admin "How accounts work" card and the legal
+pages (`<RecoveryPeriod />`) all use it. No component hard-codes the length.

@@ -11,6 +11,7 @@ import CountrySelect from "@/components/ui/CountrySelect";
 import { COUNTRIES } from "@/data/countries";
 import { useAuth } from "@/context/AuthContext";
 import { dok } from "@/lib/api";
+import { blockFromError, blockMessage, takeBlock } from "@/lib/accountBlock";
 import { cn } from "@/lib/utils";
 import { qrDeepLink, nextPhase, normaliseTtl, QR_POLL_INTERVAL_MS, type QrUiPhase } from "@/lib/qrLogin";
 import { socketUrl } from "@/lib/backend";
@@ -49,6 +50,9 @@ function authError(e) {
   if (code.includes("too-many-requests")) return "Too many attempts. Please wait a little and try again.";
   if (code.includes("popup-closed-by-user") || code.includes("cancelled-popup")) return "Google sign-in was cancelled.";
   if (code.includes("unauthorized-domain")) return "This domain isn't authorized in Firebase yet (Authentication → Settings → Authorized domains).";
+  // Suspended / archived / recovery ended: explain it properly.
+  const block = blockFromError(e);
+  if (block) return blockMessage(block);
   const status = e?.response?.status;
   if (status === 429) return e?.response?.data?.message || "Too many OTP requests — please wait before retrying.";
   if (e?.response) return e.response.data?.message || "Something went wrong. Please try again.";
@@ -66,6 +70,13 @@ export default function Login() {
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+
+  // Signed out because the account was suspended or archived? Say why (the
+  // reason was saved just before the sign-out; read once, on mount).
+  useEffect(() => {
+    const block = takeBlock();
+    if (block) setErr(blockMessage(block));
+  }, []);
 
   // Send the authenticated user to onboarding (new / incomplete) or into the app.
   const enter = (res) => {

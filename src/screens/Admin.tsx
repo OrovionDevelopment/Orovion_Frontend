@@ -9,12 +9,14 @@ import {
   Stethoscope, GraduationCap, User, Film, FileText, BookOpen, Dot,
   Banknote, Send, Receipt, ArrowLeft, ExternalLink,
   Wallet, TrendingUp, Download, SlidersHorizontal, Landmark, PiggyBank, CalendarDays, Star,
+  Info, Archive, Clock,
 } from "lucide-react";
 import { Avatar, Logo, Spinner } from "@/components/ui/Primitives";
 import { RowsSkeleton, StatGridSkeleton } from "@/components/ui/Skeletons";
 import NavArrows from "@/components/ui/NavArrows";
 import { dok, ADMIN_TOKENS } from "@/lib/api";
-import { cn, compact, timeAgo } from "@/lib/utils";
+import { cn, compact, timeAgo, formatStat, formatDate, daysUntil } from "@/lib/utils";
+import { useAccountPolicy, recoveryPhrase } from "@/hooks/useAccountPolicy";
 
 /**
  * Operator-only admin console at /admin — fully separate from the product app.
@@ -214,8 +216,22 @@ function Stat({ label, value, tone = "ink" }: { label: string; value: any; tone?
   };
   return (
     <div className="card p-4">
-      <p className={cn("text-2xl font-extrabold", tones[tone] || tones.ink)}>{compact(value ?? 0)}</p>
+      {/* formatStat: numbers compacted, formatted money as-is, null → "—" */}
+      <p className={cn("text-2xl font-extrabold", tones[tone] || tones.ink)}>{formatStat(value)}</p>
       <p className="mt-0.5 text-xs font-medium text-ink-500">{label}</p>
+    </div>
+  );
+}
+
+// A load that failed must not look like "nothing here": say so, and offer a retry.
+const errorText = (e: any) => e?.response?.data?.message || (e?.request ? "The server could not be reached." : "Something went wrong.");
+function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="card py-12 text-center">
+      <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-rose-50 text-rose-600"><AlertTriangle size={26} /></span>
+      <p className="mt-3 font-semibold text-ink-900">Couldn't load this</p>
+      <p className="mx-auto max-w-md text-sm text-ink-500">{message}</p>
+      {onRetry && <button onClick={onRetry} className="btn-outline mx-auto mt-4 px-4 py-2 text-sm"><RefreshCw size={14} /> Try again</button>}
     </div>
   );
 }
@@ -245,7 +261,31 @@ function Empty({ icon: Icon = CheckCircle2, title = "Nothing here", sub = "" }) 
 const STATUS_CHIP: any = {
   ACTIVE: "bg-emerald-50 text-emerald-600", DEACTIVATED: "bg-ink-900/[.06] text-ink-600",
   SUSPENDED: "bg-rose-50 text-rose-600", PENDING_DELETION: "bg-amber-50 text-amber-600",
+  FROZEN: "bg-sky-50 text-sky-600",
 };
+const STATUS_LABEL: any = {
+  ACTIVE: "Active", DEACTIVATED: "Deactivated", SUSPENDED: "Suspended",
+  PENDING_DELETION: "Pending deletion", FROZEN: "Archived",
+};
+
+// The account rules in plain words, shown to admins next to the controls that
+// change them. The recovery period comes from the server (account-policy), so
+// this text can never disagree with what the backend actually does.
+function AccountRulesCard() {
+  const period = recoveryPhrase(useAccountPolicy());
+  return (
+    <div className="card p-4 text-sm text-ink-600">
+      <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-ink-400"><Info size={14} /> How accounts work</p>
+      <ul className="list-disc space-y-1 pl-5">
+        <li><b>Deactivate</b> — the account is hidden and signed out; nothing is deleted. Logging in again brings it back.</li>
+        <li><b>Delete (by the user)</b> — a soft delete. Hidden at once; logging in within {period} restores everything.</li>
+        <li><b>After {period}</b> — the account is archived (frozen): data is kept, the user can no longer restore it, and their phone/Google/Apple login is released so they can sign up again.</li>
+        <li><b>Erase permanently</b> — only an admin can do this, from a user's page. Posts, Pulses, messages and files are removed; payment records and this audit log are kept.</li>
+        <li><b>Suspend</b> — the user cannot sign in and their content is hidden, for a set time or permanently. They are told the reason. A timed suspension ends by itself.</li>
+      </ul>
+    </div>
+  );
+}
 const ROLE_ICON: any = { doctor: Stethoscope, student: GraduationCap, general_user: User };
 
 /* =========================================================================
@@ -253,22 +293,31 @@ const ROLE_ICON: any = { doctor: Stethoscope, student: GraduationCap, general_us
    ========================================================================= */
 function Overview() {
   const [o, setO] = useState<any>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const load = useCallback(async (refresh = false) => {
-    setLoading(true);
-    try { const d = await dok.admin.overview(refresh); setO(d.overview); } catch { setO(null); }
+    setLoading(true); setError("");
+    try { const d = await dok.admin.overview(refresh); setO(d.overview); } catch (e) { setError(errorText(e)); }
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
 
   if (loading && !o) return <StatGridSkeleton count={6} />;
-  if (!o) return <Empty icon={AlertTriangle} title="Couldn't load overview" sub="Try refreshing." />;
+  if (!o) return <ErrorState message={error || "The overview could not be built."} onRetry={() => load(true)} />;
 
-  const u = o.users, c = o.content;
+  const u = o.users, c = o.content, cs = o.consultations;
+  const sum = (...xs: any[]) => (xs.some((x) => x == null) ? null : xs.reduce((a, b) => a + b, 0));
   return (
     <div className="space-y-6">
       <SectionHead title="Overview" subtitle={`Live snapshot · presence: ${o.presenceSource}`}
         right={<button onClick={() => load(true)} className="btn-outline px-3 py-2 text-xs"><RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh</button>} />
+
+      {o.partial && (
+        <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+          <span>Some numbers could not be loaded right now ({(o.unavailable || []).join(", ")}). They show as "—". Refresh to try again.</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Stat label="Total users" value={u.total} tone="brand" />
@@ -287,13 +336,15 @@ function Overview() {
         </Panel>
         <Panel title="Account status">
           <Row label="Active" value={u.byStatus.active} tone="emerald" />
-          <Row label="Suspended (blocked)" value={u.byStatus.suspended} tone="rose" />
+          <Row label="Suspended" value={u.byStatus.suspended} tone="rose" />
           <Row label="Deactivated" value={u.byStatus.deactivated} />
           <Row label="Pending deletion" value={u.byStatus.pending_deletion} tone="amber" />
+          <Row label="Archived" value={u.byStatus.frozen} />
         </Panel>
         <Panel title="Deletions">
-          <Row label="Scheduled" value={o.deletions.scheduled} tone="amber" />
-          <Row label="Permanently deleted (all-time)" value={o.deletions.permanentAllTime} tone="rose" />
+          <Row label="In recovery period" value={o.deletions.scheduled} tone="amber" />
+          <Row label="Archived (recovery ended)" value={o.deletions.archived} />
+          <Row label="Erased by an admin (all-time)" value={o.deletions.permanentAllTime} tone="rose" />
         </Panel>
       </div>
 
@@ -301,24 +352,27 @@ function Overview() {
         <Panel title="Content">
           <Row label="Posts" value={c.posts.post} icon={FileText} />
           <Row label="Research" value={c.posts.research} icon={BookOpen} />
-          <Row label="Thesis" value={c.posts.thesis} icon={BookOpen} />
-          <Row label="Case studies (posts)" value={c.posts.case_study} icon={BookOpen} />
+          <Row label="Case studies" value={c.posts.case_study == null ? null : c.posts.case_study + (c.clinicalCases ?? 0)} icon={FileStack} />
           <Row label="Pulses" value={c.pulses} icon={Film} />
-          <Row label="Clinical cases" value={c.clinicalCases} icon={FileStack} />
         </Panel>
         <Panel title="Consultations">
-          <Row label="Total" value={o.consultations.total} tone="brand" />
-          <Row label="Pending" value={o.consultations.pending} tone="amber" />
-          <Row label="Approved" value={o.consultations.approved} tone="emerald" />
-          <Row label="Declined / refunded" value={o.consultations.declined + o.consultations.refunded} />
+          <Row label="Requests (paid)" value={cs.total} tone="brand" />
+          <Row label="Waiting for the doctor" value={cs.awaitingDoctor} tone="amber" />
+          <Row label="Scheduled" value={cs.scheduled} tone="sky" />
+          <Row label="Completed" value={cs.completed} tone="emerald" />
+          <Row label="Declined / cancelled / missed" value={cs.notFulfilled} />
+          <Row label="Refunded payments" value={cs.refunded} />
         </Panel>
         <Panel title="Feedback & moderation">
-          <Row label="Feedback total" value={o.feedback.total} tone="brand" />
+          <Row label="New feedback" value={o.feedback.byStatus?.new} tone="brand" />
+          <Row label="Feedback total" value={o.feedback.total} />
           <Row label="Reports pending" value={o.reports.pending} tone="rose" />
-          <Row label="Doctor KYC pending" value={o.verifications.doctor.submitted + o.verifications.doctor.inReview} tone="amber" />
-          <Row label="Student KYC pending" value={o.verifications.student.submitted} tone="amber" />
+          <Row label="Doctor verifications pending" value={sum(o.verifications.doctor.submitted, o.verifications.doctor.inReview)} tone="amber" />
+          <Row label="Student verifications pending" value={o.verifications.student.submitted} tone="amber" />
         </Panel>
       </div>
+
+      <AccountRulesCard />
     </div>
   );
 }
@@ -332,11 +386,12 @@ function Panel({ title, children }: any) {
   );
 }
 function Row({ label, value, tone = "ink", icon: Icon }: any) {
-  const tones: any = { ink: "text-ink-900", brand: "text-brand-600", emerald: "text-emerald-600", amber: "text-amber-600", rose: "text-rose-600" };
+  const tones: any = { ink: "text-ink-900", brand: "text-brand-600", emerald: "text-emerald-600", amber: "text-amber-600", rose: "text-rose-600", sky: "text-sky-600" };
   return (
     <div className="flex items-center justify-between py-2">
       <span className="flex items-center gap-2 text-sm text-ink-600">{Icon && <Icon size={15} className="text-ink-400" />}{label}</span>
-      <span className={cn("text-sm font-extrabold", tones[tone])}>{compact(value ?? 0)}</span>
+      {/* null = the owning service is unreachable: "—", not a misleading 0 */}
+      <span className={cn("text-sm font-extrabold", tones[tone])}>{formatStat(value)}</span>
     </div>
   );
 }
@@ -833,7 +888,7 @@ function TransactionsSection() {
   const load = useCallback(async (search = "") => {
     setLoading(true);
     try { const d = await dok.admin.txnUsers(search ? { search } : {}); setUsers(d.users || []); }
-    catch { setUsers([]); }
+    catch (e) { setUsers([]); setMsg(errorText(e)); }
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -1165,7 +1220,29 @@ function SettlementsSection() {
    Users
    ========================================================================= */
 const ROLE_FILTERS = ["", "doctor", "student", "general_user"];
-const STATUS_FILTERS = ["", "active", "suspended", "deactivated", "pending_deletion"];
+const STATUS_FILTERS = ["", "active", "suspended", "deactivated", "pending_deletion", "frozen"];
+
+// A frozen account's login identifiers are rewritten to archived_<original>_<epoch>
+// (so the person can sign up again); show the original to the admin.
+const plainIdent = (v: any) => (typeof v === "string" && v.startsWith("archived_") ? v.replace(/^archived_/, "").replace(/_\d+$/, "") : v);
+
+const BLOCKER_TEXT: Record<string, (d: any) => string> = {
+  WALLET_BALANCE: (d) => `the doctor is still owed ${rupee((Number(d?.pendingPaise) || 0) + (Number(d?.availablePaise) || 0))}`,
+  OPEN_SETTLEMENTS: (d) => `${d?.count} settlement(s) are not finished`,
+  PENDING_REFUNDS: (d) => `${d?.count} refund(s) are pending`,
+  ACTIVE_CONSULTATIONS: (d) => `${d?.count} consultation(s) are in progress`,
+};
+
+// Turn an action's error into words the admin can act on.
+const actionError = (e: any) => {
+  const body = e?.response?.data;
+  const data = body?.data;
+  if (data?.code === "PURGE_BLOCKED" && Array.isArray(data.blockers)) {
+    return `Can't erase yet: ${data.blockers.map((b: any) => BLOCKER_TEXT[b.code]?.(b.detail) || b.code).join("; ")}.`;
+  }
+  if (data?.legs) return `${body.message} (posts & Pulses: ${data.legs.media}, messages: ${data.legs.chat}).`;
+  return body?.message || errorText(e);
+};
 
 function UsersSection() {
   const [q, setQ] = useState("");
@@ -1175,10 +1252,11 @@ function UsersSection() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [sel, setSel] = useState<any>(null);
 
   const load = useCallback(async (reset = true) => {
-    setLoading(true);
+    setLoading(true); setError("");
     try {
       const params: any = { limit: 20 };
       if (q.trim()) params.q = q.trim();
@@ -1188,7 +1266,10 @@ function UsersSection() {
       const d = await dok.admin.users(params);
       setRows((prev) => (reset ? d.users : [...prev, ...d.users]));
       setHasMore(d.hasMore); setCursor(d.nextCursor);
-    } catch { if (reset) setRows([]); }
+    } catch (e) {
+      if (reset) setRows([]);
+      setError(errorText(e));
+    }
     setLoading(false);
   }, [q, role, status, cursor]);
 
@@ -1197,7 +1278,7 @@ function UsersSection() {
 
   return (
     <div>
-      <SectionHead title="Users" subtitle="Search, block, deactivate, or permanently delete accounts." />
+      <SectionHead title="Users" subtitle="Search, suspend, deactivate, or permanently erase accounts." />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
@@ -1205,32 +1286,37 @@ function UsersSection() {
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, username, phone…" className="input pl-9" />
         </div>
         <Select value={role} onChange={setRole} options={ROLE_FILTERS} labels={{ "": "All roles", doctor: "Doctors", student: "Students", general_user: "General" }} />
-        <Select value={status} onChange={setStatus} options={STATUS_FILTERS} labels={{ "": "All status", active: "Active", suspended: "Blocked", deactivated: "Deactivated", pending_deletion: "Pending delete" }} />
+        <Select value={status} onChange={setStatus} options={STATUS_FILTERS} labels={{ "": "All status", active: "Active", suspended: "Suspended", deactivated: "Deactivated", pending_deletion: "Pending deletion", frozen: "Archived" }} />
       </div>
 
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading && rows.length === 0 ? (
-          <RowsSkeleton count={4} />
-        ) : rows.length === 0 ? (
-          <Empty icon={Users2} title="No users found" sub="Try a different search or filter." />
-        ) : rows.map((u) => (
-          <button key={u.id} onClick={() => setSel(u)} className="flex w-full items-center gap-3 p-3.5 text-left transition hover:bg-ink-900/[.02]">
-            <div className="relative">
-              <Avatar user={u} size={42} />
-              {u.isOnline && <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-emerald-500" title="Online" />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-ink-900">{u.fullName || "—"} {u.isVerified && <BadgeCheck size={13} className="inline text-brand-500" />}</p>
-              <p className="truncate text-xs text-ink-500">{u.email || u.phoneNumber || u.uniqueUsername || u.id}</p>
-            </div>
-            <span className="hidden text-xs capitalize text-ink-500 sm:block">{u.role?.replace("_", " ")}</span>
-            <span className={cn("chip text-[10px]", STATUS_CHIP[u.accountStatus] || "bg-ink-900/[.06] text-ink-600")}>{u.accountStatus?.replace("_", " ").toLowerCase()}</span>
-            <ChevronRight size={18} className="text-ink-300" />
-          </button>
-        ))}
-      </div>
+      {error && rows.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && rows.length === 0 ? (
+            <RowsSkeleton count={4} />
+          ) : rows.length === 0 ? (
+            <Empty icon={Users2} title="No users found" sub="Try a different search or filter." />
+          ) : rows.map((u) => (
+            <button key={u.id} onClick={() => setSel(u)} className="flex w-full items-center gap-3 p-3.5 text-left transition hover:bg-ink-900/[.02]">
+              <div className="relative">
+                <Avatar user={u} size={42} />
+                {u.isOnline && <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-emerald-500" title="Online" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold text-ink-900">{u.fullName || "—"} {u.isVerified && <BadgeCheck size={13} className="inline text-brand-500" />}</p>
+                <p className="truncate text-xs text-ink-500">{plainIdent(u.email || u.phoneNumber) || u.uniqueUsername || u.id}</p>
+              </div>
+              <span className="hidden text-xs capitalize text-ink-500 sm:block">{u.role?.replace("_", " ")}</span>
+              <span className={cn("chip text-[10px]", STATUS_CHIP[u.accountStatus] || "bg-ink-900/[.06] text-ink-600")}>{STATUS_LABEL[u.accountStatus] || u.accountStatus}</span>
+              <ChevronRight size={18} className="text-ink-300" />
+            </button>
+          ))}
+        </div>
+      )}
 
+      {error && rows.length > 0 && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
       {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
+
+      <div className="mt-6"><AccountRulesCard /></div>
 
       {sel && <UserDrawer userRow={sel} onClose={() => setSel(null)} onChanged={() => { setSel(null); load(true); }} />}
     </div>
@@ -1245,20 +1331,44 @@ function Select({ value, onChange, options, labels }: any) {
   );
 }
 
+const SUSPEND_PRESETS: [string, string][] = [["1", "1 day"], ["3", "3 days"], ["7", "7 days"], ["30", "30 days"], ["custom", "Custom"], ["permanent", "Permanent"]];
+const REASON_MIN = 5;
+const REASON_MAX = 500;
+
 function UserDrawer({ userRow, onClose, onChanged }: any) {
   const [detail, setDetail] = useState<any>(null);
+  const [loadError, setLoadError] = useState("");
   const [mode, setMode] = useState<null | "suspend" | "delete">(null);
   const [reason, setReason] = useState("");
-  const [hours, setHours] = useState("");
+  const [preset, setPreset] = useState("7");
+  const [customDays, setCustomDays] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
 
-  useEffect(() => { dok.admin.user(userRow.id).then(setDetail).catch(() => setDetail({ user: userRow, stats: null })); }, [userRow.id]);
+  const loadDetail = useCallback(() => {
+    setLoadError("");
+    dok.admin.user(userRow.id).then(setDetail).catch((e) => setLoadError(errorText(e)));
+  }, [userRow.id]);
+  useEffect(() => { loadDetail(); }, [loadDetail]);
 
-  const act = async (fn: () => Promise<any>) => { setBusy(true); try { await fn(); onChanged(); } catch (e: any) { alert(e?.response?.data?.message || "Action failed."); setBusy(false); } };
+  const act = async (fn: () => Promise<any>) => {
+    setBusy(true); setMsg("");
+    try { await fn(); onChanged(); } catch (e: any) { setMsg(actionError(e)); setBusy(false); }
+  };
 
   const u = detail?.user || userRow;
   const s = detail?.stats;
+  const trimmed = reason.trim();
+  const reasonOk = trimmed.length >= REASON_MIN && trimmed.length <= REASON_MAX;
+  const days = preset === "custom" ? Number(customDays) : Number(preset);
+  const durationOk = preset === "permanent" || (Number.isInteger(days) && days >= 1 && days <= 365);
+  const waitingPatients = s?.consultations?.activeAsDoctor || 0;
+  const canSuspend = ["ACTIVE", "DEACTIVATED", "SUSPENDED"].includes(u.accountStatus);
+
+  const suspend = () => act(() => dok.admin.suspendUser(u.id, preset === "permanent"
+    ? { reason: trimmed, permanent: true }
+    : { reason: trimmed, durationDays: days }));
 
   return (
     <Drawer onClose={onClose} title="User details">
@@ -1266,20 +1376,38 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
         <div className="relative"><Avatar user={u} size={56} />{u.isOnline && <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface bg-emerald-500" />}</div>
         <div className="min-w-0">
           <p className="truncate font-bold text-ink-900">{u.fullName || "—"} {u.isVerified && <BadgeCheck size={14} className="inline text-brand-500" />}</p>
-          <p className="truncate text-xs text-ink-500">{u.email || u.phoneNumber} · @{u.uniqueUsername || "—"}</p>
-          <span className={cn("chip mt-1.5 text-[10px]", STATUS_CHIP[u.accountStatus] || "bg-ink-900/[.06] text-ink-600")}>{u.accountStatus?.replace("_", " ").toLowerCase()}</span>
+          <p className="truncate text-xs text-ink-500">{plainIdent(u.email || u.phoneNumber) || "—"} · @{u.uniqueUsername || "—"}</p>
+          <span className={cn("chip mt-1.5 text-[10px]", STATUS_CHIP[u.accountStatus] || "bg-ink-900/[.06] text-ink-600")}>{STATUS_LABEL[u.accountStatus] || u.accountStatus}</span>
         </div>
       </div>
 
-      {u.suspendedUntil && <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">Blocked until {new Date(u.suspendedUntil).toLocaleString()}{u.suspensionReason ? ` · ${u.suspensionReason}` : ""}</div>}
-      {u.accountStatus === "SUSPENDED" && !u.suspendedUntil && <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">Permanently blocked{u.suspensionReason ? ` · ${u.suspensionReason}` : ""}</div>}
+      {u.accountStatus === "SUSPENDED" && (
+        <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">
+          {u.suspendedUntil ? `Suspended until ${new Date(u.suspendedUntil).toLocaleString()}` : "Suspended permanently"}
+          {u.suspensionReason ? ` · Reason: ${u.suspensionReason}` : ""}
+        </div>
+      )}
+      {u.accountStatus === "PENDING_DELETION" && (
+        <div className="mt-3 rounded-xl bg-amber-50 p-2.5 text-xs text-amber-700">
+          Deletion requested {formatDate(u.deletionRequestedAt)} · recovery ends {formatDate(u.scheduledDeletionAt)}
+          {daysUntil(u.scheduledDeletionAt) != null ? ` (in ${daysUntil(u.scheduledDeletionAt)} days)` : ""}. Logging in before then restores the account.
+        </div>
+      )}
+      {u.accountStatus === "FROZEN" && (
+        <div className="mt-3 rounded-xl bg-sky-50 p-2.5 text-xs text-sky-700">
+          Archived {formatDate(u.frozenAt)}: the recovery period ended. Data is kept; the user can no longer restore it.
+        </div>
+      )}
+
+      {loadError && <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">Couldn't load details: {loadError} <button onClick={loadDetail} className="underline">Retry</button></div>}
 
       {s && (
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          {[["Posts", s.content?.posts], ["Pulses", s.content?.pulses], ["Cases", s.content?.cases],
+        <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+          {[["Posts", s.content?.posts], ["Research", s.content?.research], ["Case studies", s.content?.caseStudies], ["Pulses", s.content?.pulses],
             ["As patient", s.consultations?.asPatient], ["As doctor", s.consultations?.asDoctor], ["Reports", s.pendingReportsAgainst]].map(([l, v]) => (
             <div key={l as string} className="rounded-xl bg-ink-900/[.03] p-2">
-              <p className="text-lg font-extrabold text-ink-900">{compact((v as number) ?? 0)}</p>
+              {/* null = that service is unreachable: "—", not a misleading 0 */}
+              <p className="text-lg font-extrabold text-ink-900">{formatStat(v)}</p>
               <p className="text-[10px] text-ink-500">{l}</p>
             </div>
           ))}
@@ -1288,44 +1416,72 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
 
       <div className="mt-3 space-y-1 text-xs text-ink-500">
         <p>Role: <span className="capitalize text-ink-700">{u.role?.replace("_", " ")}</span></p>
-        <p>Joined: {timeAgo(u.createdAt)}</p>
+        <p>Joined: {formatDate(u.createdAt)}</p>
         {u.lastActiveAt && <p>Last active: {timeAgo(u.lastActiveAt)}</p>}
         <p className="break-all">ID: {u.id}</p>
       </div>
 
+      {msg && <div className="mt-4 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">{msg}</div>}
+
       {/* Action forms */}
       {mode === "suspend" && (
         <div className="mt-4 space-y-2 rounded-xl border border-rose-200 bg-rose-50/50 p-3">
-          <p className="text-sm font-bold text-rose-700">Block user</p>
-          <input value={hours} onChange={(e) => setHours(e.target.value)} placeholder="Duration in hours (blank = permanent)" inputMode="numeric" className="input text-sm" />
-          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Reason (shown to the user)…" className="input resize-none text-sm" />
+          <p className="text-sm font-bold text-rose-700">Suspend account</p>
+          <p className="text-xs text-rose-600">They are signed out everywhere at once and can't sign in. Their posts and Pulses are hidden. They will see the reason below.</p>
+          <div className="flex flex-wrap gap-1.5">
+            {SUSPEND_PRESETS.map(([k, l]) => (
+              <button key={k} onClick={() => setPreset(k)} className={cn("rounded-full px-3 py-1.5 text-xs font-semibold", preset === k ? "bg-rose-600 text-white" : "bg-surface text-ink-600")}>{l}</button>
+            ))}
+          </div>
+          {preset === "custom" && <input value={customDays} onChange={(e) => setCustomDays(e.target.value)} placeholder="Number of days (1-365)" inputMode="numeric" className="input text-sm" />}
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} maxLength={REASON_MAX} placeholder="Reason (the user will see this)…" className="input resize-none text-sm" />
+          <p className="text-right text-[10px] text-ink-400">{trimmed.length}/{REASON_MAX}{trimmed.length > 0 && trimmed.length < REASON_MIN ? ` · at least ${REASON_MIN}` : ""}</p>
+          {waitingPatients > 0 && (
+            <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700"><AlertTriangle size={12} className="mr-1 inline" />This doctor has {waitingPatients} consultation(s) waiting. Those patients won't be able to reach them.</p>
+          )}
           <div className="flex gap-2">
             <button onClick={() => setMode(null)} className="btn-outline flex-1 py-2 text-sm">Cancel</button>
-            <button disabled={busy} onClick={() => act(() => dok.admin.suspendUser(u.id, { reason: reason || null, durationHours: hours ? Number(hours) : undefined }))} className="btn flex-1 bg-rose-600 py-2 text-sm text-white hover:bg-rose-700">{busy ? "…" : hours ? "Block temporarily" : "Block permanently"}</button>
+            <button disabled={busy || !reasonOk || !durationOk} onClick={suspend} className="btn flex-1 bg-rose-600 py-2 text-sm text-white hover:bg-rose-700 disabled:opacity-40">
+              {busy ? "…" : preset === "permanent" ? "Suspend permanently" : `Suspend for ${preset === "custom" ? (customDays || "?") : preset} day(s)`}
+            </button>
           </div>
         </div>
       )}
       {mode === "delete" && (
         <div className="mt-4 space-y-2 rounded-xl border border-rose-300 bg-rose-50 p-3">
-          <p className="flex items-center gap-1.5 text-sm font-bold text-rose-700"><AlertTriangle size={15} /> Permanently delete</p>
-          <p className="text-xs text-rose-600">This erases the account and all their content across every service. It cannot be undone. Type <b>DELETE</b> to confirm.</p>
-          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Reason (recorded in the audit log)…" className="input resize-none text-sm" />
+          <p className="flex items-center gap-1.5 text-sm font-bold text-rose-700"><AlertTriangle size={15} /> Erase permanently</p>
+          <p className="text-xs text-rose-600">This removes the account, its posts, Pulses, messages and files from every service. It cannot be undone. Payment records and the audit log are kept. Type <b>DELETE</b> to confirm.</p>
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} maxLength={REASON_MAX} placeholder="Reason (recorded in the audit log)…" className="input resize-none text-sm" />
           <input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="Type DELETE" className="input text-sm" />
           <div className="flex gap-2">
             <button onClick={() => setMode(null)} className="btn-outline flex-1 py-2 text-sm">Cancel</button>
-            <button disabled={busy || confirmText !== "DELETE"} onClick={() => act(() => dok.admin.deleteUser(u.id, { reason: reason || null }))} className="btn flex-1 bg-rose-700 py-2 text-sm text-white hover:bg-rose-800 disabled:opacity-40">{busy ? "Deleting…" : "Delete forever"}</button>
+            <button disabled={busy || confirmText !== "DELETE" || !reasonOk} onClick={() => act(() => dok.admin.deleteUser(u.id, { confirm: true, reason: trimmed }))} className="btn flex-1 bg-rose-700 py-2 text-sm text-white hover:bg-rose-800 disabled:opacity-40">{busy ? "Erasing…" : "Erase forever"}</button>
           </div>
         </div>
       )}
 
       {!mode && (
         <div className="mt-5 grid grid-cols-2 gap-2">
-          {u.accountStatus === "SUSPENDED"
-            ? <button disabled={busy} onClick={() => act(() => dok.admin.unsuspendUser(u.id))} className="btn-primary col-span-2 py-2.5 text-sm"><RotateCcw size={16} /> Unblock user</button>
-            : <button onClick={() => { setReason(""); setHours(""); setMode("suspend"); }} className="btn col-span-2 bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100"><Ban size={16} /> Block user</button>}
-          {u.accountStatus !== "DEACTIVATED" && u.accountStatus !== "SUSPENDED" &&
-            <button disabled={busy} onClick={() => act(() => dok.admin.deactivateUser(u.id, {}))} className="btn-outline col-span-2 py-2.5 text-sm"><UserX size={16} /> Deactivate (reversible)</button>}
-          <button onClick={() => { setReason(""); setConfirmText(""); setMode("delete"); }} className="btn col-span-2 border border-rose-300 bg-surface py-2.5 text-sm text-rose-700 hover:bg-rose-50"><Trash2 size={16} /> Permanently delete</button>
+          {u.accountStatus === "SUSPENDED" && (
+            <button disabled={busy} onClick={() => act(() => dok.admin.unsuspendUser(u.id))} className="btn-primary col-span-2 py-2.5 text-sm"><RotateCcw size={16} /> Lift suspension</button>
+          )}
+          {canSuspend && u.accountStatus !== "SUSPENDED" && (
+            <button onClick={() => { setReason(""); setPreset("7"); setCustomDays(""); setMsg(""); setMode("suspend"); }} className="btn col-span-2 bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100"><Ban size={16} /> Suspend</button>
+          )}
+          {u.accountStatus === "SUSPENDED" && (
+            <button onClick={() => { setReason(u.suspensionReason || ""); setPreset("7"); setCustomDays(""); setMsg(""); setMode("suspend"); }} className="btn-outline col-span-2 py-2.5 text-sm"><Clock size={16} /> Change suspension</button>
+          )}
+          {u.accountStatus === "ACTIVE" && (
+            <button disabled={busy} onClick={() => act(() => dok.admin.deactivateUser(u.id, {}))} className="btn-outline col-span-2 py-2.5 text-sm" title="Hides the account and signs it out. The user can undo this by logging in.">
+              <UserX size={16} /> Deactivate (user can undo by logging in)
+            </button>
+          )}
+          {!canSuspend && (
+            <p className="col-span-2 rounded-lg bg-ink-900/[.03] p-2 text-xs text-ink-500">
+              {u.accountStatus === "FROZEN" ? "An archived account can't be suspended or deactivated." : "This account is scheduled for deletion, so it can't be suspended. Erase it, or wait for the user."}
+            </p>
+          )}
+          <button onClick={() => { setReason(""); setConfirmText(""); setMsg(""); setMode("delete"); }} className="btn col-span-2 border border-rose-300 bg-surface py-2.5 text-sm text-rose-700 hover:bg-rose-50"><Trash2 size={16} /> Erase permanently</button>
         </div>
       )}
     </Drawer>
@@ -1338,10 +1494,8 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
 const CONTENT_TABS = [
   { key: "post", label: "Posts", icon: FileText },
   { key: "research", label: "Research", icon: BookOpen },
-  { key: "thesis", label: "Thesis", icon: BookOpen },
   { key: "case_study", label: "Case studies", icon: BookOpen },
   { key: "pulse", label: "Pulses", icon: Film },
-  { key: "clinical_case", label: "Clinical cases", icon: FileStack },
 ];
 
 function ContentSection() {
@@ -1351,29 +1505,38 @@ function ContentSection() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
 
   const load = useCallback(async (reset = true) => {
-    setLoading(true);
+    setLoading(true); setError("");
     try {
       const params: any = { type, limit: 20 };
-      if (q.trim()) params.q = q.trim();
+      if (q.trim().length >= 2) params.q = q.trim();
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.content(params);
       setItems((prev) => (reset ? d.items : [...prev, ...d.items]));
       setHasMore(d.hasMore); setCursor(d.nextCursor);
-    } catch { if (reset) setItems([]); }
+    } catch (e) {
+      if (reset) setItems([]);
+      setError(errorText(e));
+    }
     setLoading(false);
   }, [type, q, cursor]);
   useEffect(() => { const t = setTimeout(() => load(true), 250); return () => clearTimeout(t); /* eslint-disable-next-line */ }, [type, q]);
 
   const del = async (it: any) => {
-    if (!confirm(`Delete this ${type.replace("_", " ")}? It will be removed from the app.`)) return;
-    try { await dok.admin.deleteContent(type, it.id, {}); setItems((prev) => prev.filter((x) => x.id !== it.id)); } catch (e: any) { alert(e?.response?.data?.message || "Failed."); }
+    if (!confirm(`Remove this ${type.replace("_", " ")}? It disappears from the app and its open reports are closed.`)) return;
+    setMsg("");
+    try {
+      await dok.admin.deleteContent(type, it.id, {});
+      setItems((prev) => prev.filter((x) => x.id !== it.id));
+    } catch (e: any) { setMsg(actionError(e)); }
   };
 
   return (
     <div>
-      <SectionHead title="Content" subtitle="Remove any post, pulse, thesis, case study, or clinical case." />
+      <SectionHead title="Content" subtitle="Remove any post, research summary, case study, or Pulse." />
       <div className="mb-4 flex gap-2 overflow-x-auto">
         {CONTENT_TABS.map((t) => (
           <button key={t.key} onClick={() => setType(t.key)} className={cn("flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold transition", type === t.key ? "bg-brand-600 text-white shadow-glow" : "bg-surface text-ink-600 hover:bg-brand-50")}>
@@ -1383,26 +1546,32 @@ function ContentSection() {
       </div>
       <div className="relative mb-4">
         <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search content…" className="input pl-9" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search content (2+ characters)…" className="input pl-9" />
       </div>
 
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading && items.length === 0 ? <RowsSkeleton count={4} />
-          : items.length === 0 ? <Empty icon={FileStack} title="No content" sub="Nothing matches here." />
-          : items.map((it) => (
-            <div key={it.id} className="flex items-center gap-3 p-3.5">
-              <Avatar user={it.author} size={38} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-ink-900">{it.title || <span className="italic text-ink-400">(no text)</span>}</p>
-                <p className="truncate text-xs text-ink-500">
-                  {it.author?.fullName} · {compact(it.likesCount || 0)} likes · {compact(it.commentsCount || 0)} comments · {timeAgo(it.createdAt)}
-                  {it.isDeleted && <span className="ml-1 text-rose-500">· deleted</span>}
-                </p>
+      {msg && <div className="mb-3 rounded-xl bg-rose-50 p-2.5 text-sm text-rose-700">{msg}</div>}
+
+      {error && items.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && items.length === 0 ? <RowsSkeleton count={4} />
+            : items.length === 0 ? <Empty icon={FileStack} title="No content" sub="Nothing matches here." />
+            : items.map((it) => (
+              <div key={it.id} className="flex items-center gap-3 p-3.5">
+                <Avatar user={it.author} size={38} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink-900">{it.title || it.text || <span className="italic text-ink-400">(media only)</span>}</p>
+                  <p className="truncate text-xs text-ink-500">
+                    {it.author?.fullName || "[deleted user]"} · {compact(it.likesCount || 0)} likes · {compact(it.commentsCount || 0)} comments · {timeAgo(it.createdAt)}
+                    {it.pendingReports > 0 && <span className="ml-1 text-rose-500">· {it.pendingReports} open report(s)</span>}
+                    {it.isDeleted && <span className="ml-1 text-rose-500">· removed</span>}
+                  </p>
+                </div>
+                {!it.isDeleted && <button onClick={() => del(it)} className="press rounded-lg bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100" title="Remove"><Trash2 size={16} /></button>}
               </div>
-              {!it.isDeleted && <button onClick={() => del(it)} className="press rounded-lg bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100" title="Delete"><Trash2 size={16} /></button>}
-            </div>
-          ))}
-      </div>
+            ))}
+        </div>
+      )}
+      {error && items.length > 0 && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
       {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
     </div>
   );
@@ -1412,13 +1581,19 @@ function ContentSection() {
    Verifications (doctor + student)
    ========================================================================= */
 const KYC_TABS = ["SUBMITTED", "IN_REVIEW", "APPROVED", "REJECTED"];
-const KYC_CHIP: any = { SUBMITTED: "bg-amber-50 text-amber-600", IN_REVIEW: "bg-sky-50 text-sky-600", APPROVED: "bg-emerald-50 text-emerald-600", REJECTED: "bg-rose-50 text-rose-600" };
+const STUDENT_TABS = ["SUBMITTED", "APPROVED", "REJECTED"];
+const KYC_CHIP: any = { SUBMITTED: "bg-amber-50 text-amber-600", IN_REVIEW: "bg-sky-50 text-sky-600", APPROVED: "bg-emerald-50 text-emerald-600", REJECTED: "bg-rose-50 text-rose-600", NOT_SUBMITTED: "bg-ink-900/[.06] text-ink-600" };
+const ID_TYPE_LABEL: any = { AADHAAR: "Aadhaar card", PAN: "PAN card" };
+const HISTORY_LABEL: any = {
+  "verification.view": "Documents viewed", "verification.in_review": "Marked in review", "verification.approve": "Approved",
+  "verification.reject": "Rejected", "verification.reset": "Reset",
+};
 
 function VerificationsSection() {
   const [kind, setKind] = useState<"doctor" | "student">("doctor");
   return (
     <div>
-      <SectionHead title="Verifications" subtitle="Review health-professional and student KYC submissions." />
+      <SectionHead title="Verifications" subtitle="Review health-professional and student verification submissions." />
       <div className="mb-4 flex gap-2">
         <button onClick={() => setKind("doctor")} className={cn("flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold", kind === "doctor" ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}><Stethoscope size={15} /> Doctors</button>
         <button onClick={() => setKind("student")} className={cn("flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold", kind === "student" ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}><GraduationCap size={15} /> Students</button>
@@ -1428,27 +1603,96 @@ function VerificationsSection() {
   );
 }
 
+// One document: images inline, PDFs as a link. Links are signed for 5 minutes
+// and never stored; referrers are stripped so the link can't leak onward.
+function DocumentTile({ doc }: { doc: any }) {
+  if (!doc.url) {
+    return (
+      <div className="rounded-xl border border-dashed border-ink-900/[.15] p-3 text-xs text-ink-500">
+        <p className="font-semibold text-ink-700">{doc.label}</p>
+        {doc.status === "unavailable" ? "Couldn't be loaded right now — use Refresh." : "Stored outside this applicant's folder, so it isn't shown."}
+      </div>
+    );
+  }
+  const isImage = String(doc.contentType || "").startsWith("image/");
+  return (
+    <a href={doc.url} target="_blank" rel="noreferrer noopener" referrerPolicy="no-referrer" className="block overflow-hidden rounded-xl border border-ink-900/[.08] transition hover:border-brand-400">
+      {isImage
+        ? <img src={doc.url} alt={doc.label} referrerPolicy="no-referrer" loading="lazy" className="h-40 w-full bg-ink-900/[.03] object-contain" />
+        : <div className="grid h-40 place-items-center bg-ink-900/[.03] text-sm font-semibold text-brand-600"><span className="flex items-center gap-1.5"><FileText size={20} /> Open document</span></div>}
+      <p className="flex items-center justify-between px-3 py-2 text-xs font-semibold text-ink-700">{doc.label} <ExternalLink size={12} className="text-ink-400" /></p>
+    </a>
+  );
+}
+
+function VerificationDocuments({ docs, onRefresh, loading }: { docs: any[]; onRefresh: () => void; loading: boolean }) {
+  return (
+    <div className="mt-4">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-xs font-bold uppercase tracking-wide text-ink-400">Documents</p>
+        <button onClick={onRefresh} className="flex items-center gap-1 text-xs font-semibold text-brand-600"><RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh</button>
+      </div>
+      {docs.length === 0
+        ? <p className="rounded-xl bg-ink-900/[.03] p-3 text-xs text-ink-500">No documents were submitted.</p>
+        : <div className="grid grid-cols-2 gap-2">{docs.map((d) => <DocumentTile key={d.kind} doc={d} />)}</div>}
+      <p className="mt-1.5 text-[10px] text-ink-400">Links expire 5 minutes after loading. Every view is recorded in the audit log.</p>
+    </div>
+  );
+}
+
+function ReviewHistory({ history }: { history: any[] }) {
+  if (!history?.length) return null;
+  return (
+    <div className="mt-4">
+      <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-ink-400">History</p>
+      <div className="space-y-1 text-xs text-ink-500">
+        {history.map((h, i) => (
+          <p key={i}>{HISTORY_LABEL[h.action] || h.action} · {h.adminUsername || "system"} · {timeAgo(h.createdAt)}{h.metadata?.reason ? ` · "${h.metadata.reason}"` : ""}</p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RejectBox({ reason, setReason, onCancel, onConfirm, busy }: any) {
+  const t = reason.trim();
+  const ok = t.length >= REASON_MIN && t.length <= REASON_MAX;
+  return (
+    <div className="mt-4 space-y-2">
+      <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} maxLength={REASON_MAX} placeholder="Reason for rejection (shown to the applicant)…" className="input resize-none text-sm" />
+      <p className="text-right text-[10px] text-ink-400">{t.length}/{REASON_MAX}{t.length > 0 && t.length < REASON_MIN ? ` · at least ${REASON_MIN}` : ""}</p>
+      <div className="flex gap-2">
+        <button onClick={onCancel} className="btn-outline flex-1 py-2.5 text-sm">Cancel</button>
+        <button disabled={!ok || busy} onClick={onConfirm} className="btn flex-1 bg-rose-600 py-2.5 text-sm text-white hover:bg-rose-700 disabled:opacity-40">Confirm rejection</button>
+      </div>
+    </div>
+  );
+}
+
 function DoctorVerifications() {
   const [tab, setTab] = useState("SUBMITTED");
   const [stats, setStats] = useState<any>(null);
   const [rows, setRows] = useState<any[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [sel, setSel] = useState<any>(null);
-  const [reason, setReason] = useState("");
-  const [rejecting, setRejecting] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    dok.admin.vStats().then(setStats).catch(() => {});
-    try { const d = await dok.admin.vList(tab); setRows(d.verifications || []); } catch { setRows([]); }
+  const load = useCallback(async (reset = true) => {
+    setLoading(true); setError("");
+    if (reset) dok.admin.vStats().then(setStats).catch(() => {});
+    try {
+      const d = await dok.admin.vList(tab, reset ? null : cursor);
+      setRows((prev) => (reset ? d.verifications : [...prev, ...d.verifications]));
+      setHasMore(d.hasMore); setCursor(d.nextCursor);
+    } catch (e) {
+      if (reset) setRows([]);
+      setError(errorText(e));
+    }
     setLoading(false);
-  }, [tab]);
-  useEffect(() => { load(); }, [load]);
-
-  const act = async (userId: string, fn: () => Promise<any>) => {
-    setRows((r) => r.filter((x) => x.userId !== userId)); setSel(null); setRejecting(false); setReason("");
-    try { await fn(); load(); } catch { load(); }
-  };
+  }, [tab, cursor]);
+  useEffect(() => { load(true); /* eslint-disable-next-line */ }, [tab]);
 
   return (
     <>
@@ -1463,146 +1707,331 @@ function DoctorVerifications() {
       <div className="mb-4 flex gap-2 overflow-x-auto">
         {KYC_TABS.map((t) => <button key={t} onClick={() => setTab(t)} className={cn("whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold capitalize", tab === t ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}>{t.replace("_", " ").toLowerCase()}</button>)}
       </div>
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading ? <RowsSkeleton count={4} />
-          : rows.length === 0 ? <Empty title="Queue is clear" sub={`No ${tab.replace("_", " ").toLowerCase()} submissions.`} />
-          : rows.map((v) => (
-            <button key={v.userId} onClick={() => setSel(v)} className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-ink-900/[.02]">
-              <Avatar user={v.user} size={42} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-ink-900">{v.user?.fullName}</p>
-                <p className="truncate text-xs text-ink-500">{(v.specializations || []).join(", ") || v.professionType || "—"} · {v.countryOfPractice || ""}</p>
-              </div>
-              <span className={cn("chip text-[10px]", KYC_CHIP[v.kycStatus])}>{v.kycStatus?.replace("_", " ").toLowerCase()}</span>
-              <ChevronRight size={18} className="text-ink-300" />
-            </button>
-          ))}
+      {error && rows.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && rows.length === 0 ? <RowsSkeleton count={4} />
+            : rows.length === 0 ? <Empty title="Queue is clear" sub={`No ${tab.replace("_", " ").toLowerCase()} submissions.`} />
+            : rows.map((v) => (
+              <button key={v.userId} onClick={() => setSel(v)} className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-ink-900/[.02]">
+                <Avatar user={v.user} size={42} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-ink-900">{v.user?.fullName || "—"}</p>
+                  <p className="truncate text-xs text-ink-500">
+                    {[v.professionType, v.registrationNumber && `Reg. ${v.registrationNumber}`, v.countryOfPractice].filter(Boolean).join(" · ") || "No submission details"}
+                    {v.submittedAt ? ` · submitted ${timeAgo(v.submittedAt)}` : ""}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-ink-400">
+                    {[v.hasIdFront && "ID front", v.hasIdBack && "ID back", v.hasLiveness && "selfie", v.hasLicenseDoc && "licence"].filter(Boolean).join(" · ") || "no documents"}
+                  </p>
+                </div>
+                <span className={cn("chip text-[10px]", KYC_CHIP[v.kycStatus])}>{v.kycStatus?.replace("_", " ").toLowerCase()}</span>
+                <ChevronRight size={18} className="text-ink-300" />
+              </button>
+            ))}
+        </div>
+      )}
+      {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
+
+      {sel && <DoctorReviewDrawer row={sel} onClose={() => setSel(null)} onChanged={() => { setSel(null); load(true); }} />}
+    </>
+  );
+}
+
+function DoctorReviewDrawer({ row, onClose, onChanged }: any) {
+  const [d, setD] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
+    try { setD(await dok.admin.vDetail(row.userId)); } catch (e) { setError(errorText(e)); }
+    setLoading(false);
+  }, [row.userId]);
+  useEffect(() => { load(); }, [load]);
+
+  const act = async (fn: () => Promise<any>) => {
+    setBusy(true); setMsg("");
+    try { await fn(); onChanged(); } catch (e: any) { setMsg(actionError(e)); setBusy(false); }
+  };
+
+  const status = d?.profile?.kycStatus || row.kycStatus;
+  const sub = d?.submission;
+  const user = d?.profile?.user || row.user;
+
+  return (
+    <Drawer onClose={onClose} title="Review verification">
+      <div className="flex items-center gap-3">
+        <Avatar user={user} size={52} />
+        <div className="min-w-0">
+          <p className="font-bold text-ink-900">{user?.fullName}</p>
+          <p className="truncate text-xs text-ink-500">{[user?.email, user?.phoneNumber].filter(Boolean).join(" · ")}</p>
+          <span className={cn("chip mt-1 text-[10px]", KYC_CHIP[status])}>{String(status || "").replace("_", " ").toLowerCase()}</span>
+        </div>
       </div>
 
-      {sel && (
-        <Drawer onClose={() => { setSel(null); setRejecting(false); }} title="Review verification">
-          <div className="flex items-center gap-3">
-            <Avatar user={sel.user} size={52} />
-            <div><p className="font-bold text-ink-900">{sel.user?.fullName}</p><p className="text-xs text-ink-500">{sel.user?.email} · {sel.user?.phoneNumber}</p></div>
-          </div>
+      {error ? <div className="mt-4"><ErrorState message={error} onRetry={load} /></div> : (
+        <>
           <div className="mt-4 space-y-2 text-sm">
-            <Detail label="Registration #" value={sel.registrationNumber} />
-            <Detail label="Profession" value={sel.professionType} />
-            <Detail label="Country" value={sel.countryOfPractice} />
-            <Detail label="Specializations" value={(sel.specializations || []).join(", ")} />
-            <Detail label="Submitted" value={sel.submittedAt ? timeAgo(sel.submittedAt) : "—"} />
+            <Detail label="Profession" value={sub?.professionType} />
+            <Detail label="Registration #" value={sub?.registrationNumber} />
+            <Detail label="Qualification" value={sub?.highestQualification} />
+            <Detail label="Country / state" value={[sub?.countryOfPractice, sub?.stateRegion].filter(Boolean).join(" · ")} />
+            <Detail label="Contact number" value={sub?.contactNumber} />
+            <Detail label="ID type" value={ID_TYPE_LABEL[sub?.idType] || (sub ? "Not stated" : "")} />
+            <Detail label="Live selfie check" value={sub ? (sub.livenessPassed ? "Passed" : "Not passed") : ""} />
+            <Detail label="Submitted" value={sub?.submittedAt ? `${formatDate(sub.submittedAt)} (${timeAgo(sub.submittedAt)})` : ""} />
           </div>
-          {sel.kycRejectionReason && <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">Last rejection: {sel.kycRejectionReason}</div>}
-          {rejecting && <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Reason for rejection (shown to the doctor)…" className="input mt-3 resize-none text-sm" />}
-          <div className="mt-5">
-            {!rejecting ? (
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => act(sel.userId, () => dok.admin.vInReview(sel.userId))} className="btn-outline col-span-2 py-2.5 text-sm"><Eye size={16} /> Mark in review</button>
-                <button onClick={() => act(sel.userId, () => dok.admin.vApprove(sel.userId))} className="btn-primary py-2.5 text-sm"><CheckCircle2 size={16} /> Approve</button>
-                <button onClick={() => setRejecting(true)} className="btn bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100"><XCircle size={16} /> Reject</button>
-                <button onClick={() => act(sel.userId, () => dok.admin.vReset(sel.userId))} className="btn-outline col-span-2 py-2.5 text-sm"><RotateCcw size={16} /> Reset</button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <button onClick={() => setRejecting(false)} className="btn-outline flex-1 py-2.5 text-sm">Cancel</button>
-                <button disabled={!reason.trim()} onClick={() => act(sel.userId, () => dok.admin.vReject(sel.userId, reason))} className="btn flex-1 bg-rose-600 py-2.5 text-sm text-white hover:bg-rose-700">Confirm rejection</button>
-              </div>
-            )}
-          </div>
-        </Drawer>
+          {d?.profile?.kycRejectionReason && <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">Last rejection: {d.profile.kycRejectionReason}</div>}
+          {loading && !d ? <div className="mt-4"><RowsSkeleton count={2} /></div> : <VerificationDocuments docs={d?.documents || []} onRefresh={load} loading={loading} />}
+          <ReviewHistory history={d?.history} />
+        </>
       )}
-    </>
+
+      {msg && <div className="mt-4 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">{msg}</div>}
+
+      {rejecting ? (
+        <RejectBox reason={reason} setReason={setReason} busy={busy} onCancel={() => setRejecting(false)}
+          onConfirm={() => act(() => dok.admin.vReject(row.userId, reason.trim()))} />
+      ) : (
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          {status === "SUBMITTED" && <button disabled={busy} onClick={() => act(() => dok.admin.vInReview(row.userId))} className="btn-outline col-span-2 py-2.5 text-sm"><Eye size={16} /> Mark in review</button>}
+          {(status === "SUBMITTED" || status === "IN_REVIEW") && <button disabled={busy} onClick={() => act(() => dok.admin.vApprove(row.userId))} className="btn-primary py-2.5 text-sm"><CheckCircle2 size={16} /> Approve</button>}
+          {(status === "SUBMITTED" || status === "IN_REVIEW" || status === "APPROVED") && (
+            <button disabled={busy} onClick={() => { setReason(""); setRejecting(true); }} className={cn("btn bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100", status === "APPROVED" && "col-span-2")}>
+              <XCircle size={16} /> {status === "APPROVED" ? "Reject (removes the verified badge)" : "Reject"}
+            </button>
+          )}
+          <button disabled={busy} onClick={() => { if (confirm("Reset this verification? The doctor will need to submit again.")) act(() => dok.admin.vReset(row.userId)); }} className="btn-outline col-span-2 py-2.5 text-sm"><RotateCcw size={16} /> Reset</button>
+        </div>
+      )}
+    </Drawer>
   );
 }
 
 function StudentVerifications() {
+  const [tab, setTab] = useState("SUBMITTED");
   const [rows, setRows] = useState<any[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [sel, setSel] = useState<any>(null);
-  const [reason, setReason] = useState("");
-  const [rejecting, setRejecting] = useState(false);
 
-  const load = useCallback(async () => { setLoading(true); try { const d = await dok.admin.svList(); setRows(d.profiles || []); } catch { setRows([]); } setLoading(false); }, []);
-  useEffect(() => { load(); }, [load]);
-
-  const act = async (userId: string, fn: () => Promise<any>) => { setRows((r) => r.filter((x) => x.userId !== userId)); setSel(null); setRejecting(false); setReason(""); try { await fn(); } catch { load(); } };
+  const load = useCallback(async (reset = true) => {
+    setLoading(true); setError("");
+    try {
+      const d = await dok.admin.svList(tab, reset ? null : cursor);
+      setRows((prev) => (reset ? d.profiles : [...prev, ...d.profiles]));
+      setHasMore(d.hasMore); setCursor(d.nextCursor);
+    } catch (e) {
+      if (reset) setRows([]);
+      setError(errorText(e));
+    }
+    setLoading(false);
+  }, [tab, cursor]);
+  useEffect(() => { load(true); /* eslint-disable-next-line */ }, [tab]);
 
   return (
     <>
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading ? <RowsSkeleton count={4} />
-          : rows.length === 0 ? <Empty title="Queue is clear" sub="No student submissions." />
-          : rows.map((v) => (
-            <button key={v.userId} onClick={() => setSel(v)} className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-ink-900/[.02]">
-              <Avatar user={v.user} size={42} />
-              <div className="min-w-0 flex-1"><p className="truncate font-semibold text-ink-900">{v.user?.fullName}</p><p className="truncate text-xs text-ink-500">{v.user?.email}</p></div>
-              <ChevronRight size={18} className="text-ink-300" />
-            </button>
-          ))}
+      <div className="mb-4 flex gap-2 overflow-x-auto">
+        {STUDENT_TABS.map((t) => <button key={t} onClick={() => setTab(t)} className={cn("whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold capitalize", tab === t ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}>{t.toLowerCase()}</button>)}
       </div>
-      {sel && (
-        <Drawer onClose={() => { setSel(null); setRejecting(false); }} title="Student verification">
-          <div className="flex items-center gap-3"><Avatar user={sel.user} size={52} /><div><p className="font-bold text-ink-900">{sel.user?.fullName}</p><p className="text-xs text-ink-500">{sel.user?.email}</p></div></div>
-          {rejecting && <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Reason for rejection…" className="input mt-4 resize-none text-sm" />}
-          <div className="mt-5">
-            {!rejecting ? (
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => act(sel.userId, () => dok.admin.svApprove(sel.userId))} className="btn-primary py-2.5 text-sm"><CheckCircle2 size={16} /> Approve</button>
-                <button onClick={() => setRejecting(true)} className="btn bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100"><XCircle size={16} /> Reject</button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <button onClick={() => setRejecting(false)} className="btn-outline flex-1 py-2.5 text-sm">Cancel</button>
-                <button disabled={!reason.trim()} onClick={() => act(sel.userId, () => dok.admin.svReject(sel.userId, reason))} className="btn flex-1 bg-rose-600 py-2.5 text-sm text-white hover:bg-rose-700">Confirm</button>
-              </div>
-            )}
-          </div>
-        </Drawer>
+      {error && rows.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && rows.length === 0 ? <RowsSkeleton count={4} />
+            : rows.length === 0 ? <Empty title="Queue is clear" sub={`No ${tab.toLowerCase()} student submissions.`} />
+            : rows.map((v) => (
+              <button key={v.userId} onClick={() => setSel(v)} className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-ink-900/[.02]">
+                <Avatar user={v.user} size={42} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-ink-900">{v.user?.fullName || "—"}</p>
+                  <p className="truncate text-xs text-ink-500">{v.user?.email || v.user?.phoneNumber || "—"} · {v.hasDocument ? "student ID attached" : "no document"}</p>
+                </div>
+                <span className={cn("chip text-[10px]", KYC_CHIP[v.verificationStatus])}>{v.verificationStatus?.toLowerCase()}</span>
+                <ChevronRight size={18} className="text-ink-300" />
+              </button>
+            ))}
+        </div>
       )}
+      {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
+
+      {sel && <StudentReviewDrawer row={sel} onClose={() => setSel(null)} onChanged={() => { setSel(null); load(true); }} />}
     </>
   );
 }
 
+function StudentReviewDrawer({ row, onClose, onChanged }: any) {
+  const [d, setD] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
+    try { setD(await dok.admin.svDetail(row.userId)); } catch (e) { setError(errorText(e)); }
+    setLoading(false);
+  }, [row.userId]);
+  useEffect(() => { load(); }, [load]);
+
+  const act = async (fn: () => Promise<any>) => {
+    setBusy(true); setMsg("");
+    try { await fn(); onChanged(); } catch (e: any) { setMsg(actionError(e)); setBusy(false); }
+  };
+  const status = d?.profile?.verificationStatus || row.verificationStatus;
+  const user = d?.profile?.user || row.user;
+
+  return (
+    <Drawer onClose={onClose} title="Student verification">
+      <div className="flex items-center gap-3">
+        <Avatar user={user} size={52} />
+        <div><p className="font-bold text-ink-900">{user?.fullName}</p><p className="text-xs text-ink-500">{user?.email || user?.phoneNumber}</p></div>
+      </div>
+      {error ? <div className="mt-4"><ErrorState message={error} onRetry={load} /></div> : (
+        <>
+          {d?.profile?.verificationRejectionReason && <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">Last rejection: {d.profile.verificationRejectionReason}</div>}
+          {loading && !d ? <div className="mt-4"><RowsSkeleton count={2} /></div> : <VerificationDocuments docs={d?.documents || []} onRefresh={load} loading={loading} />}
+          <ReviewHistory history={d?.history} />
+        </>
+      )}
+      {msg && <div className="mt-4 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">{msg}</div>}
+      {rejecting ? (
+        <RejectBox reason={reason} setReason={setReason} busy={busy} onCancel={() => setRejecting(false)}
+          onConfirm={() => act(() => dok.admin.svReject(row.userId, reason.trim()))} />
+      ) : (
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          {status === "SUBMITTED" && <button disabled={busy} onClick={() => act(() => dok.admin.svApprove(row.userId))} className="btn-primary py-2.5 text-sm"><CheckCircle2 size={16} /> Approve</button>}
+          {(status === "SUBMITTED" || status === "APPROVED") && (
+            <button disabled={busy} onClick={() => { setReason(""); setRejecting(true); }} className={cn("btn bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100", status === "APPROVED" && "col-span-2")}>
+              <XCircle size={16} /> {status === "APPROVED" ? "Reject (removes the verified badge)" : "Reject"}
+            </button>
+          )}
+        </div>
+      )}
+    </Drawer>
+  );
+}
+
 function Detail({ label, value }: any) {
-  return <div className="flex items-center justify-between border-b border-ink-900/[.05] pb-1.5"><span className="text-ink-500">{label}</span><span className="font-semibold text-ink-900">{value || "—"}</span></div>;
+  return <div className="flex items-center justify-between gap-3 border-b border-ink-900/[.05] pb-1.5"><span className="shrink-0 text-ink-500">{label}</span><span className="truncate text-right font-semibold text-ink-900">{value || "—"}</span></div>;
 }
 
 /* =========================================================================
    Reports
    ========================================================================= */
-function ReportsSection() {
-  const [rows, setRows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const load = useCallback(async () => { setLoading(true); try { const d = await dok.admin.reports("pending"); setRows(d.reports || []); } catch { setRows([]); } setLoading(false); }, []);
-  useEffect(() => { load(); }, [load]);
+const REPORT_KINDS = [
+  { key: "post", label: "Posts", icon: FileText },
+  { key: "pulse", label: "Pulses", icon: Film },
+  { key: "user", label: "Profiles", icon: UserRound },
+];
+const REPORT_STATUSES = [["pending", "Open"], ["actioned", "Actioned"], ["dismissed", "Dismissed"], ["all", "All"]];
+const REPORT_STATUS_CHIP: any = { pending: "bg-amber-50 text-amber-600", actioned: "bg-emerald-50 text-emerald-600", dismissed: "bg-ink-900/[.06] text-ink-600" };
 
-  const dismiss = async (id: string) => { setRows((r) => r.filter((x) => x.id !== id)); try { await dok.admin.dismissReport(id); } catch { load(); } };
-  const remove = async (r: any) => { if (!confirm("Delete this reported post?")) return; setRows((x) => x.filter((y) => y.id !== r.id)); try { await dok.admin.deletePost(r.post.id); } catch { load(); } };
+function ReportsSection() {
+  const [kind, setKind] = useState("post");
+  const [status, setStatus] = useState("pending");
+  const [rows, setRows] = useState<any[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+  const [person, setPerson] = useState<any>(null);
+
+  const load = useCallback(async (reset = true) => {
+    setLoading(true); setError("");
+    try {
+      const params: any = { kind, status };
+      if (!reset && cursor) params.cursor = cursor;
+      const d = await dok.admin.reports(params);
+      setRows((prev) => (reset ? (d.reports || []) : [...prev, ...(d.reports || [])]));
+      setHasMore(d.hasMore); setCursor(d.nextCursor);
+    } catch (e) {
+      if (reset) setRows([]);
+      setError(errorText(e));
+    }
+    setLoading(false);
+  }, [kind, status, cursor]);
+  useEffect(() => { load(true); /* eslint-disable-next-line */ }, [kind, status]);
+
+  // Optimistic in the open queue; put the card back if the server refuses.
+  const resolve = async (r: any, fn: () => Promise<any>) => {
+    setMsg("");
+    const before = rows;
+    if (status === "pending") setRows((x) => x.filter((y) => y.id !== r.id));
+    try { await fn(); if (status !== "pending") load(true); }
+    catch (e: any) { setRows(before); setMsg(actionError(e)); }
+  };
+  const dismiss = (r: any) => resolve(r, () => dok.admin.dismissReport(r.id, r.kind));
+  const takedown = (r: any) => {
+    if (!confirm(`Remove this ${r.kind === "pulse" ? "Pulse" : "post"}? It disappears from the app and every open report on it is closed.`)) return;
+    resolve(r, () => dok.admin.takedownReport(r.id, r.kind));
+  };
 
   return (
     <div>
-      <SectionHead title="Reported content" subtitle="Pending user reports on posts." />
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading ? <RowsSkeleton count={4} />
-          : rows.length === 0 ? <Empty title="No open reports" sub="The queue is clear." />
-          : rows.map((r) => (
-            <div key={r.id} className="p-4">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="chip bg-rose-50 text-rose-600">{r.category}</span>
-                <span className="text-ink-400">reported by @{r.reporter?.uniqueUsername || "—"} · {timeAgo(r.createdAt)}</span>
-              </div>
-              {r.reason && <p className="mt-1.5 text-xs text-ink-500">"{r.reason}"</p>}
-              <div className="mt-2 rounded-xl bg-ink-900/[.03] p-3">
-                <p className="text-xs text-ink-400">Post by {r.author?.fullName} · {compact(r.post?.likesCount || 0)} likes</p>
-                <p className="mt-0.5 line-clamp-3 text-sm text-ink-800">{r.post?.content || <span className="italic text-ink-400">(media only)</span>}</p>
-              </div>
-              <div className="mt-2 flex gap-2">
-                <button onClick={() => dismiss(r.id)} className="btn-outline flex-1 py-2 text-sm">Dismiss</button>
-                <button onClick={() => remove(r)} className="btn flex-1 bg-rose-600 py-2 text-sm text-white hover:bg-rose-700"><Trash2 size={15} /> Delete post</button>
-              </div>
-            </div>
-          ))}
+      <SectionHead title="Reports" subtitle="What users reported: posts, Pulses and profiles." />
+      <div className="mb-3 flex gap-2 overflow-x-auto">
+        {REPORT_KINDS.map((t) => (
+          <button key={t.key} onClick={() => setKind(t.key)} className={cn("flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold transition", kind === t.key ? "bg-brand-600 text-white shadow-glow" : "bg-surface text-ink-600 hover:bg-brand-50")}>
+            <t.icon size={14} /> {t.label}
+          </button>
+        ))}
       </div>
+      <div className="mb-4 flex gap-2 overflow-x-auto">
+        {REPORT_STATUSES.map(([k, l]) => <button key={k} onClick={() => setStatus(k)} className={cn("whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold", status === k ? "bg-ink-900 text-white" : "bg-surface text-ink-600")}>{l}</button>)}
+      </div>
+
+      {msg && <div className="mb-3 rounded-xl bg-rose-50 p-2.5 text-sm text-rose-700">{msg}</div>}
+
+      {error && rows.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && rows.length === 0 ? <RowsSkeleton count={4} />
+            : rows.length === 0 ? <Empty title={status === "pending" ? "No open reports" : "Nothing here"} sub={status === "pending" ? "The queue is clear." : ""} />
+            : rows.map((r) => (
+              <div key={r.id} className="p-4">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="chip bg-rose-50 text-rose-600">{String(r.category || "other").replace(/_/g, " ")}</span>
+                  {r.status !== "pending" && <span className={cn("chip", REPORT_STATUS_CHIP[r.status])}>{r.status}</span>}
+                  <span className="text-ink-400">reported by {r.reporter ? `@${r.reporter.uniqueUsername || r.reporter.fullName}` : "[deleted user]"} · {timeAgo(r.createdAt)}</span>
+                </div>
+                {r.reason && <p className="mt-1.5 text-xs text-ink-500">"{r.reason}"</p>}
+                <div className="mt-2 flex gap-3 rounded-xl bg-ink-900/[.03] p-3">
+                  {r.target?.thumbnailUrl && <img src={r.target.thumbnailUrl} alt="" referrerPolicy="no-referrer" loading="lazy" className="h-16 w-16 shrink-0 rounded-lg object-cover" />}
+                  <div className="min-w-0">
+                    <p className="text-xs text-ink-400">
+                      {r.kind === "user" ? "Profile of " : r.kind === "pulse" ? "Pulse by " : "Post by "}
+                      {r.author?.fullName || "[deleted user]"}
+                      {r.kind !== "user" && ` · ${compact(r.target?.likesCount || 0)} likes`}
+                      {r.target?.isDeleted && <span className="ml-1 text-rose-500">· removed</span>}
+                      {r.kind === "user" && r.target?.accountStatus && r.target.accountStatus !== "ACTIVE" && <span className="ml-1 text-rose-500">· {STATUS_LABEL[r.target.accountStatus] || r.target.accountStatus}</span>}
+                    </p>
+                    <p className="mt-0.5 line-clamp-3 text-sm text-ink-800">{r.target?.title || r.target?.text || <span className="italic text-ink-400">(media only)</span>}</p>
+                  </div>
+                </div>
+                {r.status === "pending" && (
+                  <div className="mt-2 flex gap-2">
+                    <button onClick={() => dismiss(r)} className="btn-outline flex-1 py-2 text-sm">Dismiss</button>
+                    {r.kind === "user"
+                      ? <button onClick={() => setPerson({ id: r.target?.id, fullName: r.author?.fullName, accountStatus: r.target?.accountStatus, profilePhoto: r.author?.profilePhoto })} className="btn flex-1 bg-rose-600 py-2 text-sm text-white hover:bg-rose-700"><Ban size={15} /> Review person</button>
+                      : <button onClick={() => takedown(r)} className="btn flex-1 bg-rose-600 py-2 text-sm text-white hover:bg-rose-700"><Trash2 size={15} /> Remove {r.kind === "pulse" ? "Pulse" : "post"}</button>}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      )}
+      {error && rows.length > 0 && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
+      {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
+
+      {/* Suspending the person closes their open profile reports as "actioned". */}
+      {person && <UserDrawer userRow={person} onClose={() => setPerson(null)} onChanged={() => { setPerson(null); load(true); }} />}
     </div>
   );
 }
@@ -1611,47 +2040,108 @@ function ReportsSection() {
    Feedback
    ========================================================================= */
 const FB_CATS = ["", "SUGGESTION", "IDEA", "BUG", "FEATURE_REQUEST", "EXPERIENCE"];
+const FB_STATUSES = [["", "All"], ["NEW", "New"], ["REVIEWED", "Reviewed"], ["RESOLVED", "Resolved"]];
+const FB_STATUS_CHIP: any = { NEW: "bg-brand-50 text-brand-700", REVIEWED: "bg-sky-50 text-sky-600", RESOLVED: "bg-emerald-50 text-emerald-600" };
+
 function FeedbackSection() {
   const [cat, setCat] = useState("");
+  const [status, setStatus] = useState("NEW");
   const [rows, setRows] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const load = useCallback(async (reset = true) => {
-    setLoading(true);
+    setLoading(true); setError("");
     try {
       const params: any = { limit: 20 };
       if (cat) params.category = cat;
+      if (status) params.status = status;
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.feedback(params);
       setRows((p) => (reset ? d.feedback : [...p, ...d.feedback])); setHasMore(d.hasMore); setCursor(d.nextCursor);
-    } catch { if (reset) setRows([]); }
+    } catch (e) {
+      if (reset) setRows([]);
+      setError(errorText(e));
+    }
     setLoading(false);
-  }, [cat, cursor]);
-  useEffect(() => { load(true); /* eslint-disable-next-line */ }, [cat]);
+  }, [cat, status, cursor]);
+  useEffect(() => { load(true); /* eslint-disable-next-line */ }, [cat, status]);
+
+  const onUpdated = (row: any) => setRows((p) => p.map((f) => (f.id === row.id ? { ...f, ...row } : f)));
 
   return (
     <div>
-      <SectionHead title="Feedback" subtitle="What users submitted through the app." />
+      <SectionHead title="Feedback" subtitle="What users sent from the app and the website." />
+      <div className="mb-3 flex gap-2 overflow-x-auto">
+        {FB_STATUSES.map(([k, l]) => <button key={k} onClick={() => setStatus(k)} className={cn("whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold", status === k ? "bg-ink-900 text-white" : "bg-surface text-ink-600")}>{l}</button>)}
+      </div>
       <div className="mb-4 flex gap-2 overflow-x-auto">
-        {FB_CATS.map((c) => <button key={c} onClick={() => setCat(c)} className={cn("whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold", cat === c ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}>{c ? c.replace("_", " ").toLowerCase() : "all"}</button>)}
+        {FB_CATS.map((c) => <button key={c} onClick={() => setCat(c)} className={cn("whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold", cat === c ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}>{c ? c.replace("_", " ").toLowerCase() : "all types"}</button>)}
       </div>
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading && rows.length === 0 ? <RowsSkeleton count={4} />
-          : rows.length === 0 ? <Empty icon={MessageSquareText} title="No feedback" />
-          : rows.map((f) => (
-            <div key={f.id} className="flex gap-3 p-4">
-              <Avatar user={f.user} size={38} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2"><span className="chip bg-brand-50 text-brand-700 text-[10px]">{f.category?.replace("_", " ").toLowerCase()}</span><span className="text-xs text-ink-400">{f.user?.fullName} · {timeAgo(f.createdAt)}</span></div>
-                <p className="mt-1 text-sm text-ink-800">{f.message}</p>
-                {f.imageUrls?.length > 0 && <div className="mt-2 flex gap-1.5">{f.imageUrls.map((u: string, i: number) => <a key={i} href={u} target="_blank" rel="noreferrer" className="text-xs text-brand-600 underline">image {i + 1}</a>)}</div>}
-              </div>
-            </div>
-          ))}
-      </div>
+      {error && rows.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && rows.length === 0 ? <RowsSkeleton count={4} />
+            : rows.length === 0 ? <Empty icon={MessageSquareText} title="No feedback here" />
+            : rows.map((f) => <FeedbackItem key={f.id} f={f} onUpdated={onUpdated} />)}
+        </div>
+      )}
+      {error && rows.length > 0 && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
       {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
+    </div>
+  );
+}
+
+function FeedbackItem({ f, onUpdated }: { f: any; onUpdated: (row: any) => void }) {
+  const [note, setNote] = useState(f.adminNote || "");
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const save = async (body: any) => {
+    setBusy(true); setMsg("");
+    try { const row = await dok.admin.updateFeedback(f.id, body); onUpdated(row); setEditing(false); }
+    catch (e: any) { setMsg(actionError(e)); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="flex gap-3 p-4">
+      <Avatar user={f.user} size={38} />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="chip bg-brand-50 text-[10px] text-brand-700">{f.category?.replace("_", " ").toLowerCase()}</span>
+          <span className={cn("chip text-[10px]", FB_STATUS_CHIP[f.status] || "bg-ink-900/[.06] text-ink-600")}>{String(f.status || "NEW").toLowerCase()}</span>
+          {f.rating && <span className="text-xs text-amber-500">{"★".repeat(f.rating)}{"☆".repeat(5 - f.rating)}</span>}
+          <span className="text-xs text-ink-400">{f.user?.fullName || "[deleted user]"} · {f.platform && f.platform !== "unknown" ? `${f.platform} · ` : ""}{timeAgo(f.createdAt)}</span>
+        </div>
+        <p className="mt-1 whitespace-pre-line text-sm text-ink-800">{f.message}</p>
+        {f.images?.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {f.images.map((img: any, i: number) => img.url
+              ? <a key={i} href={img.url} target="_blank" rel="noreferrer noopener" referrerPolicy="no-referrer"><img src={img.url} alt={`Screenshot ${i + 1}`} referrerPolicy="no-referrer" loading="lazy" className="h-16 w-16 rounded-lg border border-ink-900/[.08] object-cover" /></a>
+              : <span key={i} className="grid h-16 w-16 place-items-center rounded-lg border border-dashed border-ink-900/[.15] text-[10px] text-ink-400">unavailable</span>)}
+          </div>
+        )}
+        {f.adminNote && !editing && <p className="mt-2 rounded-lg bg-ink-900/[.03] p-2 text-xs text-ink-600">Note: {f.adminNote}</p>}
+        {editing && (
+          <div className="mt-2 space-y-1.5">
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={2000} placeholder="Private note (only admins see this)…" className="input resize-none text-sm" />
+            <div className="flex gap-2">
+              <button onClick={() => setEditing(false)} className="btn-outline px-3 py-1.5 text-xs">Cancel</button>
+              <button disabled={busy} onClick={() => save({ adminNote: note })} className="btn-primary px-3 py-1.5 text-xs">Save note</button>
+            </div>
+          </div>
+        )}
+        {msg && <p className="mt-1.5 text-xs text-rose-600">{msg}</p>}
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {f.status !== "REVIEWED" && <button disabled={busy} onClick={() => save({ status: "REVIEWED" })} className="btn-outline px-2.5 py-1 text-[11px]">Mark reviewed</button>}
+          {f.status !== "RESOLVED" && <button disabled={busy} onClick={() => save({ status: "RESOLVED" })} className="btn-outline px-2.5 py-1 text-[11px]">Resolve</button>}
+          {f.status !== "NEW" && <button disabled={busy} onClick={() => save({ status: "NEW" })} className="btn-outline px-2.5 py-1 text-[11px]">Reopen</button>}
+          {!editing && <button onClick={() => { setNote(f.adminNote || ""); setEditing(true); }} className="btn-outline px-2.5 py-1 text-[11px]">{f.adminNote ? "Edit note" : "Add note"}</button>}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1668,9 +2158,10 @@ function RatingsSection() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const load = useCallback(async (reset = true) => {
-    setLoading(true);
+    setLoading(true); setError("");
     try {
       const params: any = { limit: 20 };
       if (stars) params.stars = stars;
@@ -1678,7 +2169,10 @@ function RatingsSection() {
       const d = await dok.admin.consultationRatings(params);
       setRows((p) => (reset ? d.ratings : [...p, ...d.ratings]));
       setHasMore(d.hasMore); setCursor(d.nextCursor); setSummary(d.summary);
-    } catch { if (reset) setRows([]); }
+    } catch (e) {
+      if (reset) setRows([]);
+      setError(errorText(e));
+    }
     setLoading(false);
   }, [stars, cursor]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, [stars]);
@@ -1695,22 +2189,25 @@ function RatingsSection() {
       <div className="mb-4 flex gap-2 overflow-x-auto">
         {RATING_STARS.map((c) => <button key={c} onClick={() => setStars(c)} className={cn("whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold", stars === c ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}>{c ? `${c} ★` : "all"}</button>)}
       </div>
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading && rows.length === 0 ? <RowsSkeleton count={4} />
-          : rows.length === 0 ? <Empty icon={Star} title="No ratings yet" />
-          : rows.map((r) => (
-            <div key={r.id} className="flex gap-3 p-4">
-              <Avatar user={r.requester} size={38} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="chip bg-brand-50 text-brand-700 text-[10px]">{"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}</span>
-                  <span className="text-xs text-ink-400">{r.requester?.fullName} → Dr. {r.doctor?.fullName} · {timeAgo(r.createdAt)}</span>
+      {error && rows.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && rows.length === 0 ? <RowsSkeleton count={4} />
+            : rows.length === 0 ? <Empty icon={Star} title="No ratings yet" />
+            : rows.map((r) => (
+              <div key={r.id} className="flex gap-3 p-4">
+                <Avatar user={r.requester} size={38} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="chip bg-brand-50 text-brand-700 text-[10px]">{"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}</span>
+                    <span className="text-xs text-ink-400">{r.requester?.fullName} → Dr. {r.doctor?.fullName} · {timeAgo(r.createdAt)}</span>
+                  </div>
+                  {r.comment && <p className="mt-1 text-sm text-ink-800">{r.comment}</p>}
                 </div>
-                {r.comment && <p className="mt-1 text-sm text-ink-800">{r.comment}</p>}
               </div>
-            </div>
-          ))}
-      </div>
+            ))}
+        </div>
+      )}
+      {error && rows.length > 0 && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
       {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
     </div>
   );
@@ -1720,25 +2217,66 @@ function RatingsSection() {
    Deletions queue
    ========================================================================= */
 function DeletionsSection() {
+  const [view, setView] = useState<"pending" | "archived">("pending");
   const [rows, setRows] = useState<any[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { dok.admin.deletions({ limit: 50 }).then((d) => setRows(d.users || [])).catch(() => setRows([])).finally(() => setLoading(false)); }, []);
+  const [error, setError] = useState("");
+  const [sel, setSel] = useState<any>(null);
+
+  const load = useCallback(async (reset = true) => {
+    setLoading(true); setError("");
+    try {
+      const params: any = { status: view, limit: 20 };
+      if (!reset && cursor) params.cursor = cursor;
+      const d = await dok.admin.deletions(params);
+      setRows((p) => (reset ? (d.users || []) : [...p, ...(d.users || [])])); setHasMore(d.hasMore); setCursor(d.nextCursor);
+    } catch (e) {
+      if (reset) setRows([]);
+      setError(errorText(e));
+    }
+    setLoading(false);
+  }, [view, cursor]);
+  useEffect(() => { load(true); /* eslint-disable-next-line */ }, [view]);
+
   return (
     <div>
-      <SectionHead title="Deletion queue" subtitle="Accounts scheduled for deletion (PENDING_DELETION)." />
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading ? <RowsSkeleton count={4} />
-          : rows.length === 0 ? <Empty icon={Trash2} title="Queue is empty" sub="No accounts pending deletion." />
-          : rows.map((u) => (
-            <div key={u.id} className="flex items-center gap-3 p-3.5">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-ink-900">{u.fullName || "—"}</p>
-                <p className="truncate text-xs text-ink-500">{u.email || u.phoneNumber} · requested {timeAgo(u.createdAt)}</p>
-              </div>
-              {u.scheduledDeletionAt && <span className="chip bg-amber-50 text-amber-600 text-[10px]">purges {timeAgo(u.scheduledDeletionAt)}</span>}
-            </div>
-          ))}
+      <SectionHead title="Deletions" subtitle="Accounts their owners deleted. Nothing here is erased — see “How accounts work” below." />
+      <div className="mb-4 flex gap-2">
+        <button onClick={() => setView("pending")} className={cn("flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold", view === "pending" ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}><Clock size={15} /> In recovery period</button>
+        <button onClick={() => setView("archived")} className={cn("flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold", view === "archived" ? "bg-brand-600 text-white" : "bg-surface text-ink-600")}><Archive size={15} /> Archived</button>
       </div>
+      {error && rows.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && rows.length === 0 ? <RowsSkeleton count={4} />
+            : rows.length === 0 ? <Empty icon={view === "pending" ? Clock : Archive} title={view === "pending" ? "No accounts in their recovery period" : "No archived accounts"} />
+            : rows.map((u) => {
+              const left = daysUntil(u.scheduledDeletionAt);
+              return (
+                <button key={u.id} onClick={() => setSel(u)} className="flex w-full items-center gap-3 p-3.5 text-left transition hover:bg-ink-900/[.02]">
+                  <Avatar user={u} size={38} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-ink-900">{u.fullName || "—"}</p>
+                    <p className="truncate text-xs text-ink-500">
+                      {plainIdent(u.email || u.phoneNumber) || u.uniqueUsername || u.id}
+                      {u.deletionRequestedAt ? ` · requested ${formatDate(u.deletionRequestedAt)}` : ""}
+                    </p>
+                  </div>
+                  {view === "pending"
+                    ? <span className="chip bg-amber-50 text-[10px] text-amber-600">recovery ends {formatDate(u.scheduledDeletionAt)}{left != null ? ` · ${left} day${left === 1 ? "" : "s"} left` : ""}</span>
+                    : <span className="chip bg-sky-50 text-[10px] text-sky-600">archived {formatDate(u.frozenAt)}</span>}
+                </button>
+              );
+            })}
+        </div>
+      )}
+      {error && rows.length > 0 && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
+      {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
+
+      <div className="mt-6"><AccountRulesCard /></div>
+
+      {sel && <UserDrawer userRow={sel} onClose={() => setSel(null)} onChanged={() => { setSel(null); load(true); }} />}
     </div>
   );
 }
@@ -1751,38 +2289,45 @@ function AuditSection() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const load = useCallback(async (reset = true) => {
-    setLoading(true);
+    setLoading(true); setError("");
     try {
       const params: any = { limit: 30 };
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.audit(params);
       setRows((p) => (reset ? d.entries : [...p, ...d.entries])); setHasMore(d.hasMore); setCursor(d.nextCursor);
-    } catch { if (reset) setRows([]); }
+    } catch (e) {
+      if (reset) setRows([]);
+      setError(errorText(e));
+    }
     setLoading(false);
   }, [cursor]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, []);
 
   return (
     <div>
-      <SectionHead title="Audit log" subtitle="Every action taken from this console." />
-      <div className="card divide-y divide-ink-900/[.05]">
-        {loading && rows.length === 0 ? <RowsSkeleton count={4} />
-          : rows.length === 0 ? <Empty icon={ScrollText} title="No activity yet" />
-          : rows.map((e) => (
-            <div key={e.id} className="flex items-start gap-3 p-3.5">
-              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-ink-900/[.04] text-ink-500"><Dot size={22} /></span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-ink-900">{e.action}</p>
-                <p className="truncate text-xs text-ink-500">
-                  {e.adminUsername || "—"} · {e.targetType || ""} {e.targetId ? `#${String(e.targetId).slice(0, 8)}` : ""} · {timeAgo(e.createdAt)}
-                  {e.metadata?.reason ? ` · "${e.metadata.reason}"` : ""}
-                </p>
+      <SectionHead title="Audit log" subtitle="Every action taken from this console, and automatic ones (shown as “system”)." />
+      {error && rows.length === 0 ? <ErrorState message={error} onRetry={() => load(true)} /> : (
+        <div className="card divide-y divide-ink-900/[.05]">
+          {loading && rows.length === 0 ? <RowsSkeleton count={4} />
+            : rows.length === 0 ? <Empty icon={ScrollText} title="No activity yet" />
+            : rows.map((e) => (
+              <div key={e.id} className="flex items-start gap-3 p-3.5">
+                <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-ink-900/[.04] text-ink-500"><Dot size={22} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-ink-900">{e.action}</p>
+                  <p className="truncate text-xs text-ink-500">
+                    {e.adminUsername || "—"} · {e.targetType || ""} {e.targetId ? `#${String(e.targetId).slice(0, 8)}` : ""} · {timeAgo(e.createdAt)}
+                    {e.metadata?.reason ? ` · "${e.metadata.reason}"` : ""}
+                  </p>
+                </div>
+                {e.ipAddress && <span className="text-[10px] text-ink-400">{e.ipAddress}</span>}
               </div>
-              {e.ipAddress && <span className="text-[10px] text-ink-400">{e.ipAddress}</span>}
-            </div>
-          ))}
-      </div>
+            ))}
+        </div>
+      )}
+      {error && rows.length > 0 && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
       {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
     </div>
   );

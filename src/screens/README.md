@@ -99,6 +99,18 @@ could flip. Masking hides content only; clicks and scroll still register, so
 heatmaps are unaffected. Any new sensitive UI on a recorded route needs the same
 attribute.
 
+**Why a person can't sign in.** When the API refuses an account with a coded
+403, Login shows the reason instead of a generic error:
+
+- suspended: until when, and the admin's reason;
+- archived;
+- recovery period ended.
+
+The message comes from `blockMessage` in `src/lib/accountBlock.ts`. It works
+both when the refusal arrives on the login attempt itself and when a signed-in
+tab was logged out by it: the reason is stashed before the logout and read back
+here once.
+
 ## `Saved.tsx` — category tabs
 
 Each tab (All, Posts, Case studies, Research, Theses, Pulse) loads its own list
@@ -115,6 +127,90 @@ old `/feed/saved?tab=` source showed the same list on every tab).
 `Onboarding.tsx`, `Login.tsx`, `Landing.tsx`, `Admin.tsx`, `HashtagWorkspace.tsx`,
 `MobileAppPage.tsx`, `CallDebug.tsx`,
 plus `consults/` and `legal/`.
+
+## Admin panel (`Admin.tsx`)
+
+Tabs: Overview, Users, Content, Verifications, Reports, Feedback, Consultation
+ratings, Deletions, Audit log, Transactions, Settlements. Endpoints:
+`dok.admin.*` in `src/lib/api.ts`; server side: `Api_service/docs/modules/admin.md`.
+
+**Showing numbers and failures**
+
+- Every number goes through `formatStat`. A missing value shows "—", never
+  "NaN" or a misleading 0.
+- A failed request shows `ErrorState` with **Retry**, never an empty list that
+  looks like "no data".
+- When part of the overview failed, a banner names the sections that are
+  missing (`partial`).
+
+**Content counts** come from media-service through api-service: Posts,
+Research, Case studies and Pulses. Case studies also include any legacy
+clinical cases. When media is down the API sends `null`, shown as "—".
+
+**Users**
+
+- Status chips and filters include **Archived** (FROZEN).
+- The drawer shows the lifecycle dates (deletion requested, recovery ends,
+  archived) and consultation counts.
+- **Suspend**: presets 1, 3, 7 or 30 days, Custom (up to 365) or Permanent, and
+  a required reason of 5–500 characters. The person sees that reason.
+- **Lift suspension** ends it early.
+- **Erase permanently**: type `DELETE` and give a reason. When money or
+  consultations are still open, the server's blockers are listed in plain
+  words; when one service fails, its error is shown.
+
+**Content**
+
+- Posts, research, case studies and Pulses come from media; clinical cases are
+  local. Remove asks for confirmation.
+
+**Reports**
+
+- Kinds: Posts, Pulses and Profiles. Status: Open, Actioned, Dismissed or All.
+- Actions: **Dismiss**, **Remove post/Pulse** (closes every open report on it),
+  or for a profile **Review person**, which opens their drawer to suspend.
+- Actions update the list optimistically and roll back if the server refuses.
+
+**Verifications**
+
+- Doctor and student queues, oldest first.
+- The drawer loads the documents as signed links: images as thumbnails, PDFs as
+  "Open document". The links expire 5 minutes after loading, and every view is
+  audited. It also shows the ID type, the submission and the review history.
+- Reject needs a reason. Rejecting an approved doctor removes their badge.
+
+**Feedback**
+
+- Category and status filters, rating, platform and screenshots.
+- Mark Reviewed or Resolved, with a private note.
+
+**Deletions**
+
+- Pending: "Requested {date}", "Recovery ends {date} (in N days)".
+- Archived: the frozen accounts.
+- The **How accounts work** card (`AccountRulesCard`) explains the rules,
+  using the server's recovery period.
+
+**Lists** all use the server's `nextCursor` with **Load more**.
+
+## `Settings.tsx` — feedback and leaving
+
+**Send feedback**
+
+- Category chips, a message of up to 2000 characters, an optional 1–5 rating,
+  and up to 5 images.
+- Sent to `POST /api/account/feedback`: as `FormData` when there are images,
+  as JSON otherwise.
+- A 429 means the hourly limit was reached (5 per person).
+- The form keeps its content when sending fails.
+
+**Danger zone**
+
+- **Deactivate** hides the account until the next login.
+- **Delete** is a soft delete. The confirmation and the explainer text use the
+  server's recovery period (`useAccountPolicy`). After deleting, the person is
+  told the exact date by which logging in restores the account.
+- Errors from the server are shown, never swallowed.
 
 ## Feed session handling (`Feed.tsx`, `Explore.tsx`)
 

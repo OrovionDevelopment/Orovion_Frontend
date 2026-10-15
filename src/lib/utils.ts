@@ -59,6 +59,34 @@ export function compact(n = 0) {
   return `${(n / 1e6).toFixed(1)}M`;
 }
 
+/**
+ * A dashboard figure: null/undefined (data unavailable) → "—"; a number or a
+ * numeric string (Postgres BIGINT arrives as a string) → compact; any other
+ * string (an already-formatted "₹1,200") → shown as-is. Passing formatted money
+ * straight to compact() is what printed "NaNM" on the admin money cards.
+ */
+export function formatStat(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = typeof value === "number" ? value : typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value.trim()) ? Number(value) : NaN;
+  if (Number.isFinite(n)) return compact(n);
+  return typeof value === "string" ? value : "—";
+}
+
+/** "15 Oct 2026" — or "—" for nothing / an invalid date. */
+export function formatDate(date: unknown, locale?: string): string {
+  if (!date) return "—";
+  const d = new Date(date as string);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** Whole days from now until `date` (0 when it is today or past; null if invalid). */
+export function daysUntil(date: unknown): number | null {
+  if (!date) return null;
+  const t = new Date(date as string).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.max(0, Math.ceil((t - Date.now()) / 86400000));
+}
+
 const PALETTE = ["#1E7B74", "#2a9085", "#48ac9f", "#19625e", "#7ccabe"];
 export function avatarColor(seed = "") {
   let h = 0;

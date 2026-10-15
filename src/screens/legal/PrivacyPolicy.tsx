@@ -4,7 +4,7 @@ import {
   Share2, BarChart3, Bot, Archive, UserX, SlidersHorizontal, Lock, Globe2,
   Stethoscope, Search, Baby, RefreshCcw, Mail,
 } from "lucide-react";
-import LegalShell, { Bullets, Note } from "@/components/legal/LegalShell";
+import LegalShell, { Bullets, Note, RecoveryPeriod } from "@/components/legal/LegalShell";
 
 const H3 = ({ children }) => <h3 className="pt-2 font-display text-[15px] font-extrabold text-ink-900">{children}</h3>;
 
@@ -210,8 +210,9 @@ const SECTIONS = [
           "Access is restricted.",
           "Public visibility is removed where applicable.",
         ]} />
-        <p><strong className="font-semibold text-ink-900">Recovery period.</strong> Users may recover their account by signing in using the same credentials within six (6) months.</p>
-        <p><strong className="font-semibold text-ink-900">Permanent deletion.</strong> If no recovery occurs during the six-month recovery period, account data may be permanently deleted according to Orovion retention procedures.</p>
+        <p><strong className="font-semibold text-ink-900">Recovery period.</strong> Users may recover their account by signing in with the same phone number, Google or Apple account within <RecoveryPeriod />.</p>
+        <p><strong className="font-semibold text-ink-900">Archiving.</strong> If no recovery occurs during the recovery period, the account is archived: it can no longer be restored by the user, and its login identifiers are released so a new account can be created. Archived data is retained according to Orovion retention procedures and applicable law.</p>
+        <p><strong className="font-semibold text-ink-900">Permanent erasure.</strong> On request, or where required, an administrator permanently erases the account: its posts, Pulses, messages and uploaded files are deleted. Records Orovion must keep (such as payment records for accounting) and its security audit log are retained.</p>
       </>
     ),
   },

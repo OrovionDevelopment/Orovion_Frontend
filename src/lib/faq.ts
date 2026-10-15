@@ -88,10 +88,10 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
     title: "Account & Recovery",
     items: [
       ["How do I contact Orovion support?", "You can contact the Orovion support team through the Help & Support section available in the app and web experience."],
-      ["What happens when I delete my account?", "Your account enters a 30 day recovery period immediately after deletion. During this period, your profile and content are not visible to other users."],
-      ["Can I recover my account after deleting it?", "Yes. You can recover your account within the 30 day recovery period by logging in with the same credentials you used before deletion."],
-      ["What happens when I log in during the recovery period?", "Logging in with the same credentials restores your account and ends the recovery process, making your account available again."],
-      ["What happens after the 30 day recovery period?", "After the 30 day recovery period ends, the account can no longer be recovered through the same recovery process."],
+      ["What happens when I delete my account?", "Your account enters a recovery period straight away (its length is shown when you delete, and in our Terms). During this period your profile, posts and Pulses are hidden from other users, and you are signed out everywhere. Nothing is erased yet."],
+      ["Can I recover my account after deleting it?", "Yes. Log in again with the same phone number, Google or Apple account before the recovery period ends, and everything comes back."],
+      ["What happens when I log in during the recovery period?", "Logging in restores your account and its content straight away and cancels the deletion."],
+      ["What happens after the recovery period?", "The account is archived. It can no longer be restored, and your phone number or Google/Apple account is released so you can create a new account. You can ask our support team to erase your data permanently."],
     ],
   },
 ];
