@@ -292,7 +292,6 @@ function AccountRulesCard() {
         <li><b>Delete (by the user)</b> — a soft delete. Hidden at once; logging in within {period} restores everything.</li>
         <li><b>After {period}</b> — the account is archived (frozen): data is kept, the user can no longer restore it, and their phone/Google/Apple login is released so they can sign up again.</li>
         <li><b>Erase permanently</b> — only an admin can do this, from a user's page. Posts, Pulses, messages and files are removed; payment records and this audit log are kept.</li>
-        <li><b>Suspend</b> — the user cannot sign in and their content is hidden, for a set time or permanently. They are told the reason. A timed suspension ends by itself.</li>
       </ul>
     </div>
   );
@@ -1314,7 +1313,7 @@ function UsersSection() {
 
   return (
     <div>
-      <SectionHead title="Users" subtitle="Search, suspend, deactivate, or permanently erase accounts." />
+      <SectionHead title="Users" subtitle="Search, deactivate, or permanently erase accounts." />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
@@ -1367,29 +1366,22 @@ function Select({ value, onChange, options, labels }: any) {
   );
 }
 
-const SUSPEND_PRESETS: [string, string][] = [["1", "1 day"], ["3", "3 days"], ["7", "7 days"], ["30", "30 days"], ["custom", "Custom"], ["permanent", "Permanent"]];
 const REASON_MIN = 5;
 const REASON_MAX = 500;
 
-// After a suspension or deactivation: a sign-out that could not reach every
-// device (Redis down, say) or patients still waiting on this doctor.
+// After a deactivation: a sign-out that could not reach every device (Redis
+// down, say) must be seen before the drawer closes.
 const signOutNotice = (d: any) => {
   const t = d?.terminated;
   const partial = t && ["sessions", "refreshTokens", "accessTokens"].some((k) => t[k] === false);
-  const waiting = Number(d?.warnings?.activeConsultationsAsDoctor) || 0;
-  return [
-    partial ? "Done, but not every device could be signed out right now. Their access ends when their current sign-in expires (about 15 minutes)." : "",
-    waiting ? `They still have ${waiting} consultation${waiting === 1 ? "" : "s"} in progress. Those are not cancelled automatically.` : "",
-  ].filter(Boolean).join(" ");
+  return partial ? "Done, but not every device could be signed out right now. Their access ends when their current sign-in expires (about 15 minutes)." : "";
 };
 
 function UserDrawer({ userRow, onClose, onChanged }: any) {
   const [detail, setDetail] = useState<any>(null);
   const [loadError, setLoadError] = useState("");
-  const [mode, setMode] = useState<null | "suspend" | "delete">(null);
+  const [mode, setMode] = useState<null | "delete">(null);
   const [reason, setReason] = useState("");
-  const [preset, setPreset] = useState("7");
-  const [customDays, setCustomDays] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -1417,14 +1409,6 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
   const s = detail?.stats;
   const trimmed = reason.trim();
   const reasonOk = trimmed.length >= REASON_MIN && trimmed.length <= REASON_MAX;
-  const days = preset === "custom" ? Number(customDays) : Number(preset);
-  const durationOk = preset === "permanent" || (Number.isInteger(days) && days >= 1 && days <= 365);
-  const waitingPatients = s?.consultations?.activeAsDoctor || 0;
-  const canSuspend = ["ACTIVE", "DEACTIVATED", "SUSPENDED"].includes(u.accountStatus);
-
-  const suspend = () => act(() => dok.admin.suspendUser(u.id, preset === "permanent"
-    ? { reason: trimmed, permanent: true }
-    : { reason: trimmed, durationDays: days }), signOutNotice);
 
   return (
     <Drawer onClose={onClose} title="User details">
@@ -1488,29 +1472,6 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
       )}
 
       {/* Action forms */}
-      {mode === "suspend" && (
-        <div className="mt-4 space-y-2 rounded-xl border border-rose-200 bg-rose-50/50 p-3">
-          <p className="text-sm font-bold text-rose-700">Suspend account</p>
-          <p className="text-xs text-rose-600">They are signed out everywhere at once and can't sign in. Their posts and Pulses are hidden. They will see the reason below.</p>
-          <div className="flex flex-wrap gap-1.5">
-            {SUSPEND_PRESETS.map(([k, l]) => (
-              <button key={k} onClick={() => setPreset(k)} className={cn("rounded-full px-3 py-1.5 text-xs font-semibold", preset === k ? "bg-rose-600 text-white" : "bg-surface text-ink-600")}>{l}</button>
-            ))}
-          </div>
-          {preset === "custom" && <input value={customDays} onChange={(e) => setCustomDays(e.target.value)} placeholder="Number of days (1-365)" inputMode="numeric" className="input text-sm" />}
-          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} maxLength={REASON_MAX} placeholder="Reason (the user will see this)…" className="input resize-none text-sm" />
-          <p className="text-right text-[10px] text-ink-400">{trimmed.length}/{REASON_MAX}{trimmed.length > 0 && trimmed.length < REASON_MIN ? ` · at least ${REASON_MIN}` : ""}</p>
-          {waitingPatients > 0 && (
-            <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700"><AlertTriangle size={12} className="mr-1 inline" />This doctor has {waitingPatients} consultation(s) waiting. Those patients won't be able to reach them.</p>
-          )}
-          <div className="flex gap-2">
-            <button onClick={() => setMode(null)} className="btn-outline flex-1 py-2 text-sm">Cancel</button>
-            <button disabled={busy || !reasonOk || !durationOk} onClick={suspend} className="btn flex-1 bg-rose-600 py-2 text-sm text-white hover:bg-rose-700 disabled:opacity-40">
-              {busy ? "…" : preset === "permanent" ? "Suspend permanently" : `Suspend for ${preset === "custom" ? (customDays || "?") : preset} day(s)`}
-            </button>
-          </div>
-        </div>
-      )}
       {mode === "delete" && (
         <div className="mt-4 space-y-2 rounded-xl border border-rose-300 bg-rose-50 p-3">
           <p className="flex items-center gap-1.5 text-sm font-bold text-rose-700"><AlertTriangle size={15} /> Erase permanently</p>
@@ -1529,20 +1490,14 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
           {u.accountStatus === "SUSPENDED" && (
             <button disabled={busy} onClick={() => act(() => dok.admin.unsuspendUser(u.id))} className="btn-primary col-span-2 py-2.5 text-sm"><RotateCcw size={16} /> Lift suspension</button>
           )}
-          {canSuspend && u.accountStatus !== "SUSPENDED" && (
-            <button onClick={() => { setReason(""); setPreset("7"); setCustomDays(""); setMsg(""); setMode("suspend"); }} className="btn col-span-2 bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100"><Ban size={16} /> Suspend</button>
-          )}
-          {u.accountStatus === "SUSPENDED" && (
-            <button onClick={() => { setReason(u.suspensionReason || ""); setPreset("7"); setCustomDays(""); setMsg(""); setMode("suspend"); }} className="btn-outline col-span-2 py-2.5 text-sm"><Clock size={16} /> Change suspension</button>
-          )}
           {u.accountStatus === "ACTIVE" && (
             <button disabled={busy} onClick={() => act(() => dok.admin.deactivateUser(u.id, {}), signOutNotice)} className="btn-outline col-span-2 py-2.5 text-sm" title="Hides the account and signs it out. The user can undo this by logging in.">
               <UserX size={16} /> Deactivate (user can undo by logging in)
             </button>
           )}
-          {!canSuspend && (
+          {(u.accountStatus === "FROZEN" || u.accountStatus === "PENDING_DELETION") && (
             <p className="col-span-2 rounded-lg bg-ink-900/[.03] p-2 text-xs text-ink-500">
-              {u.accountStatus === "FROZEN" ? "An archived account can't be suspended or deactivated." : "This account is scheduled for deletion, so it can't be suspended. Erase it, or wait for the user."}
+              {u.accountStatus === "FROZEN" ? "An archived account can't be deactivated." : "This account is scheduled for deletion. Erase it, or wait for the user."}
             </p>
           )}
           <button onClick={() => { setReason(""); setConfirmText(""); setMsg(""); setMode("delete"); }} className="btn col-span-2 border border-rose-300 bg-surface py-2.5 text-sm text-rose-700 hover:bg-rose-50"><Trash2 size={16} /> Erase permanently</button>
@@ -2117,7 +2072,7 @@ function ReportsSection() {
       {error && rows.length > 0 && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
       {hasMore && <button onClick={() => load(false)} disabled={loading} className="btn-outline mx-auto mt-4 block px-4 py-2 text-sm">{loading ? "Loading…" : "Load more"}</button>}
 
-      {/* Suspending the person closes their open profile reports as "actioned". */}
+      {/* Review person opens their account: deactivate or erase it from there. */}
       {person && <UserDrawer userRow={person} onClose={() => setPerson(null)} onChanged={() => { setPerson(null); load(true); }} />}
     </div>
   );

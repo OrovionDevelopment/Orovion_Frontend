@@ -593,7 +593,6 @@ export const dok = {
     // ── User administration ──
     users: (params = {}) => unwrap(api.get("/admin/users", { params })),
     user: (id) => unwrap(api.get(`/admin/users/${id}`)),
-    suspendUser: (id, b) => unwrap(api.post(`/admin/users/${id}/suspend`, b || {})),
     unsuspendUser: (id) => unwrap(api.post(`/admin/users/${id}/unsuspend`, {})),
     deactivateUser: (id, b) => unwrap(api.post(`/admin/users/${id}/deactivate`, b || {})),
     deleteUser: (id, b) => unwrap(api.delete(`/admin/users/${id}`, { data: b || {} })),

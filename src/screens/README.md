@@ -155,9 +155,10 @@ clinical cases. When media is down the API sends `null`, shown as "—".
 - Status chips and filters include **Archived** (FROZEN).
 - The drawer shows the lifecycle dates (deletion requested, recovery ends,
   archived) and consultation counts.
-- **Suspend**: presets 1, 3, 7 or 30 days, Custom (up to 365) or Permanent, and
-  a required reason of 5–500 characters. The person sees that reason.
-- **Lift suspension** ends it early.
+- **No Suspend action.** The panel deliberately doesn't offer it. An account
+  suspended earlier shows its reason and end date, and **Lift suspension** ends
+  it. The actions are **Deactivate** (the user can undo it by logging in) and
+  **Erase permanently**.
 - **Erase permanently**: type `DELETE` and give a reason. When money or
   consultations are still open, the server's blockers are listed in plain
   words; when one service fails, its error is shown.
@@ -171,7 +172,7 @@ clinical cases. When media is down the API sends `null`, shown as "—".
 
 - Kinds: Posts, Pulses and Profiles. Status: Open, Actioned, Dismissed or All.
 - Actions: **Dismiss**, **Remove post/Pulse** (closes every open report on it),
-  or for a profile **Review person**, which opens their drawer to suspend.
+  or for a profile **Review person**, which opens their drawer (deactivate or erase).
 - Actions update the list optimistically and roll back if the server refuses.
 
 **Verifications**
@@ -204,8 +205,8 @@ clinical cases. When media is down the API sends `null`, shown as "—".
   banner naming which figures are missing. A failed list is an error, not "No
   settlements".
 
-**User drawer** also lists the last admin actions on the person (suspended,
-lifted, deactivated…). Its "Reports" tile counts open reports on the profile
+**User drawer** also lists the last admin actions on the person (deactivated,
+suspension lifted…). Its "Reports" tile counts open reports on the profile
 and on their content.
 
 **Lists** all use the server's `nextCursor` with **Load more**. Each loader is
