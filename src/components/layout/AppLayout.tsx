@@ -47,7 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link to="/app"><Logo /></Link>
           <NavArrows />
           <form
-            onSubmit={(e) => { e.preventDefault(); const q = e.target.q.value.trim(); if (q) nav(`/app/search?q=${encodeURIComponent(q)}`); }}
+            onSubmit={(e) => { e.preventDefault(); const q = String(new FormData(e.currentTarget).get("q") ?? "").trim(); if (q) nav(`/app/search?q=${encodeURIComponent(q)}`); }}
             className="relative ml-2 hidden max-w-md flex-1 sm:block"
           >
             <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
