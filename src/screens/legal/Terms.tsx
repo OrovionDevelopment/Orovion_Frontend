@@ -5,7 +5,7 @@ import {
   Lock, Puzzle, Server, Ban, UserX, AlertCircle, Scale, Handshake,
   RefreshCcw, Landmark, Mail,
 } from "lucide-react";
-import LegalShell, { Bullets, Note, RecoveryPeriod } from "@/components/legal/LegalShell";
+import LegalShell, { Bullets, Note, RecoveryPeriodOf } from "@/components/legal/LegalShell";
 
 const SECTIONS = [
   {
@@ -303,7 +303,7 @@ const SECTIONS = [
     title: "Account deletion and recovery",
     body: (
       <>
-        <p>Users may delete their account through account settings. Deletion is not immediate: the account first enters a recovery period of <RecoveryPeriod />. During this period:</p>
+        <p>Users may delete their account through account settings. Deletion is not immediate: the account first enters a recovery period<RecoveryPeriodOf />. During this period:</p>
         <Bullets items={[
           "The profile, posts and Pulses are hidden from other users",
           "The user is signed out of every device",

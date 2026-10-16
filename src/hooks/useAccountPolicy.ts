@@ -46,4 +46,5 @@ export function useAccountPolicy(): AccountPolicy | null {
 }
 
 /** "30 days" — or "the recovery period" when the number is not known. */
-export const recoveryPhrase = (p: AccountPolicy | null) => (p?.recoveryDays ? `${p.recoveryDays} days` : "the recovery period");
+export const recoveryPhrase = (p: AccountPolicy | null) =>
+  !p?.recoveryDays ? "the recovery period" : p.recoveryDays === 1 ? "1 day" : `${p.recoveryDays} days`;

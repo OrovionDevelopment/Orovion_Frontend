@@ -71,12 +71,15 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  // Signed out because the account was suspended or archived? Say why (the
-  // reason was saved just before the sign-out; read once, on mount).
+  // Signed out because the account was suspended or archived? Say why. The
+  // reason is saved just before the sign-out and read once — after the boot
+  // session restore has finished, since on a cold load of /login that restore
+  // is what discovers the block.
   useEffect(() => {
+    if (loading) return;
     const block = takeBlock();
     if (block) setErr(blockMessage(block));
-  }, []);
+  }, [loading]);
 
   // Send the authenticated user to onboarding (new / incomplete) or into the app.
   const enter = (res) => {
@@ -199,6 +202,9 @@ export default function Login() {
           <div key={step} className="anim-pop">
             {step === 0 && (
               <>
+                {/* Why the last session ended (suspended / archived), shown on the
+                    first screen a signed-out person sees. */}
+                {err && <p role="alert" className="mt-6 rounded-xl bg-danger-50 p-3 text-sm font-medium text-danger-700">{err}</p>}
                 <h2 className="mt-7 font-display text-3xl font-extrabold tracking-tight text-ink-900 text-balance">Which best describes you?</h2>
                 <p className="mt-2 text-ink-500">This helps us personalize your experience and access within.</p>
                 <div className="mt-7 space-y-3">

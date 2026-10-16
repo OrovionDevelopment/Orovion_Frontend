@@ -118,12 +118,20 @@ export default function LegalShell({ eyebrow, title, updated, intro, sections, c
   );
 }
 
-/** Plain bullet list for enumerations without lead-in labels. */
 /** The account recovery period, from the server's own setting ("30 days"). */
 export function RecoveryPeriod() {
   return <>{recoveryPhrase(useAccountPolicy())}</>;
 }
 
+/** " of 30 days" once the server's period is known, nothing until then — so
+    "enters a recovery period<RecoveryPeriodOf />." reads correctly either way,
+    including in the server-rendered HTML. */
+export function RecoveryPeriodOf() {
+  const policy = useAccountPolicy();
+  return policy?.recoveryDays ? <> of {recoveryPhrase(policy)}</> : null;
+}
+
+/** Plain bullet list for enumerations without lead-in labels. */
 export function Bullets({ items }) {
   return (
     <ul className="space-y-1.5">

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "@/lib/router";
 import { AnalyticsDashboard } from "@/features/analytics";
 import {
@@ -234,6 +234,17 @@ function ErrorState({ message, onRetry }: { message: string; onRetry?: () => voi
       {onRetry && <button onClick={onRetry} className="btn-outline mx-auto mt-4 px-4 py-2 text-sm"><RefreshCw size={14} /> Try again</button>}
     </div>
   );
+}
+
+/** Request sequencing for a list: `const isCurrent = begin()` at the start of a
+    load; drop the response when `!isCurrent()`. A slow answer for the previous
+    filter or tab must never overwrite (or be appended to) the current one. */
+function useRequestSeq() {
+  const seq = useRef(0);
+  return useCallback(() => {
+    const id = ++seq.current;
+    return () => id === seq.current;
+  }, []);
 }
 
 function SectionHead({ title, subtitle, right }: any) {
@@ -521,7 +532,7 @@ function PaymentsSection({ onNav }: { onNav: (k: string) => void }) {
   const [rev, setRev] = useState<any[]>([]);
   const [pays, setPays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState(false);
+  const [err, setErr] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [detail, setDetail] = useState<any>(null);
   const [detailBusy, setDetailBusy] = useState(false);
@@ -531,7 +542,7 @@ function PaymentsSection({ onNav }: { onNav: (k: string) => void }) {
     : presetRange(preset)), [preset, custom]);
 
   const load = useCallback(async () => {
-    setLoading(true); setErr(false);
+    setLoading(true); setErr("");
     const r = range();
     const payParams: any = { ...r, limit: showAll ? 50 : 8 };
     if (filters.status) payParams.status = filters.status;
@@ -545,7 +556,7 @@ function PaymentsSection({ onNav }: { onNav: (k: string) => void }) {
         dok.admin.payments(payParams),
       ]);
       setSum(s); setRev(v.series || []); setPays(p.payments || []);
-    } catch { setErr(true); }
+    } catch (e) { setErr(errorText(e)); }
     setLoading(false);
   }, [range, groupBy, showAll, filters]);
   useEffect(() => { load(); }, [load]);
@@ -553,7 +564,7 @@ function PaymentsSection({ onNav }: { onNav: (k: string) => void }) {
   const openDetail = async (id: string) => {
     setDetailBusy(true); setDetail({ loading: true });
     try { const d = await dok.admin.paymentDetail(id); setDetail(d.payment); }
-    catch { setDetail(null); }
+    catch { setDetail({ failed: true }); }   // the drawer says it couldn't load
     setDetailBusy(false);
   };
   const openInvoice = async (id: string) => {
@@ -635,7 +646,7 @@ function PaymentsSection({ onNav }: { onNav: (k: string) => void }) {
       )}
 
       {loading && !sum ? <StatGridSkeleton count={6} />
-        : err ? <Empty icon={AlertTriangle} title="Couldn't load payments" sub="Try refreshing." />
+        : err ? <ErrorState message={err} onRetry={load} />
           : (
             <>
               {/* KPI cards */}
@@ -884,11 +895,12 @@ function TransactionsSection() {
   const [detail, setDetail] = useState<any>(null); // { user, summary, transactions } | { loading:true }
   const [invoiceBusy, setInvoiceBusy] = useState("");
   const [msg, setMsg] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   const load = useCallback(async (search = "") => {
-    setLoading(true);
+    setLoading(true); setLoadError("");
     try { const d = await dok.admin.txnUsers(search ? { search } : {}); setUsers(d.users || []); }
-    catch (e) { setUsers([]); setMsg(errorText(e)); }
+    catch (e) { setUsers([]); setLoadError(errorText(e)); }
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -915,7 +927,7 @@ function TransactionsSection() {
     const u = detail.user, txns = detail.transactions || [], sum = detail.summary || {};
     return (
       <div className="space-y-6">
-        <button onClick={() => setDetail(null)} className="flex items-center gap-1.5 text-sm font-semibold text-ink-600 transition hover:text-ink-900">
+        <button onClick={() => { setDetail(null); setMsg(""); }} className="flex items-center gap-1.5 text-sm font-semibold text-ink-600 transition hover:text-ink-900">
           <ArrowLeft size={16} /> All users
         </button>
 
@@ -1009,7 +1021,9 @@ function TransactionsSection() {
           placeholder="Search by name or email…" className="input pl-9" />
       </div>
 
+      {msg && <p className="rounded-xl bg-danger-50 px-3 py-2 text-xs font-semibold text-danger-700">{msg}</p>}
       {loading ? <RowsSkeleton count={6} />
+        : loadError ? <ErrorState message={loadError} onRetry={() => load(q)} />
         : users.length === 0 ? <Empty icon={Receipt} title="No transactions yet" sub="Consultation payments will appear here." />
           : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -1046,6 +1060,8 @@ const SETTLEMENT_CHIP: any = {
   PENDING:    "bg-ink-900/[.06] text-ink-500",
 };
 const rupee = (paise: any) => "₹" + Math.round((Number(paise) || 0) / 100).toLocaleString("en-IN");
+// A money figure that could not be loaded is "—", never a misleading ₹0.
+const money = (paise: any) => (paise == null ? "—" : rupee(paise));
 const firstOfMonth = (offset = 0) => {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + offset, 1)).toISOString().slice(0, 10);
@@ -1065,21 +1081,29 @@ function SettlementsSection() {
   const [gen, setGen] = useState({ periodStart: firstOfMonth(-1), periodEnd: firstOfMonth(0), doctorId: "" });
   const [genBusy, setGenBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: string; text: string } | null>(null);
+  const [failed, setFailed] = useState<string[]>([]);   // figures that could not be loaded
+  const [listError, setListError] = useState("");
 
   const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [s, l, r, ls] = await Promise.all([
-        dok.admin.settlementSummary().catch(() => null),
-        dok.admin.settlementLiability().catch(() => null),
-        dok.admin.settlementRevenue().catch(() => null),
-        dok.admin.settlements(status ? { status } : {}).catch(() => ({ items: [] })),
-      ]);
-      setSum(s?.settlements ?? null);
-      setLiab(s?.liability ?? l?.liability ?? null);
-      setRev(r?.revenue ?? null);
-      setList(ls?.items ?? []);
-    } catch { setList([]); }
+    setLoading(true); setListError("");
+    let listErr = "";
+    const [s, l, r, ls] = await Promise.all([
+      dok.admin.settlementSummary().catch(() => null),
+      dok.admin.settlementLiability().catch(() => null),
+      dok.admin.settlementRevenue().catch(() => null),
+      dok.admin.settlements(status ? { status } : {}).catch((e) => { listErr = errorText(e); return null; }),
+    ]);
+    const liability = s?.liability ?? l?.liability ?? null;
+    setFailed([
+      !s && "settlement totals",
+      !liability && "amount owed to doctors",
+      !r && "platform revenue",
+    ].filter(Boolean) as string[]);
+    setSum(s?.settlements ?? null);
+    setLiab(liability);
+    setRev(r?.revenue ?? null);
+    setList(ls?.items ?? []);
+    setListError(listErr);
     setLoading(false);
   }, [status]);
   useEffect(() => { load(); }, [load]);
@@ -1110,11 +1134,18 @@ function SettlementsSection() {
         right={<button onClick={load} className="btn-outline px-3 py-2 text-xs"><RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh</button>} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Owed to doctors" value={rupee(liab?.pendingPaise)} tone="amber" />
-        <Stat label="Outstanding (unpaid)" value={rupee(sum?.outstandingPaise)} tone="sky" />
-        <Stat label="Paid all-time" value={rupee(sum?.paidPaise)} tone="emerald" />
-        <Stat label="Platform revenue" value={rupee(rev?.platformFeePaise)} tone="brand" />
+        <Stat label="Owed to doctors" value={money(liab?.pendingPaise)} tone="amber" />
+        <Stat label="Outstanding (unpaid)" value={money(sum?.outstandingPaise)} tone="sky" />
+        <Stat label="Paid all-time" value={money(sum?.paidPaise)} tone="emerald" />
+        <Stat label="Platform revenue" value={money(rev?.platformFeePaise)} tone="brand" />
       </div>
+
+      {failed.length > 0 && (
+        <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+          <span>Some figures could not be loaded ({failed.join(", ")}). They show as "—". <button onClick={load} className="font-semibold underline">Retry</button></span>
+        </div>
+      )}
 
       {msg && (
         <p className={cn("anim-pop rounded-xl px-3 py-2 text-xs font-semibold",
@@ -1146,6 +1177,7 @@ function SettlementsSection() {
       </div>
 
       {loading && list.length === 0 ? <RowsSkeleton count={6} />
+        : listError ? <ErrorState message={listError} onRetry={load} />
         : list.length === 0 ? <Empty icon={Banknote} title="No settlements" sub="Generate a period above to create payouts." />
           : (
             <div className="card overflow-hidden p-0">
@@ -1255,7 +1287,9 @@ function UsersSection() {
   const [error, setError] = useState("");
   const [sel, setSel] = useState<any>(null);
 
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     try {
       const params: any = { limit: 20 };
@@ -1264,14 +1298,16 @@ function UsersSection() {
       if (status) params.status = status;
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.users(params);
+      if (!isCurrent()) return;
       setRows((prev) => (reset ? d.users : [...prev, ...d.users]));
       setHasMore(d.hasMore); setCursor(d.nextCursor);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setRows([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [q, role, status, cursor]);
+  }, [q, role, status, cursor, begin]);
 
   // reload whenever filters change (debounced on q)
   useEffect(() => { const t = setTimeout(() => load(true), 250); return () => clearTimeout(t); /* eslint-disable-next-line */ }, [q, role, status]);
@@ -1335,6 +1371,18 @@ const SUSPEND_PRESETS: [string, string][] = [["1", "1 day"], ["3", "3 days"], ["
 const REASON_MIN = 5;
 const REASON_MAX = 500;
 
+// After a suspension or deactivation: a sign-out that could not reach every
+// device (Redis down, say) or patients still waiting on this doctor.
+const signOutNotice = (d: any) => {
+  const t = d?.terminated;
+  const partial = t && ["sessions", "refreshTokens", "accessTokens"].some((k) => t[k] === false);
+  const waiting = Number(d?.warnings?.activeConsultationsAsDoctor) || 0;
+  return [
+    partial ? "Done, but not every device could be signed out right now. Their access ends when their current sign-in expires (about 15 minutes)." : "",
+    waiting ? `They still have ${waiting} consultation${waiting === 1 ? "" : "s"} in progress. Those are not cancelled automatically.` : "",
+  ].filter(Boolean).join(" ");
+};
+
 function UserDrawer({ userRow, onClose, onChanged }: any) {
   const [detail, setDetail] = useState<any>(null);
   const [loadError, setLoadError] = useState("");
@@ -1345,6 +1393,7 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
   const [confirmText, setConfirmText] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [notice, setNotice] = useState("");
 
   const loadDetail = useCallback(() => {
     setLoadError("");
@@ -1352,9 +1401,16 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
   }, [userRow.id]);
   useEffect(() => { loadDetail(); }, [loadDetail]);
 
-  const act = async (fn: () => Promise<any>) => {
+  // `noticeFor` turns a successful response into something the admin must read
+  // before the drawer closes; nothing to say → close straight away.
+  const act = async (fn: () => Promise<any>, noticeFor?: (d: any) => string) => {
     setBusy(true); setMsg("");
-    try { await fn(); onChanged(); } catch (e: any) { setMsg(actionError(e)); setBusy(false); }
+    try {
+      const d = await fn();
+      const note = noticeFor ? noticeFor(d) : "";
+      if (!note) return onChanged();
+      setNotice(note); setMode(null); setBusy(false); loadDetail();
+    } catch (e: any) { setMsg(actionError(e)); setBusy(false); }
   };
 
   const u = detail?.user || userRow;
@@ -1368,7 +1424,7 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
 
   const suspend = () => act(() => dok.admin.suspendUser(u.id, preset === "permanent"
     ? { reason: trimmed, permanent: true }
-    : { reason: trimmed, durationDays: days }));
+    : { reason: trimmed, durationDays: days }), signOutNotice);
 
   return (
     <Drawer onClose={onClose} title="User details">
@@ -1414,6 +1470,8 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
         </div>
       )}
 
+      <ReviewHistory history={detail?.recentActions} />
+
       <div className="mt-3 space-y-1 text-xs text-ink-500">
         <p>Role: <span className="capitalize text-ink-700">{u.role?.replace("_", " ")}</span></p>
         <p>Joined: {formatDate(u.createdAt)}</p>
@@ -1422,6 +1480,12 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
       </div>
 
       {msg && <div className="mt-4 rounded-xl bg-rose-50 p-2.5 text-xs text-rose-700">{msg}</div>}
+      {notice && (
+        <div role="status" className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <p>{notice}</p>
+          <button onClick={() => onChanged()} className="btn-outline mt-2 px-3 py-1.5 text-xs">Done</button>
+        </div>
+      )}
 
       {/* Action forms */}
       {mode === "suspend" && (
@@ -1472,7 +1536,7 @@ function UserDrawer({ userRow, onClose, onChanged }: any) {
             <button onClick={() => { setReason(u.suspensionReason || ""); setPreset("7"); setCustomDays(""); setMsg(""); setMode("suspend"); }} className="btn-outline col-span-2 py-2.5 text-sm"><Clock size={16} /> Change suspension</button>
           )}
           {u.accountStatus === "ACTIVE" && (
-            <button disabled={busy} onClick={() => act(() => dok.admin.deactivateUser(u.id, {}))} className="btn-outline col-span-2 py-2.5 text-sm" title="Hides the account and signs it out. The user can undo this by logging in.">
+            <button disabled={busy} onClick={() => act(() => dok.admin.deactivateUser(u.id, {}), signOutNotice)} className="btn-outline col-span-2 py-2.5 text-sm" title="Hides the account and signs it out. The user can undo this by logging in.">
               <UserX size={16} /> Deactivate (user can undo by logging in)
             </button>
           )}
@@ -1508,21 +1572,25 @@ function ContentSection() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
 
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     try {
       const params: any = { type, limit: 20 };
       if (q.trim().length >= 2) params.q = q.trim();
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.content(params);
+      if (!isCurrent()) return;
       setItems((prev) => (reset ? d.items : [...prev, ...d.items]));
       setHasMore(d.hasMore); setCursor(d.nextCursor);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setItems([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [type, q, cursor]);
+  }, [type, q, cursor, begin]);
   useEffect(() => { const t = setTimeout(() => load(true), 250); return () => clearTimeout(t); /* eslint-disable-next-line */ }, [type, q]);
 
   const del = async (it: any) => {
@@ -1587,6 +1655,8 @@ const ID_TYPE_LABEL: any = { AADHAAR: "Aadhaar card", PAN: "PAN card" };
 const HISTORY_LABEL: any = {
   "verification.view": "Documents viewed", "verification.in_review": "Marked in review", "verification.approve": "Approved",
   "verification.reject": "Rejected", "verification.reset": "Reset",
+  "user.suspend": "Suspended", "user.unsuspend": "Suspension lifted", "user.unsuspend.expired": "Suspension ended",
+  "user.deactivate": "Deactivated", "user.delete.failed": "Erase failed",
 };
 
 function VerificationsSection() {
@@ -1679,19 +1749,23 @@ function DoctorVerifications() {
   const [error, setError] = useState("");
   const [sel, setSel] = useState<any>(null);
 
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     if (reset) dok.admin.vStats().then(setStats).catch(() => {});
     try {
       const d = await dok.admin.vList(tab, reset ? null : cursor);
+      if (!isCurrent()) return;
       setRows((prev) => (reset ? d.verifications : [...prev, ...d.verifications]));
       setHasMore(d.hasMore); setCursor(d.nextCursor);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setRows([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [tab, cursor]);
+  }, [tab, cursor, begin]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, [tab]);
 
   return (
@@ -1802,7 +1876,7 @@ function DoctorReviewDrawer({ row, onClose, onChanged }: any) {
           {(status === "SUBMITTED" || status === "IN_REVIEW") && <button disabled={busy} onClick={() => act(() => dok.admin.vApprove(row.userId))} className="btn-primary py-2.5 text-sm"><CheckCircle2 size={16} /> Approve</button>}
           {(status === "SUBMITTED" || status === "IN_REVIEW" || status === "APPROVED") && (
             <button disabled={busy} onClick={() => { setReason(""); setRejecting(true); }} className={cn("btn bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100", status === "APPROVED" && "col-span-2")}>
-              <XCircle size={16} /> {status === "APPROVED" ? "Reject (removes the verified badge)" : "Reject"}
+              <XCircle size={16} /> {status === "APPROVED" || user?.isVerified ? "Reject (removes the verified badge)" : "Reject"}
             </button>
           )}
           <button disabled={busy} onClick={() => { if (confirm("Reset this verification? The doctor will need to submit again.")) act(() => dok.admin.vReset(row.userId)); }} className="btn-outline col-span-2 py-2.5 text-sm"><RotateCcw size={16} /> Reset</button>
@@ -1821,18 +1895,22 @@ function StudentVerifications() {
   const [error, setError] = useState("");
   const [sel, setSel] = useState<any>(null);
 
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     try {
       const d = await dok.admin.svList(tab, reset ? null : cursor);
+      if (!isCurrent()) return;
       setRows((prev) => (reset ? d.profiles : [...prev, ...d.profiles]));
       setHasMore(d.hasMore); setCursor(d.nextCursor);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setRows([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [tab, cursor]);
+  }, [tab, cursor, begin]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, [tab]);
 
   return (
@@ -1909,7 +1987,7 @@ function StudentReviewDrawer({ row, onClose, onChanged }: any) {
           {status === "SUBMITTED" && <button disabled={busy} onClick={() => act(() => dok.admin.svApprove(row.userId))} className="btn-primary py-2.5 text-sm"><CheckCircle2 size={16} /> Approve</button>}
           {(status === "SUBMITTED" || status === "APPROVED") && (
             <button disabled={busy} onClick={() => { setReason(""); setRejecting(true); }} className={cn("btn bg-rose-50 py-2.5 text-sm text-rose-600 hover:bg-rose-100", status === "APPROVED" && "col-span-2")}>
-              <XCircle size={16} /> {status === "APPROVED" ? "Reject (removes the verified badge)" : "Reject"}
+              <XCircle size={16} /> {status === "APPROVED" || user?.isVerified ? "Reject (removes the verified badge)" : "Reject"}
             </button>
           )}
         </div>
@@ -1944,29 +2022,38 @@ function ReportsSection() {
   const [msg, setMsg] = useState("");
   const [person, setPerson] = useState<any>(null);
 
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     try {
       const params: any = { kind, status };
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.reports(params);
+      if (!isCurrent()) return;
       setRows((prev) => (reset ? (d.reports || []) : [...prev, ...(d.reports || [])]));
       setHasMore(d.hasMore); setCursor(d.nextCursor);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setRows([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [kind, status, cursor]);
+  }, [kind, status, cursor, begin]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, [kind, status]);
 
   // Optimistic in the open queue; put the card back if the server refuses.
   const resolve = async (r: any, fn: () => Promise<any>) => {
     setMsg("");
-    const before = rows;
+    const at = Math.max(0, rows.findIndex((y) => y.id === r.id));
     if (status === "pending") setRows((x) => x.filter((y) => y.id !== r.id));
     try { await fn(); if (status !== "pending") load(true); }
-    catch (e: any) { setRows(before); setMsg(actionError(e)); }
+    catch (e: any) {
+      // Put back just this card — a snapshot would also undo other cards
+      // resolved meanwhile.
+      if (status === "pending") setRows((x) => (x.some((y) => y.id === r.id) ? x : [...x.slice(0, at), r, ...x.slice(at)]));
+      setMsg(actionError(e));
+    }
   };
   const dismiss = (r: any) => resolve(r, () => dok.admin.dismissReport(r.id, r.kind));
   const takedown = (r: any) => {
@@ -2052,7 +2139,9 @@ function FeedbackSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     try {
       const params: any = { limit: 20 };
@@ -2060,13 +2149,15 @@ function FeedbackSection() {
       if (status) params.status = status;
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.feedback(params);
+      if (!isCurrent()) return;
       setRows((p) => (reset ? d.feedback : [...p, ...d.feedback])); setHasMore(d.hasMore); setCursor(d.nextCursor);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setRows([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [cat, status, cursor]);
+  }, [cat, status, cursor, begin]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, [cat, status]);
 
   const onUpdated = (row: any) => setRows((p) => p.map((f) => (f.id === row.id ? { ...f, ...row } : f)));
@@ -2160,21 +2251,25 @@ function RatingsSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     try {
       const params: any = { limit: 20 };
       if (stars) params.stars = stars;
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.consultationRatings(params);
+      if (!isCurrent()) return;
       setRows((p) => (reset ? d.ratings : [...p, ...d.ratings]));
       setHasMore(d.hasMore); setCursor(d.nextCursor); setSummary(d.summary);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setRows([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [stars, cursor]);
+  }, [stars, cursor, begin]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, [stars]);
 
   return (
@@ -2225,19 +2320,23 @@ function DeletionsSection() {
   const [error, setError] = useState("");
   const [sel, setSel] = useState<any>(null);
 
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     try {
       const params: any = { status: view, limit: 20 };
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.deletions(params);
+      if (!isCurrent()) return;
       setRows((p) => (reset ? (d.users || []) : [...p, ...(d.users || [])])); setHasMore(d.hasMore); setCursor(d.nextCursor);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setRows([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [view, cursor]);
+  }, [view, cursor, begin]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, [view]);
 
   return (
@@ -2290,19 +2389,23 @@ function AuditSection() {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const begin = useRequestSeq();
   const load = useCallback(async (reset = true) => {
+    const isCurrent = begin();
     setLoading(true); setError("");
     try {
       const params: any = { limit: 30 };
       if (!reset && cursor) params.cursor = cursor;
       const d = await dok.admin.audit(params);
+      if (!isCurrent()) return;
       setRows((p) => (reset ? d.entries : [...p, ...d.entries])); setHasMore(d.hasMore); setCursor(d.nextCursor);
     } catch (e) {
+      if (!isCurrent()) return;
       if (reset) setRows([]);
       setError(errorText(e));
     }
     setLoading(false);
-  }, [cursor]);
+  }, [cursor, begin]);
   useEffect(() => { load(true); /* eslint-disable-next-line */ }, []);
 
   return (

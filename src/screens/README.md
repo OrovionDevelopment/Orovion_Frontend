@@ -106,7 +106,10 @@ attribute.
 - archived;
 - recovery period ended.
 
-The message comes from `blockMessage` in `src/lib/accountBlock.ts`. It works
+The message comes from `blockMessage` in `src/lib/accountBlock.ts` and is shown
+as a banner on the first step, which is where a signed-out person lands. It is
+read after the boot session restore finishes, because on a cold load of `/login`
+that restore is what discovers the block. It works
 both when the refusal arrives on the login attempt itself and when a signed-in
 tab was logged out by it: the reason is stashed before the logout and read back
 here once.
@@ -191,7 +194,28 @@ clinical cases. When media is down the API sends `null`, shown as "—".
 - The **How accounts work** card (`AccountRulesCard`) explains the rules,
   using the server's recovery period.
 
-**Lists** all use the server's `nextCursor` with **Load more**.
+**Money tabs**
+
+- **Payments**: a failed load shows an error with **Retry**. A payment whose
+  details can't be loaded says so in the drawer.
+- **Transactions**: a failed list shows an error with Retry instead of "No
+  transactions yet".
+- **Settlements**: a figure that can't be loaded shows "—" (never ₹0), with a
+  banner naming which figures are missing. A failed list is an error, not "No
+  settlements".
+
+**User drawer** also lists the last admin actions on the person (suspended,
+lifted, deactivated…). Its "Reports" tile counts open reports on the profile
+and on their content.
+
+**Lists** all use the server's `nextCursor` with **Load more**. Each loader is
+sequenced (`useRequestSeq`): a slow answer for the previous filter or tab is
+dropped, so it can never overwrite the current list or be appended to it.
+
+**After a suspension or deactivation**, the drawer stays open with a notice
+when not every device could be signed out (access ends when the current
+sign-in expires, about 15 minutes) or when a doctor still has consultations in
+progress. Otherwise it closes.
 
 ## `Settings.tsx` — feedback and leaving
 
