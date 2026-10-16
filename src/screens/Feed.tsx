@@ -2,7 +2,7 @@
 import Roll from "@/components/ui/Roll";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@/lib/router";
-import { Loader2, Sparkles, Search as SearchIcon } from "lucide-react";
+import { Loader2, Sparkles, Search as SearchIcon, Send } from "lucide-react";
 import PostCard from "@/components/PostCard";
 import RightRail from "@/components/layout/RightRail";
 import { Avatar } from "@/components/ui/Primitives";
@@ -221,15 +221,16 @@ export default function Feed() {
         <button onClick={() => nav("/app/search")} className="press flex w-full items-center gap-2 rounded-full border border-ink-900/10 bg-surface px-4 py-3 text-sm text-ink-400 transition hover:border-brand-300 sm:hidden">
           <SearchIcon size={18} /> Search people, papers, #tags…
         </button>
-        {/* Health-professional stats strip (app parity, mobile only) */}
-        {user?.role === "doctor" && <DoctorStatsStrip />}
-
-        {/* Composer — a single prompt line; tapping it opens the full composer. */}
-        <div className="card p-4">
-          <div className="flex items-center gap-3">
-            <Avatar user={user} size={42} />
-            <button onClick={() => nav("/app/create")} className="flex-1 truncate text-left text-[17px] text-ink-400 transition hover:text-ink-500">
+        {/* Composer — styled like the chat message box (pill field + round send
+            button, see Messages.tsx); tapping either opens the full composer. */}
+        <div className="card p-3">
+          <div className="flex items-center gap-2">
+            <Avatar user={user} size={40} />
+            <button onClick={() => nav("/app/create")} className="min-w-0 flex-1 truncate rounded-full bg-ink-900/[.04] px-4 py-3 text-left text-sm text-ink-400 transition hover:bg-ink-900/[.07]">
               Share something with the community...
+            </button>
+            <button onClick={() => nav("/app/create")} aria-label="Create a post" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-600 text-white shadow-glow transition hover:bg-brand-700">
+              <Send size={18} />
             </button>
           </div>
         </div>
@@ -261,59 +262,6 @@ export default function Feed() {
         )}
       </div>
       <RightRail />
-    </div>
-  );
-}
-
-/* ---------------- doctor stats strip (app parity, mobile only) ----------------
-   "Unread" is live (notifications). Priority / Paid Priority have no backend yet,
-   so they show a neutral placeholder — never a fake number (see CLAUDE.md). */
-
-function DoctorStatsStrip() {
-  const nav = useNavigate();
-  const [unread, setUnread] = useState(null);
-  const [soon, setSoon] = useState(false);
-
-  useEffect(() => {
-    dok.notifications
-      .unread()
-      .then((d) => setUnread(typeof d === "number" ? d : d?.count ?? d?.unread ?? 0))
-      .catch(() => setUnread(null));
-  }, []);
-
-  const cards = [
-    { key: "unread", label: "Unread", value: unread ?? "—", tint: "brand", onClick: () => nav("/app/notifications") },
-    { key: "priority", label: "Priority", value: "—", tint: "ink", onClick: () => setSoon(true) },
-    { key: "paid", label: "Paid Priority", value: "—", tint: "rose", onClick: () => setSoon(true) },
-  ];
-
-  return (
-    <div>
-      <div className="grid grid-cols-3 gap-3">
-        {cards.map((c) => (
-          <button
-            key={c.key}
-            onClick={c.onClick}
-            className={cn(
-              "card press flex flex-col items-start gap-1 p-3 text-left",
-              c.tint === "rose" && "bg-rose-50 ring-1 ring-rose-100"
-            )}
-          >
-            <span
-              className={cn(
-                "font-display text-2xl font-extrabold leading-none",
-                c.tint === "rose" ? "text-rose-600" : c.tint === "brand" ? "text-brand-700" : "text-ink-900"
-              )}
-            >
-              {c.value}
-            </span>
-            <span className="text-xs font-medium text-ink-500">{c.label}</span>
-          </button>
-        ))}
-      </div>
-      {soon && (
-        <p className="mt-2 px-1 text-xs text-ink-400">Priority &amp; paid queues arrive with consultations.</p>
-      )}
     </div>
   );
 }

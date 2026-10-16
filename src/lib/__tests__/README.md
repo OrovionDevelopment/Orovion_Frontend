@@ -37,6 +37,13 @@ Share links:
 `qrLogin.test.ts` has two stale expectations: `qrDeepLink` now appends
 `&platform=web`, and the test predates that.
 
+Pulse feed:
+
+- `wheelPaging.test.ts` — one wheel or trackpad gesture moves exactly one Pulse.
+  Small trackpad deltas add up before anything moves, the rest of the gesture
+  (momentum tail included) is swallowed, a pause starts the next gesture, and
+  the index never leaves the feed.
+
 Accounts and admin:
 
 - `accountBlock.test.ts` — the three coded refusals are recognised and nothing

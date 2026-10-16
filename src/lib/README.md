@@ -126,6 +126,19 @@ the Pulse tab never show a Pulse, and the page then guessed Pulses from
   unbroken ~16ms stream, so its momentum tail slamming into the top can never
   self-trigger a refresh; a deliberate second flick, made after a pause, can.
 
+## Pulse feed paging — `wheelPaging.ts`
+
+- `wheelPixels`, `wheelPage`, `clampSlide`: the maths behind "one wheel or
+  trackpad gesture = one Pulse" in `src/screens/Pulses.tsx`.
+
+  Native scroll-snap let a trackpad hold the feed half-way between two Pulses
+  until the fingers lifted, and let momentum skip several. Now deltas add up
+  until they pass `WHEEL_PAGE_PX`, that fires one step, and the rest of the same
+  gesture, momentum tail included, is ignored. A gesture ends the same way as in
+  pull-to-refresh: `startsNewGesture`, a pause longer than
+  `WHEEL_GESTURE_GAP_MS`. Touch never fires wheel events, so phones keep the
+  native swipe.
+
 ## Analytics
 
 - `clarity.ts` — the pure half of the Microsoft Clarity integration

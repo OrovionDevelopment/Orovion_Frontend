@@ -10,6 +10,14 @@ before the access token has been re-minted from the refresh cookie.
 
 ## `Feed.tsx` — the home feed ("post section")
 
+The doctor stats strip that sat above the composer (Unread / Priority / Paid
+Priority) was removed on request; the Unread count is still on the
+Notifications screen.
+
+The composer prompt ("Share something with the community...") is styled like
+the chat message box: a rounded pill field and a round send button, the same
+classes as the input in `Messages.tsx`. Either one opens the full composer.
+
 Offline-first, then live:
 
 1. On a fresh mount the per-user IndexedDB cache paints the last-known first page
@@ -41,9 +49,19 @@ spinner.
 ## `Pulses.tsx` — Pulse
 
 A vertical, **one-pulse-at-a-time** discovery feed (not a tile grid). Slides are a
-native CSS scroll-snap column (`snap-y snap-mandatory`) where each slide fills the
-content viewport, so exactly one pulse is on screen; trackpad, touch and the arrow
-keys all step one pulse without a custom gesture lock. An `IntersectionObserver`
+CSS scroll-snap column (`snap-y snap-mandatory`) where each slide fills the
+content viewport, so exactly one pulse is on screen.
+
+- **Touch** uses the native swipe and snap.
+- **Mouse wheel and trackpad** are taken over: one gesture moves exactly one
+  pulse, with a smooth scroll (`src/lib/wheelPaging.ts`). With native snapping a
+  trackpad could hold the feed half-way, two pulses showing at once, and a
+  flick's momentum could skip several.
+- **Arrow keys and the up/down buttons** step one pulse.
+
+Steps count from the slide the feed rests on or is heading to (`target`), not
+from `active`, so a quick second step made during the scroll is not lost. They
+scroll the feed only, never the page around it. An `IntersectionObserver`
 (threshold .6) picks the active slide, and **only the active slide mounts a
 player** — every other slide stays a poster, so a long feed never accumulates
 `<video>`/hls.js instances or fires phantom view pings.

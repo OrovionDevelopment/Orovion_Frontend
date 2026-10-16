@@ -100,9 +100,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
           <div className="mt-6 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-4 text-white shadow-glow">
-            <p className="text-sm font-semibold">Verified by license.</p>
-            <p className="mt-1 text-xs text-white/80">Get your MD badge and unlock consults.</p>
-            <button onClick={() => nav("/app/profile")} className="mt-3 w-full rounded-full bg-surface py-2 text-xs font-bold text-brand-700">Start verification</button>
+            <p className="text-sm font-semibold">Verify your credentials.</p>
+            <p className="mt-1 text-xs text-white/80">Earn your verified badge and build trust across Orovion</p>
+            <button onClick={() => nav("/app/profile")} className="mt-3 w-full rounded-full bg-surface py-2 text-xs font-bold text-brand-700">Verify your profile</button>
           </div>
         </aside>
 

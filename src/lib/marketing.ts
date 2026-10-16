@@ -111,7 +111,7 @@ export const HOME = {
     title: "Where Healthcare Comes Together.",
     text: "Orovion brings healthcare professionals, medical students and people to connect, share knowledge, explore real cases and access private consultations in one place.",
     cta: { label: "Join Orovion", to: "/login" },
-    image: { src: "/marketing/a.jpeg", srcPhone: "/marketing/a.jpeg" },
+    image: { src: "/marketing/Multigenerational Family Care Portrait.png", srcPhone: "/marketing/Multigenerational Family Care Portrait.png" },
     placeholder: true,
   },
   /** The scroll-driven toggle that follows the hero. */

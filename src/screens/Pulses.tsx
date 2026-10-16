@@ -8,6 +8,7 @@ import { dok } from "@/lib/api";
 import { usePullToRefresh, useAutoRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { logFeedError, logFeedEmpty } from "@/lib/diagnostics";
+import { IDLE_WHEEL, clampSlide, wheelPage, wheelPixels } from "@/lib/wheelPaging";
 
 const rid = (r) => r?._id || r?.id;
 const PAGE = 10;
@@ -16,10 +17,13 @@ const PAGE = 10;
  * Pulse tab — a vertical, one-pulse-at-a-time discovery feed.
  *
  * Layout: a snap-scrolling column where every slide fills the content viewport, so
- * exactly one pulse is ever on screen. Snapping is native (`snap-y snap-mandatory`),
- * which gives correct trackpad/touch/keyboard behaviour without a custom gesture
- * lock. Only the slide the user is looking at mounts a player (`active`) — the rest
- * stay posters, so a long feed never spawns a stack of <video>/hls.js instances.
+ * exactly one pulse is ever on screen. Touch keeps native snapping
+ * (`snap-y snap-mandatory`). Wheel and trackpad input is taken over so that one
+ * gesture moves exactly one pulse (`src/lib/wheelPaging.ts`): with native snapping
+ * a trackpad could hold the feed half-way between two pulses, and a flick's
+ * momentum could skip several. Only the slide the user is looking at mounts a
+ * player (`active`) — the rest stay posters, so a long feed never spawns a stack
+ * of <video>/hls.js instances.
  *
  * Pagination (docs/modules/recommendation.md §2): media-service materialises a
  * ranked session ONCE and every later page is an OFFSET slice of it. A continuation
@@ -46,10 +50,17 @@ export default function Pulses() {
   const loadingRef = useRef(false);
   const gen = useRef(0); // bumped on every refresh; invalidates in-flight pages
   const scroller = useRef<HTMLDivElement | null>(null);
+  const stage = useRef<HTMLDivElement | null>(null); // the feed plus its nav buttons: the wheel target
   const activeRef = useRef(0);
   activeRef.current = active;
+  // The slide the feed rests on or is heading to. Steps count from here, not from
+  // `active`, which only flips once a slide is 60% visible, so a quick second step
+  // made during the scroll would otherwise be lost.
+  const target = useRef(0);
+  const wheel = useRef(IDLE_WHEEL);
 
   const list = pulses || [];
+  const hasSlides = list.length > 0; // the feed (and its scroller) is mounted
   // the tail (spinner / end-of-feed) is a slide too, so arrows can reach it
   const totalSlides = list.length + (loadingMore || atEnd ? 1 : 0);
 
@@ -133,6 +144,7 @@ export default function Pulses() {
       setPulses(r);
       setOver({});
       setActive(0);
+      target.current = 0;
       scroller.current?.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) { logFeedError("pulse", "refresh", err); setPulses((x) => x || []); }
     finally { setRefreshing(false); }
@@ -152,8 +164,33 @@ export default function Pulses() {
   const goTo = useCallback((idx: number) => {
     const root = scroller.current;
     const node = root?.querySelector(`[data-slide="${idx}"]`);
-    node?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!root || !node) return;
+    target.current = idx;
+    // Scroll the feed only; scrollIntoView would also scroll the page around it.
+    const top = root.scrollTop + node.getBoundingClientRect().top - root.getBoundingClientRect().top;
+    root.scrollTo({ top, behavior: "smooth" });
   }, []);
+
+  const step = useCallback((dir: number) => {
+    goTo(clampSlide(target.current + dir, totalSlides));
+  }, [goTo, totalSlides]);
+
+  // Once the feed comes to rest (after a swipe, a key press or a wheel step), the
+  // slide it rests on is where the next step counts from.
+  useEffect(() => {
+    const root = scroller.current;
+    if (!root) return;
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      setAtTop(root.scrollTop <= 4);
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        if (root.clientHeight) target.current = Math.round(root.scrollTop / root.clientHeight);
+      }, 150);
+    };
+    root.addEventListener("scroll", onScroll, { passive: true });
+    return () => { root.removeEventListener("scroll", onScroll); clearTimeout(settle); };
+  }, [hasSlides]);
 
   // The visible slide drives `active` (which pulse plays and counts a view).
   useEffect(() => {
@@ -179,12 +216,30 @@ export default function Pulses() {
       if (document.body.style.overflow === "hidden") return; // a sheet/modal is open
       const t = e.target;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-      if (e.key === "ArrowDown") { e.preventDefault(); goTo(Math.min(active + 1, totalSlides - 1)); }
-      else if (e.key === "ArrowUp") { e.preventDefault(); goTo(Math.max(active - 1, 0)); }
+      if (e.key === "ArrowDown") { e.preventDefault(); step(1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); step(-1); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, totalSlides, goTo]);
+  }, [step]);
+
+  // Wheel and trackpad: one gesture moves exactly one pulse. Pinch-zoom (ctrlKey)
+  // and sideways swipes are left to the browser. Sheets and modals render in a
+  // portal, so scrolling inside them never reaches this listener.
+  useEffect(() => {
+    const el = stage.current;
+    const root = scroller.current;
+    if (!el || !root) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      const r = wheelPage(wheel.current, Date.now(), wheelPixels(e.deltaY, e.deltaMode, root.clientHeight));
+      wheel.current = r.state;
+      if (r.step) step(r.step);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [hasSlides, step]);
 
   // Prefetch the next page well before the tail.
   useEffect(() => {
@@ -230,10 +285,9 @@ export default function Pulses() {
           </div>
         </div>
       ) : (
-        <div className="relative">
+        <div ref={stage} className="relative">
           <div
             ref={scroller}
-            onScroll={(e) => setAtTop(e.currentTarget.scrollTop <= 4)}
             className={`no-scrollbar ${slide} snap-y snap-mandatory overflow-y-auto overscroll-contain rounded-3xl`}
           >
             {list.map((r, idx) => (
@@ -278,7 +332,7 @@ export default function Pulses() {
           {/* desktop up/down nav */}
           <div className="pointer-events-none absolute right-3 top-1/2 z-10 hidden -translate-y-1/2 flex-col gap-3 lg:flex">
             <button
-              onClick={() => goTo(active - 1)}
+              onClick={() => step(-1)}
               disabled={active === 0}
               aria-label="Previous Pulse"
               className="press pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-ink-950/40 text-white backdrop-blur transition hover:bg-ink-950/60 disabled:opacity-30"
@@ -286,7 +340,7 @@ export default function Pulses() {
               <ChevronUp size={20} />
             </button>
             <button
-              onClick={() => goTo(active + 1)}
+              onClick={() => step(1)}
               disabled={active >= totalSlides - 1}
               aria-label="Next Pulse"
               className="press pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-ink-950/40 text-white backdrop-blur transition hover:bg-ink-950/60 disabled:opacity-30"
