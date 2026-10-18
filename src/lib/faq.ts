@@ -88,6 +88,7 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
     title: "Account & Recovery",
     items: [
       ["How do I contact Orovion support?", "You can contact the Orovion support team through the Help & Support section available in the app and web experience."],
+      ["How do I delete my Orovion account?", "Log in to Orovion, tap your profile icon, go to Profile under Account Settings, and click Delete Account. Then follow the on-screen instructions to complete the account deletion process."],
       ["What happens when I delete my account?", "Your account enters a recovery period straight away (its length is shown when you delete, and in our Terms). During this period your profile, posts and Pulses are hidden from other users, and you are signed out everywhere. Nothing is erased yet."],
       ["Can I recover my account after deleting it?", "Yes. Log in again with the same phone number, Google or Apple account before the recovery period ends, and everything comes back."],
       ["What happens when I log in during the recovery period?", "Logging in restores your account and its content straight away and cancels the deletion."],
